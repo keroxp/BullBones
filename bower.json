@@ -1,0 +1,22 @@
+{
+  "name": "BullBones",
+  "version": "0.0.0",
+  "homepage": "https://github.com/keroxp/BullBones",
+  "authors": [
+    "Yusuke Sakurai <kerokerokerop@gmail.com>"
+  ],
+  "main": "index.html",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "backbone": "~1.2.0",
+    "easeljs": "~0.8.0",
+    "jquery": "~2.1.4"
+  }
+}
