@@ -12,11 +12,10 @@ module.exports = (grunt) ->
     haxe:
       build:
         main: "Main"
+        libs: [ "createjs"]
         classpath: ["src"]
         output: "js/main.js"
-        flags: [
-          "createjs"
-        ]
+
   grunt.loadNpmTasks "grunt-haxe"
   grunt.loadNpmTasks "grunt-contrib-watch"
   grunt.registerTask "default", ["haxe:build", "watch"]

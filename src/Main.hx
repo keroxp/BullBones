@@ -1,10 +1,10 @@
 package ;
+
 class Main {
     public function new() {
     }
     public static function main () {
-        var s = "hoge";
-        var sub = new Sub();
-        trace(s);
+        var canvas = new MainCanvas();
+        trace("Hello Haxe!!");
     }
 }
