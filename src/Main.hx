@@ -1,10 +1,29 @@
 package ;
 
+import jQuery.JQuery;
+import js.Browser;
+import js.html.*;
+
 class Main {
     public function new() {
     }
     public static function main () {
-        var canvas = new MainCanvas();
-        trace("Hello Haxe!!");
+        new JQuery(function () {
+            var document = Browser.document;
+            var window = Browser.window;
+            var w: Float = window.innerWidth;
+            var h: Float = window.innerHeight;
+            if (1024 < w) w = 1024;
+            if (768 < h) h = 768;
+            var h:Float = window.innerHeight;
+            trace("w: "+w+" h: "+h);
+            var canvasDom = new JQuery("#mainCanvas");
+            canvasDom.attr({
+                width : w,
+                height: h
+            });
+            var canvas = new MainCanvas("mainCanvas",w,h);
+            trace("Hello Haxe!!");
+        });
     }
 }

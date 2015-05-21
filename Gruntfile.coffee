@@ -13,10 +13,16 @@ module.exports = (grunt) ->
         files: [
           "styl/*.styl"
         ]
+        tasks: [
+          "stylus:build"
+        ]
     haxe:
       build:
         main: "Main"
-        libs: [ "createjs"]
+        libs: [
+          "createjs"
+          "jQueryExtern"
+        ]
         classpath: ["src"]
         output: "js/main.js"
     stylus:
