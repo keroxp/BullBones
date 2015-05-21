@@ -9,16 +9,26 @@ module.exports = (grunt) ->
         tasks: [
           "haxe:build"
         ]
+      stylus:
+        files: [
+          "styl/*.styl"
+        ]
     haxe:
       build:
         main: "Main"
         libs: [ "createjs"]
         classpath: ["src"]
         output: "js/main.js"
+    stylus:
+      build:
+        files:
+          "css/main.css": ["styl/*.styl"]
+
 
   grunt.loadNpmTasks "grunt-haxe"
   grunt.loadNpmTasks "grunt-contrib-watch"
-  grunt.registerTask "default", ["haxe:build", "watch"]
+  grunt.loadNpmTasks "grunt-contrib-stylus"
+  grunt.registerTask "default", ["haxe:build", "stylus:build", "watch"]
 
 
 
