@@ -68,14 +68,17 @@ class Figure {
         var s = mPoints[0];
         shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
         shape.graphics.moveTo(s.x,s.y);
-        for (p in mPoints) {
+        for (i in 1...mPoints.length-2) {
+            var p = mPoints[i];
             if (mDirtyFlags[i]) {
-                shape.graphics.lineTo(p.x,p.y);
+                var n = mPoints[i+1];
+                var c = (p.x+n.x)/2;
+                var d = (p.y+n.y)/2;
+                shape.graphics.quadraticCurveTo(p.x,p.y,c,d);
             } else {
                 shape.graphics.moveTo(p.x,p.y);
             }
             mDirtyFlags[i] = false;
-            i++;
         }
         shape.graphics.endStroke();
     }
