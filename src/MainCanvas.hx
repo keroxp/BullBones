@@ -1,4 +1,7 @@
 package ;
+import js.html.CanvasElement;
+import js.html.CanvasRenderingContext2D;
+import js.html.KeyboardEvent;
 import createjs.easeljs.*;
 class MainCanvas {
     var mStage: Stage;
@@ -10,7 +13,16 @@ class MainCanvas {
     var mDrawingFigure: Figure;
     var mFocusedFigure: Figure;
     var mFigures: Array<Figure> = new Array();
+    var mContext: CanvasRenderingContext2D;
     public function new(canvasId: String, w: Float, h: Float) {
+
+        var window = js.Browser.window;
+        window.addEventListener("keyup", onKeyUp);
+
+        var document = js.Browser.document;
+        var canvas: CanvasElement = cast(document.getElementById(canvasId));
+        mContext = canvas.getContext("2d");
+
         mStage = new Stage(canvasId);
         mFgLayer = new Container();
         mBgLayer = new Container();
@@ -125,5 +137,20 @@ class MainCanvas {
         mPrevX = e.stageX;
         mPrevY = e.stageY;
         draw();
+    }
+    function onKeyUp (e: KeyboardEvent) {
+        trace(e);
+        switch e.keyCode {
+            case 8: onDelete(e);
+        }
+    }
+    function onDelete (e: KeyboardEvent) {
+        if (mFocusedFigure != null) {
+            mFigures.remove(mFocusedFigure);
+            mMainLayer.removeChild(mFocusedFigure.shape);
+            mBoundingBox.clear();
+            mFocusedFigure = null;
+            draw();
+        }
     }
 }
