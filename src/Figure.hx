@@ -1,12 +1,14 @@
 package ;
+import geometry.FuzzyPoint;
+import geometry.Rect;
 import createjs.easeljs.Shape;
-import createjs.easeljs.Point;
+
 class Figure {
     public function new(x: Float, y: Float) {
         addPoint(x,y);
     }
     // 図形を構成する点
-    @:protected var mPoints: Array<Point> = new Array();
+    @:protected var mPoints: Array<FuzzyPoint> = new Array();
     // 描画につかうShape
     public var shape(default, null): Shape = new Shape();
     function get_shape() return shape;
@@ -45,7 +47,11 @@ class Figure {
         if (bounds.right < x) bounds.right = x;
         if (y < bounds.top) bounds.top = y;
         if (bounds.bottom < y) bounds.bottom = y;
-        mPoints.push(new Point(x,y));
+        if (mPoints.length == 0) {
+            mPoints.push(new FuzzyPoint(x,y));
+        } else {
+            mPoints.push(new FuzzyPoint(x,y,mPoints[mPoints.length-1]));
+        }
         mDirtyFlags.push(true);
     }
     public function moveBy (dx: Float, dy: Float) {

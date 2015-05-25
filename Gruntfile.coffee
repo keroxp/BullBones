@@ -4,7 +4,7 @@ module.exports = (grunt) ->
     watch:
       haxe:
         files: [
-          "src/*.hx"
+          "src/**/*.hx"
         ]
         tasks: [
           "haxe:build"

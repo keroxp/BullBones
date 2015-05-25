@@ -1,6 +1,8 @@
 package ;
+import geometry.Rect;
 import createjs.easeljs.Container;
 import createjs.easeljs.Shape;
+
 class BoundingBox {
     public var shape(default, null): Container;
     var mLTCorner: Shape;

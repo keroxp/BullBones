@@ -1,5 +1,4 @@
-package ;
-import createjs.easeljs.Point;
+package geometry;
 class Rect {
     public var left: Float;
     public var top: Float;
