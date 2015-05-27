@@ -22,7 +22,7 @@ class Vector2D {
         return Math.sqrt(rawPower());
     }
     public function rawPower (): Float {
-        return dx*dx+dy*dy;
+        return Math.pow(dx,2) + Math.pow(dy,2);
     }
     public function multiply (a: Float): Vector2D {
         return new Vector2D(dx*a,dy*a);

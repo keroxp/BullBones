@@ -1,5 +1,5 @@
 package ;
-import recognition.Recognition;
+import geometry.FuzzyPoint;
 import BoundingBox.Corner;
 import js.html.CanvasElement;
 import js.html.CanvasRenderingContext2D;
@@ -13,12 +13,18 @@ class MainCanvas implements BoundingBox.OnChangeListener {
     var mBgLayer: Container;
     var mCanvas: Shape;
     var mBoundingBox: BoundingBox;
+    var mFuzzySketchGraph: Shape;
     var mDrawingFigure: Figure;
     var mFocusedFigure: Figure;
     var mFigures: Array<Figure> = new Array();
     var mContext: CanvasRenderingContext2D;
     var mEditMode: Bool = false;
+    var mCanvasWidth: Float;
+    var mCanvasHeight: Float;
     public function new(canvasId: String, w: Float, h: Float) {
+
+        mCanvasWidth = w;
+        mCanvasHeight = h;
 
         var window = js.Browser.window;
         window.addEventListener("keyup", onKeyUp);
@@ -40,17 +46,13 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         mMainLayer.addChild(mCanvas);
 
         Touch.enable(mStage);
-        var circle = new Shape();
-        circle.graphics.beginFill("DeepSkyBlue").drawCircle(0, 0, 50);
-        circle.x = 100;
-        circle.y = 100;
-        circle.on("mousedown", onCircleMouseDown);
-        circle.on("pressmove", onCirclePressMove);
-        mMainLayer.addChild(circle);
 
         mBoundingBox = new BoundingBox();
         mBoundingBox.listener = this;
         mFgLayer.addChild(mBoundingBox.shape);
+
+        mFuzzySketchGraph = new Shape();
+        mFgLayer.addChild(mFuzzySketchGraph);
 
         mStage.addChild(mBgLayer);
         mStage.addChild(mMainLayer);
@@ -59,14 +61,26 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         mStage.update();
     }
     function draw () {
+        mContext.beginPath();
         for (f in mFigures) {
-            f.render();
+            if (f.isDirty) {
+                f.render();
+                f.isDirty = false;
+            }
         }
+        mContext.stroke();
         if (mFocusedFigure != null) {
             mBoundingBox.clear();
             mBoundingBox.render(mFocusedFigure.bounds);
         }
         mStage.update();
+    }
+    function drawFuzzyPointGraph (p: FuzzyPoint, i: Int) {
+        if (i == 0) {
+            mFuzzySketchGraph.graphics.clear();
+            mFuzzySketchGraph.graphics.setStrokeStyle(1).beginStroke("red").moveTo(0,mCanvasHeight);
+        }
+        mFuzzySketchGraph.graphics.lineTo(i*3, mCanvasHeight-p.velocity/3);
     }
     function findFigure (shape: Shape): Figure {
         for (f in mFigures) {
@@ -107,23 +121,29 @@ class MainCanvas implements BoundingBox.OnChangeListener {
             mDrawingFigure.shape.addEventListener("mousedown", onFigureMouseDown);
             mDrawingFigure.shape.addEventListener("pressmove", onFigurePressMove);
             mDrawingFigure.shape.addEventListener("pressup", onFigurePressUp);
-            mDrawingFigure.width = 5;
+            mDrawingFigure.width = 3;
             mFigures.push(mDrawingFigure);
             mMainLayer.addChild(mDrawingFigure.shape);
+            drawFuzzyPointGraph(mDrawingFigure.points[0],0);
         }
         draw();
     }
     function onCanvasPressMove (e: MouseEvent) {
         if (mDrawingFigure != null) {
             mDrawingFigure.addPoint(e.stageX,e.stageY);
+            var i = mDrawingFigure.points.length-1;
+            var fp = mDrawingFigure.points[i];
+            haxe.Timer.delay(function(){
+                drawFuzzyPointGraph(fp,i);
+            },0);
             draw();
         }
     }
     function onCanvasMouseUp (e: MouseEvent) {
         if (mDrawingFigure != null) {
             mDrawingFigure.addPoint(e.stageX, e.stageY);
-            trace(mDrawingFigure);
-            recognition.Recognition.line(cast mDrawingFigure.points);
+            mDrawingFigure.calcVertexes();
+            mDrawingFigure.isDrawing = false;
             mDrawingFigure = null;
             draw();
         }

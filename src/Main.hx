@@ -13,9 +13,6 @@ class Main {
             var window = Browser.window;
             var w: Float = window.innerWidth;
             var h: Float = window.innerHeight;
-            if (1024 < w) w = 1024;
-            if (768 < h) h = 768;
-            var h:Float = window.innerHeight;
             trace("w: "+w+" h: "+h);
             var canvasDom = new JQuery("#mainCanvas");
             canvasDom.attr({

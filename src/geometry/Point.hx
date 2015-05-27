@@ -7,6 +7,9 @@ class Point {
         this.y = y;
     }
     public function distance (p: Point): Float {
-        return Math.abs(Math.sqrt(Math.pow(x-p.x,2)+Math.pow(y-p.y,2)));
+        return Math.sqrt(rawDistance(p));
+    }
+    public function rawDistance(p: Point): Float {
+        return Math.pow(x-p.x,2)+Math.pow(y-p.y,2);
     }
 }

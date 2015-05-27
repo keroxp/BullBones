@@ -32,7 +32,7 @@ class Recognition {
                 leftMax = w;
             }
         }
-        trace("rmax: "+rightMax+" lmax: "+leftMax);
+//        trace("rmax: "+rightMax+" lmax: "+leftMax);
         return rightMax+leftMax;
     }
 }

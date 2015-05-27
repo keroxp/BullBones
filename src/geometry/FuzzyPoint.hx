@@ -7,7 +7,7 @@ class FuzzyPoint extends Point {
         timestamp = Date.now();
         if (prev != null) {
             var d = timestamp.getTime()-prev.timestamp.getTime();
-            velocity = distance(prev)/d;
+            velocity = distance(prev)*100/d; // ms
         }
     }
 }
