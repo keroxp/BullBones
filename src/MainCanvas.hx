@@ -1,9 +1,10 @@
 package ;
-import haxe.Timer;
+import recognition.Recognition;
 import BoundingBox.Corner;
 import js.html.CanvasElement;
 import js.html.CanvasRenderingContext2D;
 import js.html.KeyboardEvent;
+import figure.Figure;
 import createjs.easeljs.*;
 class MainCanvas implements BoundingBox.OnChangeListener {
     var mStage: Stage;
@@ -122,6 +123,7 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         if (mDrawingFigure != null) {
             mDrawingFigure.addPoint(e.stageX, e.stageY);
             trace(mDrawingFigure);
+            recognition.Recognition.line(cast mDrawingFigure.points);
             mDrawingFigure = null;
             draw();
         }
