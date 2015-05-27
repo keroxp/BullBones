@@ -12,6 +12,7 @@ class Rect {
     }
     public function width () return right-left;
     public function height () return bottom-top;
+    public function center (): Point return new Point((left+right)/2,(top+bottom)/2);
     public function offset (dx: Float, dy: Float) {
         this.left += dx;
         this.top += dy;

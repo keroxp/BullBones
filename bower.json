@@ -18,5 +18,8 @@
     "backbone": "~1.2.0",
     "easeljs": "~0.8.0",
     "jquery": "~2.1.4"
+  },
+  "devDependencies": {
+    "bootstrap": "~3.3.4"
   }
 }

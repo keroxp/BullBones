@@ -1,9 +1,11 @@
 package ;
+import haxe.Timer;
+import BoundingBox.Corner;
 import js.html.CanvasElement;
 import js.html.CanvasRenderingContext2D;
 import js.html.KeyboardEvent;
 import createjs.easeljs.*;
-class MainCanvas {
+class MainCanvas implements BoundingBox.OnChangeListener {
     var mStage: Stage;
     var mFgLayer: Container;
     var mMainLayer: Container;
@@ -14,6 +16,7 @@ class MainCanvas {
     var mFocusedFigure: Figure;
     var mFigures: Array<Figure> = new Array();
     var mContext: CanvasRenderingContext2D;
+    var mEditMode: Bool = false;
     public function new(canvasId: String, w: Float, h: Float) {
 
         var window = js.Browser.window;
@@ -45,6 +48,7 @@ class MainCanvas {
         mMainLayer.addChild(circle);
 
         mBoundingBox = new BoundingBox();
+        mBoundingBox.listener = this;
         mFgLayer.addChild(mBoundingBox.shape);
 
         mStage.addChild(mBgLayer);
@@ -73,7 +77,6 @@ class MainCanvas {
     var mPrevY: Float;
     function onFigureMouseDown (e: MouseEvent) {
         var f = findFigure(cast e.target);
-        f.color = "#ff0000";
         mPrevX = e.stageX;
         mPrevY = e.stageY;
         mFocusedFigure = f;
@@ -137,6 +140,49 @@ class MainCanvas {
         mPrevX = e.stageX;
         mPrevY = e.stageY;
         draw();
+    }
+    public function onCornerDown (e: MouseEvent, corner: Corner): Void {
+
+    }
+    public function onCornerMove (e: MouseEvent, corner: Corner, dx: Float, dy: Float): Void {
+        var w = mFocusedFigure.bounds.width();
+        var h = mFocusedFigure.bounds.height();
+        var px: Float = 0;
+        var py: Float = 0;
+        var b = mFocusedFigure.bounds;
+        switch corner {
+            case Corner.TopLeft: {
+                b.left += dx;
+                b.top += dy;
+                px = b.right;
+                py = b.bottom;
+            }
+            case Corner.TopRight: {
+                b.right += dx;
+                b.top += dy;
+                px = b.left;
+                py = b.bottom;
+            }
+            case Corner.BottomLeft: {
+                b.left += dx;
+                b.bottom += dy;
+                px = b.right;
+                py = b.top;
+            }
+            case Corner.BottomRight: {
+                b.right += dx;
+                b.bottom += dy;
+                px = b.left;
+                py = b.top;
+            }
+        }
+        var scaleX = mFocusedFigure.bounds.width()/w;
+        var scaleY = mFocusedFigure.bounds.height()/h;
+        mFocusedFigure.setScale(scaleX,scaleY,px,py);
+        draw();
+    }
+    public function onCornerUp (e: MouseEvent, corner: Corner): Void {
+
     }
     function onKeyUp (e: KeyboardEvent) {
         trace(e);

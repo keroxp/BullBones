@@ -1,4 +1,5 @@
 package ;
+import createjs.easeljs.Matrix2D;
 import geometry.FuzzyPoint;
 import geometry.Rect;
 import createjs.easeljs.Shape;
@@ -32,6 +33,28 @@ class Figure {
     // bounds
     public var bounds(default, null): Rect;
     function get_bounds () return bounds;
+    public var scaleX(default, null): Float = 1.0;
+    public var scaleY(default, null): Float = 1.0;
+    public function setScale (sx: Float, sy: Float, px: Float, py: Float) {
+        var m = new Matrix2D();
+        for (p in mPoints) {
+            var vx = px-p.x;
+            var vy = py-p.y;
+            m.identity();
+            m.translate(vx,vy);
+            m.scale(sx,sy);
+            m.translate(-vx,-vy);
+            m.transformPoint(p.x,p.y,p);
+        }
+        bounds = null;
+        for (p in mPoints) {
+            calcBounds(p.x,p.y);
+        }
+        scaleX = sx;
+        scaleY = sy;
+        shape.graphics.clear();
+        markAsDirtyAll();
+    }
     // 再描画フラグ
     public function markAsDirtyAll() {
         for (i in 0...mDirtyFlags.length-1) {
@@ -42,17 +65,20 @@ class Figure {
         mDirtyFlags[index] = true;
     }
     public function addPoint (x: Float, y: Float) {
-        if (bounds == null) bounds = new Rect(x,y,x,y);
-        if (x < bounds.left) bounds.left = x;
-        if (bounds.right < x) bounds.right = x;
-        if (y < bounds.top) bounds.top = y;
-        if (bounds.bottom < y) bounds.bottom = y;
+        calcBounds(x,y);
         if (mPoints.length == 0) {
             mPoints.push(new FuzzyPoint(x,y));
         } else {
             mPoints.push(new FuzzyPoint(x,y,mPoints[mPoints.length-1]));
         }
         mDirtyFlags.push(true);
+    }
+    private function calcBounds (x: Float, y: Float) {
+        if (bounds == null) bounds = new Rect(x,y,x,y);
+        if (x < bounds.left) bounds.left = x;
+        if (bounds.right < x) bounds.right = x;
+        if (y < bounds.top) bounds.top = y;
+        if (bounds.bottom < y) bounds.bottom = y;
     }
     public function moveBy (dx: Float, dy: Float) {
         for (p in mPoints) {
