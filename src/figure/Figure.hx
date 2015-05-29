@@ -179,27 +179,27 @@ class Figure {
         var i = 0;
         var s = points[0];
         var e = points[points.length-1];
-        if (isLine || (s2e().rawPower() > LINE_LENGTH_THRESH
-            && Recognition.line(cast points) < LINE_RECOGNIZE_THRESH))
-        {
-            if (!isLine) {
-                isLine = true;
-            }
-            shape.graphics.clear();
-            shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
-            shape.graphics.moveTo(s.x,s.y);
-            shape.graphics.lineTo(e.x,e.y);
-        } else {
+//        if (isLine || (s2e().rawPower() > LINE_LENGTH_THRESH
+//            && Recognition.line(cast points) < LINE_RECOGNIZE_THRESH))
+//        {
+//            if (!isLine) {
+//                isLine = true;
+//            }
+//            shape.graphics.clear();
+//            shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
+//            shape.graphics.moveTo(s.x,s.y);
+//            shape.graphics.lineTo(e.x,e.y);
+//        } else {
             renderPolygon();
-        }
+//        }
         shape.graphics.endStroke();
     }
     private function renderPolygon () {
         var s = points[0];
         var e = points[points.length-1];
-        shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
         if (isDrawing && mDirtyPoints.length > 0) {
             var ds = points[mDirtyPoints[0]-1];
+            shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
             shape.graphics.moveTo(ds.x,ds.y);
             for (i in mDirtyPoints) {
                 var dp = points[i];
@@ -207,14 +207,10 @@ class Figure {
             }
             mDirtyPoints = new Array();
         } else {
+            shape.graphics.clear();
+            shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
             shape.graphics.moveTo(s.x,s.y);
-            for (i in 1...points.length-2) {
-                var p = points[i];
-                var n = points[i+1];
-                var c = (p.x+n.x)/2;
-                var d = (p.y+n.y)/2;
-                shape.graphics.quadraticCurveTo(p.x,p.y,c,d);
-            }
+            drawMovingAverage();
         }
         shape.graphics.endStroke();
         if (!isDrawing) {
@@ -237,5 +233,35 @@ class Figure {
                 }
             }
         }
+    }
+    private function drawQuadraticCurve () {
+        for (i in 1...points.length-2) {
+            var p = points[i];
+            var n = points[i+1];
+            var c = (p.x+n.x)/2;
+            var d = (p.y+n.y)/2;
+            shape.graphics.quadraticCurveTo(p.x,p.y,c,d);
+        }
+    }
+    public var supplementLength = 5;
+    private function drawMovingAverage () {
+        // 平均係数
+        var m = supplementLength;
+        var i = m-1;
+        while (i < points.length) {
+            var avp = new Point();
+            var seg: Array<FuzzyPoint> = points.slice(i-m+1,i+1);
+            for (p in seg){
+                avp.x += p.x;
+                avp.y += p.y;
+            }
+            avp.x = avp.x/m;
+            avp.y = avp.y/m;
+            shape.graphics.lineTo(avp.x,avp.y);
+            i++;
+        }
+        var e = points[points.length-1];
+        shape.graphics.lineTo(e.x,e.y);
+        trace(points.length);
     }
 }
