@@ -1,4 +1,5 @@
 package ;
+import js.html.Image;
 import geometry.FuzzyPoint;
 import BoundingBox.Corner;
 import js.html.CanvasElement;
@@ -58,6 +59,25 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         mStage.addChild(mMainLayer);
         mStage.addChild(mFgLayer);
 
+        var img = new Image();
+        img.src = "img/bullbones.jpg";
+        img.onload = function (a: Dynamic): Void {
+            var dummyCanvas: CanvasElement = cast js.Browser.document.createElement("canvas");
+            var dummyContext = dummyCanvas.getContext2d();
+            var w = img.width;
+            var h = img.height;
+            dummyCanvas.width = w;
+            dummyCanvas.height = h;
+            dummyContext.drawImage(img,0,0);
+            var input = dummyContext.getImageData(0,0,w,h);
+            var out = new cv.Filter(input,w,h).applyEdge2().applyNegaposi().applyGray().get();
+            dummyContext.putImageData(out,0,0);
+            var bm = new Bitmap(dummyCanvas.toDataURL("image/jpeg"));
+            bm.scaleX = 0.5;
+            bm.scaleY = 0.5;
+            mMainLayer.addChild(bm);
+            mStage.update();
+        }
         mStage.update();
     }
     function draw () {
@@ -69,6 +89,7 @@ class MainCanvas implements BoundingBox.OnChangeListener {
             }
         }
         mContext.stroke();
+        mContext.closePath();
         if (mFocusedFigure != null) {
             mBoundingBox.clear();
             mBoundingBox.render(mFocusedFigure.bounds);
@@ -207,7 +228,6 @@ class MainCanvas implements BoundingBox.OnChangeListener {
 
     }
     function onKeyUp (e: KeyboardEvent) {
-        trace(e);
         switch e.keyCode {
             case 8: onDelete(e);
         }

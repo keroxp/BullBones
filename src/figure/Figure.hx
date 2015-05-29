@@ -1,4 +1,5 @@
 package figure;
+import recognition.Recognition;
 import createjs.easeljs.Point;
 import geometry.Vector2D;
 import createjs.easeljs.Matrix2D;
@@ -71,6 +72,8 @@ class Figure {
     public var isDrawing: Bool = true;
     // 直線フラグ
     private var isLine: Bool = false;
+    //　デバッグ中？
+    public var isDebug: Bool = true;
     // 閉じているか
     private static var CLOSE_THRESH: Float = 20*20;
     public function getClosedPoint (): Point {
@@ -176,19 +179,19 @@ class Figure {
         var i = 0;
         var s = points[0];
         var e = points[points.length-1];
-//        if (isLine || (s2e().rawPower() > LINE_LENGTH_THRESH
-//            && Recognition.line(cast points) < LINE_RECOGNIZE_THRESH))
-//        {
-//            if (!isLine) {
-//                isLine = true;
-//            }
-//            shape.graphics.clear();
-//            shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
-//            shape.graphics.moveTo(s.x,s.y);
-//            shape.graphics.lineTo(e.x,e.y);
-//        } else {
+        if (isLine || (s2e().rawPower() > LINE_LENGTH_THRESH
+            && Recognition.line(cast points) < LINE_RECOGNIZE_THRESH))
+        {
+            if (!isLine) {
+                isLine = true;
+            }
+            shape.graphics.clear();
+            shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
+            shape.graphics.moveTo(s.x,s.y);
+            shape.graphics.lineTo(e.x,e.y);
+        } else {
             renderPolygon();
-//        }
+        }
         shape.graphics.endStroke();
     }
     private function renderPolygon () {
@@ -215,21 +218,23 @@ class Figure {
         }
         shape.graphics.endStroke();
         if (!isDrawing) {
-            shape.graphics
-            .beginFill("blue")
-            .drawCircle(s.x,s.y,3)
-            .drawCircle(e.x,e.y,3)
-            .endFill();
-            for (v in vertexes) {
-                shape.graphics.setStrokeStyle(3).beginStroke("red");
-                shape.graphics.drawCircle(v.point.x,v.point.y,5);
-                shape.graphics.endStroke();
-            }
-            var cp = getClosedPoint();
-            if (cp != null) {
-                shape.graphics.setStrokeStyle(3).beginStroke("pink");
-                shape.graphics.drawCircle(cp.x,cp.y,5);
-                shape.graphics.endStroke();
+            if (isDebug) {
+                shape.graphics
+                .beginFill("blue")
+                .drawCircle(s.x,s.y,3)
+                .drawCircle(e.x,e.y,3)
+                .endFill();
+                for (v in vertexes) {
+                    shape.graphics.setStrokeStyle(3).beginStroke("red");
+                    shape.graphics.drawCircle(v.point.x,v.point.y,5);
+                    shape.graphics.endStroke();
+                }
+                var cp = getClosedPoint();
+                if (cp != null) {
+                    shape.graphics.setStrokeStyle(3).beginStroke("pink");
+                    shape.graphics.drawCircle(cp.x,cp.y,5);
+                    shape.graphics.endStroke();
+                }
             }
         }
     }

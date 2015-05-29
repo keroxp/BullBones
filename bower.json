@@ -20,6 +20,6 @@
     "jquery": "~2.1.4"
   },
   "devDependencies": {
-    "bootstrap": "~3.3.4"
+    "materialize": "~0.96.1"
   }
 }
