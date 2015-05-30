@@ -1,5 +1,6 @@
 package ;
 
+import view.SearchView;
 import jQuery.JQuery;
 import js.Browser;
 import js.html.*;
@@ -21,6 +22,7 @@ class Main {
             });
             var canvas = new MainCanvas("mainCanvas",w,h);
             trace("Hello Haxe!!");
+            var searchView = new SearchView("inputWrapper");
         });
     }
 }

@@ -35,6 +35,8 @@ module.exports = (grunt) ->
           livereload: LIVERELOAD_PORT
         files: [
           "js/main.js"
+          "css/main.css"
+          "index.html"
         ]
     haxe:
       build:

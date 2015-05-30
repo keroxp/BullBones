@@ -228,6 +228,7 @@ class MainCanvas implements BoundingBox.OnChangeListener {
 
     }
     function onKeyUp (e: KeyboardEvent) {
+        e.preventDefault();
         switch e.keyCode {
             case 8: onDelete(e);
         }

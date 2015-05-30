@@ -7,11 +7,18 @@
 </head>
 <body>
   <div id="wrapper">
-    <div id="inputWrapper" class="row z-depth-1">
+    <div id="inputWrapper" class="z-depth-1">
       <div class="input-field col s12">
         <i class="mdi-action-search prefix"></i>
-        <input id="icon_prefix" type="text" class="validate">
-        <label for="icon_prefix">描きたいモチーフを検索</label>
+        <input id="searchInput" type="text" class="validate" autocomplete="off">
+        <label for="searchInput">描きたいモチーフを検索</label>
+      </div>
+      <div id="searchResultsWrapper">
+        <div id="searchingIndicator" class="hidden">
+          <img src="img/ajax-loader.gif"/>
+        </div>
+        <div id="searchResults" class="clearfix hidden">
+        </div>
       </div>
     </div>
     <a id="searchButton" class="btn-floating waves-effect waves-light btn-large red">
