@@ -1,4 +1,5 @@
 package view;
+import js.html.Node;
 import createjs.easeljs.Event;
 import js.html.Image;
 import jQuery.JQuery;
@@ -7,7 +8,7 @@ class SearchView {
   private var jLoader: JQuery;
   private var jInput: JQuery;
   private var jResults: JQuery;
-  private var mImages: Array<Dynamic>;
+  private var mImages: Array<Dynamic> = [];
   private var mLoading: Bool;
   private var mCurrentQ: String;
   public function new(id: String) {
@@ -22,6 +23,7 @@ class SearchView {
     var val: String = cast jInput.val();
     if (val.length == 0) {
       jResults.addClass("hidden");
+      mCurrentQ = null;
     }
   }
   private function onSearch (e: Event) {
@@ -34,8 +36,8 @@ class SearchView {
       mLoading = true;
       ajax.BingSearch.search(q).done(function(data: Dynamic) {
         setLoading(false);
-        mImages = data.d.results;
         render(data.d.results.map(function(e) { return e.Thumbnail.MediaUrl; }));
+        mImages = data.d.results;
       }).fail(function(jxhr: jQuery.JqXHR) {
         setLoading(false);
         trace("error!");
@@ -54,36 +56,40 @@ class SearchView {
       jResults.removeClass("hidden");
     };
   }
+  private static var WHITE_IMG = "data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
   public function render (urls: Array<String>) {
     var document = js.Browser.document;
     var fragment =  document.createDocumentFragment();
     var imgs = jResults.find("img").get();
-    var imgCnt = imgs.length;
-    if (imgCnt == 0) {
-      // 最初
-      var i = 0;
-      while (i < urls.length-1) {
-        var row = new JQuery("<div class='searchResultsRow'></div>");
-        for (j in 0...3) {
-          var cell;
-          if (i < urls.length) {
-            var url = urls[i];
-            cell = new JQuery('<div class="searchResultsCell"><img src=\"$url\"></div>');
-          } else {
-            cell = new JQuery('<div class="searchResultsCell"></div>');
-          }
-          row.append(cell);
-          i++;
-        }
-        fragment.appendChild(row.get()[0]);
+    var i = 0;
+    var diff = urls.length-mImages.length;
+    // 検索結果が少ない場合必要のないrowは非表示にする
+    var a = Math.floor(urls.length/3);
+    var b = Math.floor(mImages.length/3);
+    jResults.find(".searchResultsRow").each(function(i: Int, el: Node) {
+      if (diff < 0 && a < i) {
+        // 前回よりも減った場合
+        new JQuery(el).addClass("hidden");
+      } else if (0 < diff && b < i){
+        // 増えた場合
+        new JQuery(el).removeClass("hidden");
       }
-      jResults.get()[0].appendChild(fragment);
-    } else {
-      // 次
-      for (i in 0...imgCnt) {
-        var img: Image = cast imgs[i];
-        img.src = urls[i];
-      }
+    });
+    for (j in 0...imgs.length) {
+      var img:Image = cast imgs[j];
+      img.src = j < urls.length ? urls[j] : WHITE_IMG;
+      i++;
     }
+    while (i < urls.length-1) {
+      var row = new JQuery("<div class='searchResultsRow'></div>");
+      for (j in 0...3) {
+        var url = i < urls.length ? urls[i] : WHITE_IMG;
+        var cell = new JQuery('<div class="searchResultsCell"><img src=\"$url\"></div>');
+        row.append(cell);
+        i++;
+      }
+      fragment.appendChild(row.get()[0]);
+    }
+    jResults.get()[0].appendChild(fragment);
   }
 }
