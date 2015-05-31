@@ -23,6 +23,11 @@ class Main {
             var canvas = new MainCanvas("mainCanvas",w,h);
             trace("Hello Haxe!!");
             var searchView = new SearchView("inputWrapper");
+            searchView.onSelectImage = canvas.onSelectImage;
         });
+        js.Lib.eval("window.BullBones = this");
     }
+    public var globalCallback: Dynamic -> Void = function (d: Dynamic) {
+        trace(d);
+    };
 }

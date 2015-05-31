@@ -1,0 +1,83 @@
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>BullBones</title>
+  <link rel="stylesheet" type="text/css" href="bower_components/materialize/dist/css/materialize.min.css" />
+  <link rel="stylesheet" type="text/css" href="css/main.css" />
+</head>
+<body>
+  <div id="wrapper">
+    <div id="navigationController" class="z-depth-1">
+      <div id="inputWrapper" class="viewController active">
+        <div class="input-field col s12">
+          <i class="mdi-action-search prefix"></i>
+          <input id="searchInput" type="text" class="validate" autocomplete="off">
+          <label for="searchInput">描きたいモチーフを検索</label>
+        </div>
+        <div id="searchResultsWrapper">
+          <div id="searchingIndicator" class="hidden">
+            <img src="img/ajax-loader.gif"/>
+          </div>
+          <div id="searchResults" class="clearfix hidden">
+          </div>
+        </div>
+      </div>
+      <div id="imageDetailWrapper" class="viewController next">
+        <nav>
+          <div class="nav-wrapper">
+            <a href="#" class="backButton clearfix">
+              <i class="medium mdi-navigation-chevron-left"></i>
+            </a>
+          </div>
+        </nav>
+        <div id="imageDetailContent">
+          <div id="imageDetailThumbnail">
+            <img src="img/bullbones.jpg">
+          </div>
+          <div>
+            <form action="#">
+              <div class="input-field">
+                <input type="checkbox" id="test5" />
+                <label for="test5">Red</label>
+              </div>
+              <div class="input-field">
+                <input type="checkbox" id="test6" checked="checked" />
+                <label for="test6">Yellow</label>
+              </div>
+              <div class="input-field">
+                <input type="checkbox" class="filled-in" id="filled-in-box" checked="checked" />
+                <label for="filled-in-box">Filled in</label>
+              </div>
+              <div class="input-field">
+                <input type="checkbox" id="test7" checked="checked" disabled="disabled" />
+                <label for="test7">Green</label>
+              </div>
+              <div class="input-field">
+                <input type="checkbox" id="test8" disabled="disabled" />
+                <label for="test8">Brown</label>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <a id="searchButton" class="btn-floating waves-effect waves-light btn-large red">
+      <i class="large mdi-action-search"></i>
+    </a>
+    <a id="brushButton" class="btn-floating waves-effect waves-light btn-large blue">
+      <i class="large mdi-image-brush"></i>
+    </a>
+    <div id="canvasWrapper">
+      <canvas id="mainCanvas"></canvas>
+    </div>
+  </div>
+  <script src="http://localhost:35729/livereload.js"></script>
+  <script src="bower_components/jquery/dist/jquery.min.js"></script>
+  <script src="bower_components/materialize/dist/js/materialize.min.js"></script>
+  <script src="bower_components/easeljs/lib/easeljs-0.8.0.min.js"></script>
+  <script src="bower_components/jpgjs/jpg.js"></script>
+  <script src="lib/png.js/zlib.js"></script>
+  <script src="lib/png.js/png.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -15,5 +15,11 @@
     "grunt-contrib-stylus": "^0.21.0",
     "grunt-contrib-watch": "^0.6.1",
     "grunt-haxe": "^0.1.13"
+  },
+  "dependencies": {
+    "body-parser": "^1.12.4",
+    "express": "^4.12.4",
+    "request": "^2.56.0",
+    "xhr2proxy": "^0.1.4"
   }
 }

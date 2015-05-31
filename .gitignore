@@ -1,6 +1,6 @@
 node_modules
 .DS_Store
 .idea
-js/*
-css/*
-bower_components
+public/js/*
+public/css/*
+public/bower_components

@@ -28,13 +28,27 @@ body
     position fixed
     right 25px
     top 100px
-  #inputWrapper
+  #navigationController
     width 400px;
     position fixed;
     top 25px;
     left 50%;
     margin-left -210px
     padding 5px
+    background-color white
+    overflow hidden
+    .viewController
+      width 100%
+      position relative
+      top 0
+    .next
+      right -100%
+    .slideOut
+      -webkit-transition: transform 0.2s ease
+      -webkit-transform: translate3d(100%,0,0)
+    .slideIn
+      -webkit-transition: transform 0.2s ease
+      -webkit-transform: translate3d(-100%,0,0)
     #searchResultsWrapper
       max-height 400px
       overflow auto
@@ -44,18 +58,33 @@ body
       #searchResults
         text-align center
         .searchResultsRow
-          width 100%
+          width 390px
           margin-bottom 10px
           display table
           .searchResultsCell
             display table-cell
             vertical-align middle
+            border 1px solid white
             width 130px
             height 130px
-            padding-left 10px
+            padding 0 5px
             img
               max-width 100%
               max-height 100%
+          .selected
+            border 1px solid #ef5350!important
+    #imageDetailWrapper
+      position absolute
+      height 400px
+      #imageDetailContent
+        padding 10px
+        #imageDetailThumbnail
+          width 100%
+          height 200px
+          text-align center
+          img
+            max-width 100%
+            max-height 100%
   #actionBar
     padding 15px 0
   .sidebar

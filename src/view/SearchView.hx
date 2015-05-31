@@ -1,8 +1,11 @@
 package view;
+import js.html.EventTarget;
+import js.html.Element;
+import jQuery.JQuery;
+import js.html.MouseEvent;
 import js.html.Node;
 import createjs.easeljs.Event;
 import js.html.Image;
-import jQuery.JQuery;
 class SearchView {
   public var j: JQuery;
   private var jLoader: JQuery;
@@ -11,6 +14,7 @@ class SearchView {
   private var mImages: Array<Dynamic> = [];
   private var mLoading: Bool;
   private var mCurrentQ: String;
+  public var onSelectImage: String -> Void;
   public function new(id: String) {
     j = new JQuery("#"+id);
     jLoader = j.find("#searchingIndicator");
@@ -29,8 +33,8 @@ class SearchView {
   private function onSearch (e: Event) {
     e.preventDefault();
     e.stopPropagation();
-    var q = jInput.val();
-    if (!mLoading && q != mCurrentQ) {
+    var q:String = cast jInput.val();
+    if (!mLoading && q.length > 0 && q != mCurrentQ) {
       trace('start searching \"$q\"');
       setLoading(true);
       mLoading = true;
@@ -45,6 +49,22 @@ class SearchView {
         mLoading = false;
       });
       mCurrentQ = q;
+    }
+  }
+  private var mSelectedCell: JQuery;
+  public function onCellClicked (e: MouseEvent) {
+    if (mSelectedCell != null) {
+      mSelectedCell.removeClass("selected");
+    }
+    var cell = new JQuery(e.target);
+    if (!cell.hasClass("searchResultsCell")) {
+      cell = cell.parent(".searchResultsCell");
+    }
+    cell.addClass("selected");
+    mSelectedCell = cell;
+    var index:Int = cell.data("index");
+    if (onSelectImage != null) {
+      onSelectImage(mImages[index].MediaUrl);
     }
   }
   public function setLoading (loading: Bool) {
@@ -85,6 +105,8 @@ class SearchView {
       for (j in 0...3) {
         var url = i < urls.length ? urls[i] : WHITE_IMG;
         var cell = new JQuery('<div class="searchResultsCell"><img src=\"$url\"></div>');
+        cell.attr('data-index', i);
+        cell.on("click", onCellClicked);
         row.append(cell);
         i++;
       }
