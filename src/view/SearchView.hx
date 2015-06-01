@@ -76,6 +76,10 @@ class SearchView {
       jResults.removeClass("hidden");
     };
   }
+  public function toggle () {
+    j.toggle();
+    jInput.focus();
+  }
   private static var WHITE_IMG = "data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
   public function render (urls: Array<String>) {
     var document = js.Browser.document;

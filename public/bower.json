@@ -17,7 +17,8 @@
   "dependencies": {
     "backbone": "~1.2.0",
     "easeljs": "~0.8.0",
-    "jquery": "~2.1.4"
+    "jquery": "~2.1.4",
+    "underscore": "~1.8.3"
   },
   "devDependencies": {
     "materialize": "~0.96.1"

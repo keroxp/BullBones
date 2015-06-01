@@ -41,7 +41,7 @@ module.exports = (grunt) ->
           "createjs"
           "jQueryExtern"
         ]
-        classpath: ["src"]
+        classpath: ["lib","src"]
         output: "public/js/main.js"
     stylus:
       build:
