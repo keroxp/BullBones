@@ -262,6 +262,5 @@ class Figure {
         }
         var e = points[points.length-1];
         shape.graphics.lineTo(e.x,e.y);
-        trace(points.length);
     }
 }

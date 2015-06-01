@@ -20,6 +20,12 @@ body
   overflow visible
   max-width 100%
   max-height 100%
+  #layerButton
+    position fixed
+    left 25px
+    top 25px
+    i
+      color black
   #searchButton
     position fixed
     right 25px
@@ -28,7 +34,7 @@ body
     position fixed
     right 25px
     top 100px
-  #navigationController
+  #searchView
     width 400px;
     position fixed;
     top 25px;
@@ -37,18 +43,6 @@ body
     padding 5px
     background-color white
     overflow hidden
-    .viewController
-      width 100%
-      position relative
-      top 0
-    .next
-      right -100%
-    .slideOut
-      -webkit-transition: transform 0.2s ease
-      -webkit-transform: translate3d(100%,0,0)
-    .slideIn
-      -webkit-transition: transform 0.2s ease
-      -webkit-transform: translate3d(-100%,0,0)
     #searchResultsWrapper
       max-height 400px
       overflow auto

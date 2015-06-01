@@ -1,4 +1,4 @@
-package ;
+package figure;
 import createjs.easeljs.DisplayObject;
 import createjs.easeljs.MouseEvent;
 import geometry.Rect;
