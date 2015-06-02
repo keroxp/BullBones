@@ -1,4 +1,7 @@
 package ;
+import js.html.DOMWindow;
+import jQuery.JQuery;
+import js.Error;
 import js.html.MouseEvent;
 import createjs.easeljs.Container;
 import js.html.ImageData;
@@ -15,10 +18,12 @@ import createjs.easeljs.Bitmap;
 
 class MainCanvas implements BoundingBox.OnChangeListener {
     var mStage: Stage;
+    var jCanvas: JQuery;
     var mFgLayer: Container;
     var mMainLayer: Container;
     var mBoundingBox: BoundingBox;
     var mFuzzySketchGraph: Shape;
+    var mBackground: Shape;
     var mDrawingFigure: Figure;
     var mFocusedFigure: Figure;
     var mFigures: Array<Figure> = new Array();
@@ -26,8 +31,10 @@ class MainCanvas implements BoundingBox.OnChangeListener {
     var mContext: CanvasRenderingContext2D;
     public function new(canvasId: String, w: Float, h: Float) {
 
-        var window = js.Browser.window;
+        var window: DOMWindow = js.Browser.window;
         window.addEventListener("keyup", onKeyUp);
+
+        jCanvas = new JQuery('#$canvasId');
 
         var document = js.Browser.document;
         var canvas: CanvasElement = cast(document.getElementById(canvasId));
@@ -40,6 +47,9 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         mFgLayer = new Container();
         mMainLayer = new Container();
         mStage = new Stage(canvasId);
+
+        mBackground = new Shape();
+        mStage.addChild(mBackground);
 
         mBoundingBox = new BoundingBox();
         mBoundingBox.listener = this;
@@ -63,8 +73,8 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         }
         mContext.stroke();
         mContext.closePath();
-        if (mFocusedFigure != null) {
-            mBoundingBox.clear();
+        mBoundingBox.clear();
+        if (editing && mFocusedFigure != null) {
             mBoundingBox.render(mFocusedFigure.bounds);
         }
         mStage.update();
@@ -94,7 +104,18 @@ class MainCanvas implements BoundingBox.OnChangeListener {
             mMainLayer.addChild(bm);
             mStage.update();
         }
+        img.onerror = function (e: Error) {
+            js.Lib.alert("画像の読み込みに失敗しました");
+            trace(e);
+        }
         img.src = 'proxy/$src';
+    }
+    public var editing(default,null): Bool = false;
+    public function setEdit(edit: Bool) {
+        editing = edit;
+        mFocusedFigure = edit ? mFigures[mFigures.length-1] : null;
+        jCanvas.css("background-color", edit ? "#333" : "#fff");
+        draw();
     }
     function findFigure (shape: Shape): Figure {
         for (f in mFigures) {
@@ -134,9 +155,6 @@ class MainCanvas implements BoundingBox.OnChangeListener {
             mFocusedFigure = null;
         } else {
             mDrawingFigure = new Figure(e.layerX, e.layerY);
-            mDrawingFigure.shape.addEventListener("mousedown", onFigureMouseDown);
-            mDrawingFigure.shape.addEventListener("pressmove", onFigurePressMove);
-            mDrawingFigure.shape.addEventListener("pressup", onFigurePressUp);
             mDrawingFigure.width = 3;
             mFigures.push(mDrawingFigure);
             mMainLayer.addChild(mDrawingFigure.shape);

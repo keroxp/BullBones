@@ -73,7 +73,7 @@ class Figure {
     // 直線フラグ
     private var isLine: Bool = false;
     //　デバッグ中？
-    public var isDebug: Bool = true;
+    public var isDebug: Bool = false;
     // 閉じているか
     private static var CLOSE_THRESH: Float = 20*20;
     public function getClosedPoint (): Point {
@@ -235,7 +235,7 @@ class Figure {
         }
     }
     private function drawQuadraticCurve () {
-        for (i in 1...points.length-2) {
+        for (i in 1...points.length-1) {
             var p = points[i];
             var n = points[i+1];
             var c = (p.x+n.x)/2;
@@ -247,8 +247,7 @@ class Figure {
     private function drawMovingAverage () {
         // 平均係数
         var m = supplementLength;
-        var i = m-1;
-        while (i < points.length) {
+        for (i in m-1...points.length) {
             var avp = new Point();
             var seg: Array<FuzzyPoint> = points.slice(i-m+1,i+1);
             for (p in seg){
@@ -258,7 +257,6 @@ class Figure {
             avp.x = avp.x/m;
             avp.y = avp.y/m;
             shape.graphics.lineTo(avp.x,avp.y);
-            i++;
         }
         var e = points[points.length-1];
         shape.graphics.lineTo(e.x,e.y);

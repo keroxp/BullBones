@@ -19,7 +19,7 @@ class Recognition {
             se.dx*Math.cos(-Math.PI/2) - se.dy * Math.sin(-Math.PI/2),
             se.dx*Math.sin(-Math.PI/2) + se.dy * Math.cos(-Math.PI/2)
         ).normalize();
-        for (i in 1...points.length-2) {
+        for (i in 1...points.length-1) {
             var sp = new Vector2D(points[i].x-s.x,points[i].y-s.y);
             var cos = se.dot(sp)/(se.power()*sp.power());
             var sin = Math.sin(Math.acos(cos));

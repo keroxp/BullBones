@@ -1,8 +1,9 @@
 package ;
 
+import js.html.DOMWindow;
 import backbone.Events;
 import jQuery.JQuery;
-import js.html.Event;
+import js.html.MouseEvent;
 import view.SearchView;
 import js.Browser;
 
@@ -11,22 +12,32 @@ class App extends BackboneEvents {
     super();
     new JQuery(function () {
       var document = Browser.document;
-      var window = Browser.window;
+      var window: DOMWindow = Browser.window;
       var w: Float = window.innerWidth;
       var h: Float = window.innerHeight;
-      trace("w: "+w+" h: "+h);
       var canvasDom = new JQuery("#mainCanvas");
       canvasDom.attr({
         width : w,
         height: h
       });
       var canvas = new MainCanvas("mainCanvas",w,h);
-      trace("Hello Haxe!!");
+      // 検索ビュー
       var searchView = new SearchView("searchView");
       searchView.onSelectImage = canvas.onSelectImage;
+      // 検索ボタン
       var searchButton = new JQuery("#searchButton");
-      searchButton.on("click", function (e: Event) {
+      searchButton.on("click", function (e: MouseEvent) {
         searchView.toggle();
+      });
+      // 編集ボタン
+      var editButton = new JQuery("#editButton");
+      editButton.on("click", function (e: MouseEvent) {
+        canvas.setEdit(!canvas.editing);
+      });
+      // デバッグボタン
+      var debugButton = new JQuery("#debugButton");
+      debugButton.on("click", function (e: MouseEvent){
+
       });
     });
   }

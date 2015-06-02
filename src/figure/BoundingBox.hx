@@ -83,9 +83,10 @@ class BoundingBox {
     }
     public function render (bounds: Rect) {
         mBox.graphics
-        .setStrokeStyle(0.3)
-        .beginStroke("#111")
-        .drawRoundRect(bounds.left,bounds.top,bounds.width(),bounds.height(),0);
+        .setStrokeStyle(1)
+        .beginStroke("#fff")
+        .drawRoundRect(bounds.left,bounds.top,bounds.width(),bounds.height(),0)
+        .endStroke();
         drawCorner(mLTCorner,bounds.left,bounds.top);
         drawCorner(mRTCorner,bounds.right,bounds.top);
         drawCorner(mLBCorner,bounds.left,bounds.bottom);

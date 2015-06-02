@@ -17,8 +17,8 @@ class Filter {
     var dummyCanvas: CanvasElement = cast js.Browser.document.createElement("canvas");
     var dummyContext = dummyCanvas.getContext2d();
     var outImg = dummyContext.createImageData(w,h);
-    for (y in 0...h-1) {
-      for (x in 0...w-1) {
+    for (y in 0...h) {
+      for (x in 0...w) {
         var i = (y*w + x)*4;
         outImg.data[i] = 255;
         outImg.data[i+1] = 255;
@@ -34,6 +34,10 @@ class Filter {
   }
   public function applyNegaposi (): Filter {
     bufImg = negaposi(bufImg,w,h);
+    return this;
+  }
+  public function applyBinalize (t: Int): Filter {
+    bufImg = binalize(bufImg,w,h,t);
     return this;
   }
   public function applySobel (course: Int): Filter {
@@ -54,8 +58,8 @@ class Filter {
   // グレスケ
   public static function gray (inImg: ImageData, w:Int, h: Int): ImageData {
     var outImg = createTmpImage(w,h);
-    for (y in 0...h-1) {
-      for (x in 0...w-1) {
+    for (y in 0...h) {
+      for (x in 0...w) {
         var i = (y*w + x)*4;
         // グレースケールの定数
         var gray = 0
@@ -70,11 +74,26 @@ class Filter {
     }
     return outImg;
   }
+  // 二値化
+  public static function binalize (inImg: ImageData, w:Int, h: Int, ?t: Int = 128): ImageData {
+    var outImg = createTmpImage(w,h);
+    for (y in 0...h) {
+      for (x in 0...w) {
+        var i = (y+w+x)*4;
+        if (inImg.data[i] < t) {
+          outImg.data[i] = 0;
+        } else {
+          outImg.data[i] = 255;
+        }
+      }
+    }
+    return outImg;
+  }
   // ネガポジ
   public static function negaposi (inImg: ImageData, w: Int, h: Int): ImageData {
     var outImg = createTmpImage(w,h);
-    for (y in 0...h-1) {
-      for (x in 0...w-1) {
+    for (y in 0...h) {
+      for (x in 0...w) {
         var i = (y*w + x)*4;
         outImg.data[i] = 255 - inImg.data[i];
         outImg.data[i+1] = 255 - inImg.data[i+1];
@@ -108,9 +127,9 @@ class Filter {
   public static function sobel (inImg: ImageData, w: Int, h: Int, course: Int): ImageData {
     var outImg = createTmpImage(w,h);
     var S = SOBEL_MATRIXES[course];
-    for (y in 0...h-1) {
-      for (x in 0...w-1) {
-        for (c in 0...2) {
+    for (y in 0...h) {
+      for (x in 0...w) {
+        for (c in 0...3) {
           var i = (y*w + x)*4 + c;
           outImg.data[i] =
           S[0]*inImg.data[i - w*4 - 4] + S[1]*inImg.data[i -w*4] + S[2]*inImg.data[i -w*4 + 4] +

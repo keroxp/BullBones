@@ -1,10 +1,10 @@
 package ;
 
 class Main {
-    public function new() {
-    }
+    private static var App: App;
     public static function main () {
         var app = new App();
         app.start();
+        App = app;
     }
 }

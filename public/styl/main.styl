@@ -4,13 +4,13 @@ html, body
 body
   margin 0
   padding 0
+  background-color #ccc
 .clearfix:after
-  content: ".";
-  display: block;
-  height: 0;
-  clear: both;
-  visibility: hidden;
-
+  content: "."
+  display: block
+  height: 0
+  clear: both
+  visibility: hidden
 .clearfix
   display: inline-table
 .hidden
@@ -34,11 +34,19 @@ body
     position fixed
     right 25px
     top 100px
+  #editButton
+    position fixed
+    right 25px
+    top 175px
+  #debugButton
+    position fixed
+    right 25px
+    bottom 25px
   #searchView
-    width 400px;
-    position fixed;
-    top 25px;
-    left 50%;
+    width 400px
+    position fixed
+    top 25px
+    left 50%
     margin-left -210px
     padding 5px
     background-color white
@@ -79,6 +87,8 @@ body
           img
             max-width 100%
             max-height 100%
+  #canvasWrapper
+    background-color white
   #actionBar
     padding 15px 0
   .sidebar

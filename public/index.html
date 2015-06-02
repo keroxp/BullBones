@@ -7,31 +7,39 @@
 </head>
 <body>
   <div id="wrapper">
-    <div id="searchView" class="z-depth-1" style="display:none">
-      <div class="input-field col s12">
-        <i class="mdi-action-search prefix"></i>
-        <input id="searchInput" type="text" class="validate" autocomplete="off">
-        <label for="searchInput">描きたいモチーフを検索</label>
-      </div>
-      <div id="searchResultsWrapper">
-        <div id="searchingIndicator" class="hidden">
-          <img src="img/ajax-loader.gif"/>
+    <div id="appView">
+      <div id="searchView" class="z-depth-1" style="display:none">
+        <div class="input-field col s12">
+          <i class="mdi-action-search prefix"></i>
+          <input id="searchInput" type="text" class="validate" autocomplete="off">
+          <label for="searchInput">描きたいモチーフを検索</label>
         </div>
-        <div id="searchResults" class="clearfix hidden">
+        <div id="searchResultsWrapper">
+          <div id="searchingIndicator" class="hidden">
+            <img src="img/ajax-loader.gif"/>
+          </div>
+          <div id="searchResults" class="clearfix hidden">
+          </div>
         </div>
       </div>
-    </div>
-    <a id="layerButton" class="btn waves-effect waves-light white">
-      <i class="large mdi-action-list"></i>
-    </a>
-    <a id="searchButton" class="btn-floating waves-effect waves-light btn-large red">
-      <i class="large mdi-action-search"></i>
-    </a>
-    <a id="brushButton" class="btn-floating waves-effect waves-light btn-large blue">
-      <i class="large mdi-image-brush"></i>
-    </a>
-    <div id="canvasWrapper">
-      <canvas id="mainCanvas"></canvas>
+      <a id="layerButton" class="btn waves-effect waves-light white">
+        <i class="large mdi-action-list"></i>
+      </a>
+      <a id="searchButton" class="btn-floating waves-effect waves-light btn-large red" title="検索">
+        <i class="large mdi-action-search"></i>
+      </a>
+      <a id="brushButton" class="btn-floating waves-effect waves-light btn-large blue" title="ブラシ">
+        <i class="large mdi-image-brush"></i>
+      </a>
+      <a id="editButton" class="btn-floating waves-effect waves-light btn-large green" title="編集モード">
+        <i class="large mdi-editor-mode-edit"></i>
+      </a>
+      <a id="debugButton" class="btn-floating waves-effect waves-light btn-large white">
+        <i class="large mdi-action-bug-report" style="color: black"></i>
+      </a>
+      <div id="canvasWrapper">
+        <canvas id="mainCanvas"></canvas>
+      </div>
     </div>
   </div>
   <script src="http://localhost:35729/livereload.js"></script>
