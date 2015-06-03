@@ -1,4 +1,5 @@
 package ;
+import backbone.Collection;
 import backbone.Backbone.Options;
 import backbone.Model;
 class Model extends backbone.Model {

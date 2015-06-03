@@ -1,4 +1,5 @@
 package ;
+import backbone.haxe.BackboneEvents;
 import backbone.Backbone.Options;
 import backbone.Model;
 import jQuery.JQuery;
@@ -22,7 +23,7 @@ import figure.Figure;
 import createjs.easeljs.Stage;
 import createjs.easeljs.Shape;
 
-class MainCanvas extends Model implements BoundingBox.OnChangeListener {
+class MainCanvas extends BackboneEvents implements BoundingBox.OnChangeListener {
     var mStage: Stage;
     var mFgLayer: Container;
     var mBgLayer: Container;

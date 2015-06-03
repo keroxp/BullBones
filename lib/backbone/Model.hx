@@ -1,5 +1,4 @@
 package backbone;
-import backbone.Events.BackboneEvents;
 import backbone.Backbone.Options;
 import js.html.XMLHttpRequest;
 
