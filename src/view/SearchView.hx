@@ -7,7 +7,7 @@ import js.html.Node;
 import createjs.easeljs.Event;
 import js.html.Image;
 class SearchView {
-  public var j: JQuery;
+  public var jq: JQuery;
   private var jLoader: JQuery;
   private var jInput: JQuery;
   private var jResults: JQuery;
@@ -16,10 +16,10 @@ class SearchView {
   private var mCurrentQ: String;
   public var onSelectImage: String -> Void;
   public function new(id: String) {
-    j = new JQuery("#"+id);
-    jLoader = j.find("#searchingIndicator");
-    jInput = j.find("#searchInput");
-    jResults = j.find("#searchResults");
+    jq = new JQuery("#"+id);
+    jLoader = jq.find("#searchingIndicator");
+    jInput = jq.find("#searchInput");
+    jResults = jq.find("#searchResults");
     jInput.bind("change", onSearch);
     jInput.bind("input", onInput);
   }
@@ -77,7 +77,7 @@ class SearchView {
     };
   }
   public function toggle () {
-    j.toggle();
+    jq.toggle();
     jInput.focus();
   }
   private static var WHITE_IMG = "data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";

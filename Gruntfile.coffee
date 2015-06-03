@@ -11,6 +11,7 @@ module.exports = (grunt) ->
       haxe:
         files: [
           "src/**/*.hx"
+          "lib/**/*.hx"
         ]
         tasks: [
           "haxe:build"
