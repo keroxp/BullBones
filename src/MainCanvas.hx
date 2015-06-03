@@ -1,4 +1,7 @@
 package ;
+import backbone.Backbone.Options;
+import backbone.Model;
+import jQuery.JQuery;
 import geometry.MouseEventCapture;
 import js.html.Document;
 import figure.Draggable;
@@ -19,7 +22,7 @@ import figure.Figure;
 import createjs.easeljs.Stage;
 import createjs.easeljs.Shape;
 
-class MainCanvas implements BoundingBox.OnChangeListener {
+class MainCanvas extends Model implements BoundingBox.OnChangeListener {
     var mStage: Stage;
     var mFgLayer: Container;
     var mBgLayer: Container;
@@ -37,12 +40,16 @@ class MainCanvas implements BoundingBox.OnChangeListener {
     var vGridDivision = 10;
     var mPressed = false;
     var vBackgroundColor = "#ddd";
+    public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null) = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
+    public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null) = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEMOVE_EVENT";
+    public static var ON_CANVAS_MOUSEUP_EVENT(default, null) = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEUP_EVENT";
     public var isEditing(default,null): Bool = false;
-    public function new(canvasId: String, w: Float, h: Float) {
+    public function new(app: App, jq: JQuery) {
+        super();
         var window: DOMWindow = js.Browser.window;
         window.addEventListener("keyup", onKeyUp);
         var document: Document = js.Browser.document;
-        var canvas: CanvasElement = cast(document.getElementById(canvasId));
+        var canvas: CanvasElement = cast jq.get()[0];
         canvas.addEventListener("mousedown", onCanvasMouseDown);
         canvas.addEventListener("mousemove", onCanvasMouseMove);
         canvas.addEventListener("mouseup", onCanvasMouseUp);
@@ -51,7 +58,7 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         mBgLayer = new Container();
         mFgLayer = new Container();
         mMainLayer = new Container();
-        mStage = new Stage(canvasId);
+        mStage = new Stage(jq.attr("id"));
         // 背景
         mBackground = new Shape();
         mBackground.visible = false;
@@ -73,6 +80,8 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         mStage.addChild(mBgLayer);
         mStage.addChild(mMainLayer);
         mStage.addChild(mFgLayer);
+
+        // KVO
 
         mStage.update();
     }
@@ -160,7 +169,8 @@ class MainCanvas implements BoundingBox.OnChangeListener {
                 drawBoundingBox();
             } else {
                 var f =  new Figure(e.clientX, e.clientY);
-                f.width = 3;
+                f.width = Main.App.brushWidth;
+                f.color = Main.App.brushColor;
                 mFigures.push(f);
                 mContext.beginPath();
                 f.render();
@@ -185,6 +195,7 @@ class MainCanvas implements BoundingBox.OnChangeListener {
             }
         }
         mCapture.down(e);
+        trigger(ON_CANVAS_MOUSEDOWN_EVENT);
         draw();
     }
     function onCanvasMouseMove (e: MouseEvent) {
@@ -207,6 +218,7 @@ class MainCanvas implements BoundingBox.OnChangeListener {
             }
         }
         mCapture.move(e);
+        trigger(ON_CANVAS_MOUSEMOVE_EVENT);
     }
     function onCanvasMouseUp (e: MouseEvent) {
         if (!isEditing && mDrawingFigure != null) {
@@ -226,6 +238,7 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         mDrawingFigure = null;
         mPressed = false;
         mDragBegan = false;
+        trigger(ON_CANVAS_MOUSEUP_EVENT);
     }
     public function onCornerDown (e: createjs.easeljs.MouseEvent, corner: Corner): Void {
 

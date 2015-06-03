@@ -28,6 +28,27 @@
       <a id="brushButton" class="btn-floating waves-effect waves-light btn-large blue" title="ブラシ">
         <i class="large mdi-image-brush"></i>
       </a>
+      <div id="brushWrapper" class="z-depth-1" style="display:none;">
+        <div id="brushView">
+          <canvas id="brushPreviewCanvas" width="220" height="100"></canvas>
+          <div id="brushForm">
+            <form action="#">
+              <p class="range-field">
+                <label for="brushWidthInput">太さ</label>
+                <input id="brushWidthInput" type="range" min="1" max="20" value="5"/>
+              </p>
+              <p class="range-field">
+                <label for="brushAlphaInput">透明度</label>
+                <input id="brushAlphaInput" type="range" min="0" max="255" value="255" />
+              </p>
+              <p class="range-field">
+                <label for="brushThickInput">濃度</label>
+                <input id="brushThickInput" type="range" min="0" max="255" value="255" />
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
       <a id="editButton" class="btn-floating waves-effect waves-light btn-large green" title="編集モード">
         <i class="large mdi-editor-mode-edit"></i>
       </a>
