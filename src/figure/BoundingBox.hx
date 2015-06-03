@@ -25,6 +25,8 @@ class BoundingBox {
     var mBox: Shape;
     public var listener: OnChangeListener;
     public var conerRadius = 5.0;
+    public var color = "#000";
+    public var cornerFillColor = "#fff";
     public function new() {
         shape = new Container();
         mRTCorner = new Shape();
@@ -84,7 +86,7 @@ class BoundingBox {
     public function render (bounds: Rect) {
         mBox.graphics
         .setStrokeStyle(1)
-        .beginStroke("#fff")
+        .beginStroke(color)
         .drawRoundRect(bounds.left,bounds.top,bounds.width(),bounds.height(),0)
         .endStroke();
         drawCorner(mLTCorner,bounds.left,bounds.top);
@@ -95,8 +97,8 @@ class BoundingBox {
     function drawCorner(s: Shape, x: Float, y: Float) {
         s.graphics
         .setStrokeStyle(0.2)
-        .beginStroke("#000")
-        .beginFill("#999")
+        .beginStroke(color)
+        .beginFill(cornerFillColor)
         .drawRoundRect(x-conerRadius,y-conerRadius,conerRadius*2,conerRadius*2,0);
     }
     public function clear() {

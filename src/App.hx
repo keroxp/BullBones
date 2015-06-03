@@ -32,7 +32,7 @@ class App extends BackboneEvents {
       // 編集ボタン
       var editButton = new JQuery("#editButton");
       editButton.on("click", function (e: MouseEvent) {
-        canvas.setEdit(!canvas.editing);
+        canvas.toggleEditing();
       });
       // デバッグボタン
       var debugButton = new JQuery("#debugButton");

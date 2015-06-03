@@ -1,6 +1,7 @@
 package ;
+import js.html.Document;
+import js.html.Element;
 import js.html.DOMWindow;
-import jQuery.JQuery;
 import js.Error;
 import js.html.MouseEvent;
 import createjs.easeljs.Container;
@@ -18,46 +19,56 @@ import createjs.easeljs.Bitmap;
 
 class MainCanvas implements BoundingBox.OnChangeListener {
     var mStage: Stage;
-    var jCanvas: JQuery;
     var mFgLayer: Container;
+    var mBgLayer: Container;
     var mMainLayer: Container;
     var mBoundingBox: BoundingBox;
     var mFuzzySketchGraph: Shape;
     var mBackground: Shape;
+    var mGrid: Shape;
     var mDrawingFigure: Figure;
     var mFocusedFigure: Figure;
     var mFigures: Array<Figure> = new Array();
     var mCanvas: CanvasElement;
     var mContext: CanvasRenderingContext2D;
+    var vGridUnit = 10;
+    var vGridDivision = 10;
+    var vPressed = false;
+    var vBackgroundColor = "#ddd";
+    public var isEditing(default,null): Bool = false;
     public function new(canvasId: String, w: Float, h: Float) {
-
         var window: DOMWindow = js.Browser.window;
         window.addEventListener("keyup", onKeyUp);
-
-        jCanvas = new JQuery('#$canvasId');
-
-        var document = js.Browser.document;
+        var document: Document = js.Browser.document;
         var canvas: CanvasElement = cast(document.getElementById(canvasId));
         canvas.addEventListener("mousedown", onCanvasMouseDown);
         canvas.addEventListener("mousemove", onCanvasMouseMove);
         canvas.addEventListener("mouseup", onCanvasMouseUp);
         mCanvas = canvas;
         mContext = canvas.getContext("2d");
-
+        mBgLayer = new Container();
         mFgLayer = new Container();
         mMainLayer = new Container();
         mStage = new Stage(canvasId);
-
+        // 背景
         mBackground = new Shape();
-        mStage.addChild(mBackground);
-
+        mBackground.visible = false;
+        drawBackground();
+        mBgLayer.addChild(mBackground);
+        // グリッド
+        mGrid = new Shape();
+        mGrid.visible = false;
+        drawGrid();
+        mBgLayer.addChild(mGrid);
+        // バウンディングボックス
         mBoundingBox = new BoundingBox();
         mBoundingBox.listener = this;
         mFgLayer.addChild(mBoundingBox.shape);
-
+        // ファジィグラフ
         mFuzzySketchGraph = new Shape();
         mFgLayer.addChild(mFuzzySketchGraph);
 
+        mStage.addChild(mBgLayer);
         mStage.addChild(mMainLayer);
         mStage.addChild(mFgLayer);
 
@@ -74,7 +85,7 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         mContext.stroke();
         mContext.closePath();
         mBoundingBox.clear();
-        if (editing && mFocusedFigure != null) {
+        if (isEditing && mFocusedFigure != null) {
             mBoundingBox.render(mFocusedFigure.bounds);
         }
         mStage.update();
@@ -86,7 +97,29 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         }
         mFuzzySketchGraph.graphics.lineTo(i*3, mCanvas.height-p.velocity/3);
     }
-
+    function drawBackground () {
+        mBackground.graphics
+        .beginFill(vBackgroundColor)
+        .drawRoundRect(0,0,mCanvas.width,mCanvas.height,0)
+        .endFill();
+    }
+    function drawGrid () {
+        mGrid.graphics
+        .setStrokeStyle(1)
+        .beginStroke("#fff");
+        var i = vGridUnit;
+        var max = Math.max(mCanvas.width,mCanvas.height);
+        while (i < max) {
+            if (i < mCanvas.width) {
+                mGrid.graphics.moveTo(i,0).lineTo(i,mCanvas.height);
+            }
+            if (i < mCanvas.height) {
+                mGrid.graphics.moveTo(0,i).lineTo(mCanvas.width,i);
+            }
+            i += vGridUnit*vGridDivision;
+        }
+        mGrid.graphics.endStroke();
+    }
     public function onSelectImage (src: String) {
         var img = new Image();
         img.onload = function (a) {
@@ -110,11 +143,11 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         }
         img.src = 'proxy/$src';
     }
-    public var editing(default,null): Bool = false;
-    public function setEdit(edit: Bool) {
-        editing = edit;
-        mFocusedFigure = edit ? mFigures[mFigures.length-1] : null;
-        jCanvas.css("background-color", edit ? "#333" : "#fff");
+    public function toggleEditing() {
+        isEditing = !isEditing;
+        mFocusedFigure = isEditing ? mFigures[mFigures.length-1] : null;
+        mBackground.visible = isEditing;
+        mGrid.visible = isEditing;
         draw();
     }
     function findFigure (shape: Shape): Figure {
@@ -147,23 +180,26 @@ class MainCanvas implements BoundingBox.OnChangeListener {
         draw();
         trace(e);
     }
-    private var mPressed: Bool = false;
     function onCanvasMouseDown (e: MouseEvent) {
-        mPressed = true;
-        if (mFocusedFigure != null) {
-            mBoundingBox.clear();
-            mFocusedFigure = null;
+        vPressed = true;
+        if (!isEditing) {
+            if (mFocusedFigure != null) {
+                mBoundingBox.clear();
+                mFocusedFigure = null;
+            } else {
+                mDrawingFigure = new Figure(e.layerX, e.layerY);
+                mDrawingFigure.width = 3;
+                mFigures.push(mDrawingFigure);
+                mMainLayer.addChild(mDrawingFigure.shape);
+                drawFuzzyPointGraph(mDrawingFigure.points[0],0);
+            }
         } else {
-            mDrawingFigure = new Figure(e.layerX, e.layerY);
-            mDrawingFigure.width = 3;
-            mFigures.push(mDrawingFigure);
-            mMainLayer.addChild(mDrawingFigure.shape);
-            drawFuzzyPointGraph(mDrawingFigure.points[0],0);
+
         }
         draw();
     }
     function onCanvasMouseMove (e: MouseEvent) {
-        if (mPressed) {
+        if (vPressed) {
             if (mDrawingFigure != null) {
                 mDrawingFigure.addPoint(e.layerX,e.layerY);
                 var i = mDrawingFigure.points.length-1;
@@ -184,7 +220,7 @@ class MainCanvas implements BoundingBox.OnChangeListener {
             draw();
         }
         mDrawingFigure = null;
-        mPressed = false;
+        vPressed = false;
     }
     public function onCornerDown (e: createjs.easeljs.MouseEvent, corner: Corner): Void {
 
@@ -231,6 +267,7 @@ class MainCanvas implements BoundingBox.OnChangeListener {
     }
     function onKeyUp (e: KeyboardEvent) {
         e.preventDefault();
+        e.stopPropagation();
         switch e.keyCode {
             case 8: onDelete(e);
         }
