@@ -1,5 +1,7 @@
 package figure;
-import recognition.Recognition;
+import geometry.MouseEventCapture;
+import js.html.CanvasRenderingContext2D;
+import js.html.MouseEvent;
 import createjs.easeljs.Point;
 import geometry.Vector2D;
 import createjs.easeljs.Matrix2D;
@@ -15,7 +17,7 @@ class Vertex {
         radian = rad;
     }
 }
-class Figure {
+class Figure implements Draggable {
     public function new(x: Float, y: Float) {
         addPoint(x,y);
     }
@@ -24,15 +26,17 @@ class Figure {
     // 頂点っぽい点
     public var vertexes(default, null): Array<Vertex> = new Array();
     // 描画につかうShape
-    public var shape(default, null): Shape = new Shape();
-    // 再描画フラグ
-    public var isDirty: Bool;
+    private var shape(default, null): Shape = new Shape();
+
+    @:isVar public var display(get, null):createjs.easeljs.DisplayObject;
+    function get_display():createjs.easeljs.DisplayObject {
+        return this.shape;
+    }
     // 色
     public var color(default, set): String = "#000000";
     function set_color (c) {
         color = c;
         shape.graphics.clear();
-        isDirty = true;
         return color;
     }
     // 描画の点の半径
@@ -40,11 +44,11 @@ class Figure {
     function set_width (r: Float) {
         width = r;
         shape.graphics.clear();
-        isDirty = true;
+        render();
         return width;
     }
     // bounds
-    public var bounds(default, null): Rect;
+    public var bounds(get, null): Rect;
     function get_bounds () return bounds;
     public var scaleX(default, null): Float = 1.0;
     public var scaleY(default, null): Float = 1.0;
@@ -66,7 +70,7 @@ class Figure {
         scaleX = sx;
         scaleY = sy;
         shape.graphics.clear();
-        isDirty = true;
+        render();
     }
     // 描画中か？
     public var isDrawing: Bool = true;
@@ -138,7 +142,7 @@ class Figure {
                 mDirtyPoints.push(points.length-1);
             }
         }
-        isDirty = true;
+        render();
     }
     private function calcBounds (x: Float, y: Float) {
         if (bounds == null) bounds = new Rect(x,y,x,y);
@@ -148,24 +152,17 @@ class Figure {
         if (bounds.bottom < y) bounds.bottom = y;
     }
     private function resetBounds () {
-        var l,t,r,b: Float = 0;
-        var _bounds = new Rect();
+        var l = points[0].x;
+        var t = points[0].y;
+        var r = l;
+        var b = t;
         for (p in points) {
-            if (p.x < _bounds.left) _bounds.left = p.x;
-            if (_bounds.right < p.x) _bounds.right = p.x;
-            if (p.y < _bounds.top) _bounds.top = p.y;
-            if (_bounds.bottom < p.y) _bounds.bottom = p.y;
+            if (p.x < l) l = p.x;
+            if (r < p.x) r = p.x;
+            if (p.y < t) t = p.y;
+            if (b < p.y) b = p.y;
         }
-        bounds = _bounds;
-    }
-    public function moveBy (dx: Float, dy: Float) {
-        for (p in points) {
-            p.x += dx;
-            p.y += dy;
-        }
-        bounds.offset(dx,dy);
-        shape.graphics.clear();
-        isDirty = true;
+        bounds = new Rect(l,t,r,b);
     }
     public function s2e (): Vector2D {
         var s = points[0];
@@ -192,24 +189,28 @@ class Figure {
 //        } else {
             renderPolygon();
 //        }
-        shape.graphics.endStroke();
     }
+    private function xx(x: Float): Float return x-shape.x;
+    private function yy(y: Float): Float return y-shape.y;
+
     private function renderPolygon () {
         var s = points[0];
         var e = points[points.length-1];
+        var sx = shape.x;
+        var sy = shape.y;
         if (isDrawing && mDirtyPoints.length > 0) {
             var ds = points[mDirtyPoints[0]-1];
             shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
-            shape.graphics.moveTo(ds.x,ds.y);
+            shape.graphics.moveTo(xx(ds.x),yy(ds.y));
             for (i in mDirtyPoints) {
                 var dp = points[i];
-                shape.graphics.lineTo(dp.x,dp.y);
+                shape.graphics.lineTo(xx(dp.x),yy(dp.y));
             }
             mDirtyPoints = new Array();
         } else {
             shape.graphics.clear();
             shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
-            shape.graphics.moveTo(s.x,s.y);
+            shape.graphics.moveTo(xx(s.x),yy(s.y));
             drawMovingAverage();
         }
         shape.graphics.endStroke();
@@ -222,13 +223,13 @@ class Figure {
                 .endFill();
                 for (v in vertexes) {
                     shape.graphics.setStrokeStyle(3).beginStroke("red");
-                    shape.graphics.drawCircle(v.point.x,v.point.y,5);
+                    shape.graphics.drawCircle(xx(v.point.x),yy(v.point.y),5);
                     shape.graphics.endStroke();
                 }
                 var cp = getClosedPoint();
                 if (cp != null) {
                     shape.graphics.setStrokeStyle(3).beginStroke("pink");
-                    shape.graphics.drawCircle(cp.x,cp.y,5);
+                    shape.graphics.drawCircle(xx(cp.x),yy(cp.y),5);
                     shape.graphics.endStroke();
                 }
             }
@@ -254,11 +255,33 @@ class Figure {
                 avp.x += p.x;
                 avp.y += p.y;
             }
-            avp.x = avp.x/m;
-            avp.y = avp.y/m;
-            shape.graphics.lineTo(avp.x,avp.y);
+            shape.graphics.lineTo(xx(avp.x/m),yy(avp.y/m));
         }
         var e = points[points.length-1];
-        shape.graphics.lineTo(e.x,e.y);
+        shape.graphics.lineTo(xx(e.x),yy(e.y));
+    }
+
+    private var mCapture: MouseEventCapture = new MouseEventCapture();
+    public function onDragStart(e:MouseEvent):Void {
+        mCapture.down(e);
+    }
+
+    public function onDragMove(e:MouseEvent):Void {
+        shape.x += mCapture.getMoveX(e);
+        shape.y += mCapture.getMoveY(e);
+        mCapture.move(e);
+    }
+
+    public function onDragEnd(e:MouseEvent):Void {
+        var dx = mCapture.getTotalMoveX(e);
+        var dy = mCapture.getTotalMoveY(e);
+        for (p in points) {
+            p.x += dx;
+            p.y += dy;
+        }
+        resetBounds();
+        shape.graphics.clear();
+        render();
+        mCapture.up(e);
     }
 }

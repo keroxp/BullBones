@@ -20,18 +20,18 @@ class Rect {
         this.bottom += dy;
     }
     public function intersects (r: Rect): Bool {
-        return containsPoint(new Point(r.left,r.top))
-            || containsPoint(new Point(r.right,r.top))
-            || containsPoint(new Point(r.left,r.bottom))
-            || containsPoint(new Point(r.right,r.bottom));
+        return containsPoint(r.left,r.top)
+            || containsPoint(r.right,r.top)
+            || containsPoint(r.left,r.bottom)
+            || containsPoint(r.right,r.bottom);
     }
     public function contains (r: Rect): Bool {
-        return containsPoint(new Point(r.left,r.top))
-                && containsPoint(new Point(r.right,r.top))
-                && containsPoint(new Point(r.left,r.bottom))
-                && containsPoint(new Point(r.right,r.bottom));
+        return containsPoint(r.left,r.top)
+                && containsPoint(r.right,r.top)
+                && containsPoint(r.left,r.bottom)
+                && containsPoint(r.right,r.bottom);
     }
-    public function containsPoint (p: Point): Bool {
-        return left < p.x && p.x < right && top < p.y && p.y < bottom;
+    public function containsPoint (x: Float, y: Float): Bool {
+        return left < x && x < right && top < y && y < bottom;
     }
 }
