@@ -9,10 +9,10 @@ class BingSearch {
   public static function search (q: String): jQuery.Promise {
     var ba = new BytesData();
     var auth:String = KEY+":"+KEY;
-    for (i in 0...auth.length-1) {
+    for (i in 0...auth.length) {
       ba[i] = KEY.charCodeAt(i);
     }
-    var encodedKey:String = js.Lib.eval("btoa(\""+auth+"\");");
+    var encodedKey:String = js.Lib.eval('btoa(\"$auth\");');
     return cast JQuery._static.ajax({
       url: URL+"'"+q+"'",
       type: "PUT",
