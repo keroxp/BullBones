@@ -1,13 +1,12 @@
 package backbone;
-import backbone.Backbone.Options;
 import js.html.XMLHttpRequest;
 
 @:native("Backbone.Model")
 extern class Model implements Events {
 
-    public function new (?attributes: Dynamic, ?options: Options): Void;
+    public function new (?attributes: Dynamic, ?options: Dynamic): Void;
 
-    public function initialize (?attributes: Dynamic, ?options: Options): Void;
+    public function initialize (?attributes: Dynamic, ?options: Dynamic): Void;
 
     public var attributes(get, null): Dynamic;
 
@@ -24,7 +23,7 @@ extern class Model implements Events {
     public var cidPrefix(get,set): String;
 
     // Return a copy of the model's `attributes` object.
-    public function toJSON(?options: Options): Dynamic;
+    public function toJSON(?options: Dynamic): Dynamic;
 
     // Proxy `Backbone.sync` by default -- but override this if you need
     // custom syncing semantics for *this* particular model.
@@ -46,15 +45,15 @@ extern class Model implements Events {
     // Set a hash of model attributes on the object, firing `"change"`. This is
     // the core primitive operation of a model, updating the data and notifying
     // anyone who needs to know about the change in state. The heart of the beast.
-    public function set(key: String, val: Dynamic, ?options: Options): Model;
+    public function set(key: String, val: Dynamic, ?options: Dynamic): Model;
 
 
     // Remove an attribute from the model, firing `"change"`. `unset` is a noop
     // if the attribute doesn't exist.
-    public function unset(attr: String, ?options: Options): Void;
+    public function unset(attr: String, ?options: Dynamic): Void;
 
     // Clear all attributes on the model, firing `"change"`.
-    public function clear(?options: Options): Model;
+    public function clear(?options: Dynamic): Model;
 
     // Determine if the model has changed since the last `"change"` event.
     // If you specify an attribute name, determine if that attribute has changed.
@@ -82,19 +81,19 @@ extern class Model implements Events {
 
     // Fetch the model from the server, merging the response with the model's
     // local attributes. Any changed attributes will trigger a "change" event.
-    public function fetch(?options: Options): Model;
+    public function fetch(?options: Dynamic): Model;
 
 
     // Set a hash of model attributes, and sync the model to the server.
     // If the server returns an attributes hash that differs, the model's
     // state will be `set` again.
-    public function save(?key: String, ?val: Dynamic, ?options: Options): XMLHttpRequest;
+    public function save(?key: String, ?val: Dynamic, ?options: Dynamic): XMLHttpRequest;
 
 
     // Destroy this model on the server if it was already persisted.
     // Optimistically removes the model from its collection, if it has one.
     // If `wait: true` is passed, waits for the server to respond before removal.
-    public function destroy(?options: Options): XMLHttpRequest;
+    public function destroy(?options: Dynamic): XMLHttpRequest;
 
 
     // Default URL for the model's representation on the server -- if you're
@@ -104,7 +103,7 @@ extern class Model implements Events {
 
     // **parse** converts a response into the hash of attributes to be `set` on
     // the model. The default implementation is just to pass the response along.
-    public function parse(resp: Dynamic, ?options: Options): Dynamic;
+    public function parse(resp: Dynamic, ?options: Dynamic): Dynamic;
 
 
     // Create a new model with identical attributes to this one.
@@ -114,7 +113,7 @@ extern class Model implements Events {
     public function isNew(): Bool;
 
     // Check if the model is currently in a valid state.
-    public function isValid(?options: Options): Bool;
+    public function isValid(?options: Dynamic): Bool;
 
     // Backbone.Events
     public function on(name: String, callback: Dynamic, ?context: Dynamic): Events;
@@ -123,7 +122,7 @@ extern class Model implements Events {
     public function stopListening(obj: Events, name: String, callback: Dynamic): Events;
     public function once(name: String, callback: Dynamic, ?context: Dynamic): Events;
     public function listenToOnce(obj: Events, name: String, callback: Dynamic): Events;
-    public function trigger(name: String): Events;
+    public function trigger<T>(name: String, ?value: T, ?options: Dynamic): Events;
     public function bind(name: String, callback: Dynamic, ?context: Dynamic): Events;
     public function unbind(name: String, callback: Dynamic, ?context: Dynamic): Events;
 }

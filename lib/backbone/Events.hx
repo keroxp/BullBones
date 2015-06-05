@@ -34,7 +34,7 @@ extern interface Events {
   // passed the same arguments as `trigger` is, apart from the event name
   // (unless you're listening on `"all"`, which will cause your callback to
   // receive the true name of the event as the first argument).
-  public function trigger(name: String): Events;
+  public function trigger<T>(name: String, ?value: T, ?options: Dynamic): Events;
 
   // Aliases for backwards compatibility.
   public function bind(name: String, callback: Dynamic, ?context: Dynamic): Events;

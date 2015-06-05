@@ -8,7 +8,7 @@
 <body>
   <div id="wrapper">
     <div id="appView">
-      <div id="searchView" class="z-depth-1" style="display:none">
+      <div id="searchView" class="bb-panel z-depth-1" style="display:none">
         <div class="input-field col s12">
           <i class="mdi-action-search prefix"></i>
           <input id="searchInput" type="text" class="validate" autocomplete="off">
@@ -22,24 +22,24 @@
           </div>
         </div>
       </div>
-      <a id="searchButton" class="btn-floating waves-effect waves-light btn-large red" title="検索">
+      <a id="searchButton" class="bb-btn btn-floating waves-effect waves-light btn-large red" title="検索">
         <i class="large mdi-action-search"></i>
       </a>
-      <a id="brushButton" class="btn-floating waves-effect waves-light btn-large blue" title="ブラシ">
-        <i class="large mdi-image-brush"></i>
+      <a id="brushButton" class="bb-btn btn-floating waves-effect waves-light btn-large blue" title="ブラシ">
+        <i class="large mdi-image-palette"></i>
       </a>
-      <div id="brushWrapper" class="z-depth-1" style="display:none;">
+      <div id="brushWrapper" class="bb-panel panel z-depth-1" style="display:none;">
         <div id="brushView">
           <canvas id="brushPreviewCanvas" width="220" height="100"></canvas>
           <div id="brushForm">
             <form action="#">
               <p class="range-field">
                 <label for="brushWidthInput">太さ</label>
-                <input id="brushWidthInput" type="range" min="1" max="20" value="5"/>
+                <input id="brushWidthInput" type="range" min="1" max="20" value="3"/>
               </p>
               <p class="range-field">
                 <label for="brushAlphaInput">透明度</label>
-                <input id="brushAlphaInput" type="range" min="0" max="255" value="255" />
+                <input id="brushAlphaInput" type="range" min="0" max="100" value="100" />
               </p>
               <p class="range-field">
                 <label for="brushThickInput">濃度</label>
@@ -49,9 +49,41 @@
           </div>
         </div>
       </div>
-      <a id="editButton" class="btn-floating waves-effect waves-light btn-large green" title="編集モード">
+      <a id="editButton" class="bb-btn btn-floating waves-effect waves-light btn-large green" title="画像を編集">
         <i class="large mdi-editor-mode-edit"></i>
       </a>
+      <a id="imageEditorButton" class="bb-btn btn-floating waves-effect waves-light btn-large orange" style="display:none" title="画像を編集">
+        <i class="large mdi-image-image"></i>
+      </a>
+       <div id="imageEditorView" class="bb-panel panel z-depth-1" style="display:none">
+        <div id="imageEditorPreview">
+          <img id="imageEditorPreviewImage" src="" />
+        </div>
+        <div id="imageEditorForm">
+          <form action="#">
+            <p>
+              <input type="checkbox" class="filled-in" id="grayInput" />
+              <label for="grayInput">モノクロ</label>
+            </p>
+            <p>
+              <input type="checkbox" class="filled-in" id="lineExtractInput" />
+              <label for="lineExtractInput">線画の抽出</label>
+            </p>
+            <div id="lineExtractInputWrapper" class="switch" style="display:none;">
+              <label>
+                くっきり Off
+                <input id="lineExtractSwitchInput" type="checkbox">
+                <span class="lever"></span>
+                On
+              </label>
+            </div>
+            <p class="range-field">
+              <label for="imageAlpha">透明度</label>
+              <input id="imageAlpha" type="range" min="0" max="100" value="100" />
+            </p>
+          </form>
+        </div>
+      </div>
       <a id="debugButton" class="btn-floating waves-effect waves-light btn-large white">
         <i class="large mdi-action-bug-report" style="color: black"></i>
       </a>
