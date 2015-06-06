@@ -1,4 +1,5 @@
 package figure;
+import figure.Draggable.DraggableType;
 import geometry.MouseEventCapture;
 import js.html.CanvasRenderingContext2D;
 import js.html.MouseEvent;
@@ -27,6 +28,12 @@ class Figure implements Draggable {
     public var vertexes(default, null): Array<Vertex> = new Array();
     // 描画につかうShape
     private var shape(default, null): Shape = new Shape();
+
+    @:isVar public var type(get, null):DraggableType;
+    function get_type():DraggableType {
+        return Figure;
+    }
+
 
     @:isVar public var display(get, null):createjs.easeljs.DisplayObject;
     function get_display():createjs.easeljs.DisplayObject {

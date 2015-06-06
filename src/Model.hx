@@ -1,6 +1,5 @@
 package ;
 import backbone.Collection;
-import backbone.Backbone.Options;
 import backbone.Model;
 class Model extends backbone.Model {
     public function new (?attr: Dynamic, ?options: Dynamic) {
@@ -31,12 +30,12 @@ class Model extends backbone.Model {
     "all" — this special event fires for any triggered event, passing the event name as the first argument.
 **/
 
-typedef OnAddCallback = Model -> Collection -> Options -> Void;
-typedef OnRemoveCallback = Model -> Collection -> Options -> Void;
-typedef OnUpdateCallback = Collection -> Options -> Void;
-typedef OnRestCallback = Collection -> Options -> Void;
-typedef OnSortCallback = Collection -> Options -> Void;
-typedef OnChangeCallback = (Model -> Options) -> Void;
-typedef OnChangeAttributeCallback<T> = Model -> T -> Options -> Void;
-typedef OnDestoroyCallback = Model -> Collection -> Options -> Void;
+typedef OnAddCallback = Model -> Collection -> Dynamic -> Void;
+typedef OnRemoveCallback = Model -> Collection -> Dynamic -> Void;
+typedef OnUpdateCallback = Collection -> Dynamic -> Void;
+typedef OnRestCallback = Collection -> Dynamic -> Void;
+typedef OnSortCallback = Collection -> Dynamic -> Void;
+typedef OnChangeCallback = (Model -> Dynamic) -> Void;
+typedef OnChangeAttributeCallback<T> = Model -> T -> Dynamic -> Void;
+typedef OnDestoroyCallback = Model -> Collection -> Dynamic -> Void;
 typedef OnAllCallback = String -> Void;

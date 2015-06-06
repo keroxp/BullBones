@@ -1,7 +1,13 @@
 package ;
-import backbone.haxe.BackboneEvents;
-import backbone.Backbone.Options;
-import backbone.Model;
+import createjs.easeljs.Bitmap;
+import cv.ImageUtil;
+import cv.FilterFactory;
+import view.ImageEditorView.ImageEditorListener;
+import view.SearchView.SearchResultListener;
+import ajax.Loader;
+import jQuery.Event;
+import view.ViewModel;
+import ajax.BingSearch.BingSearchResult;
 import jQuery.JQuery;
 import geometry.MouseEventCapture;
 import js.html.Document;
@@ -23,7 +29,13 @@ import figure.Figure;
 import createjs.easeljs.Stage;
 import createjs.easeljs.Shape;
 
-class MainCanvas extends BackboneEvents implements BoundingBox.OnChangeListener {
+interface MainCanvasListener {
+    public function onCanvasImageSelected(image: figure.Image): Void;
+}
+class MainCanvas extends ViewModel
+implements BoundingBox.OnChangeListener
+implements SearchResultListener
+implements ImageEditorListener {
     var mStage: Stage;
     var mFgLayer: Container;
     var mBgLayer: Container;
@@ -33,7 +45,6 @@ class MainCanvas extends BackboneEvents implements BoundingBox.OnChangeListener 
     var mBackground: Shape;
     var mGrid: Shape;
     var mDrawingFigure: Figure;
-    var mFocusedFigure: Draggable;
     var mFigures: Array<Draggable> = new Array();
     var mCanvas: CanvasElement;
     var mContext: CanvasRenderingContext2D;
@@ -41,21 +52,51 @@ class MainCanvas extends BackboneEvents implements BoundingBox.OnChangeListener 
     var vGridDivision = 10;
     var mPressed = false;
     var vBackgroundColor = "#ddd";
-    public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null) = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
-    public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null) = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEMOVE_EVENT";
-    public static var ON_CANVAS_MOUSEUP_EVENT(default, null) = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEUP_EVENT";
-    public var isEditing(default,null): Bool = false;
-    public function new(app: App, jq: JQuery) {
-        super();
+    public var listener: MainCanvasListener;
+    public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null)
+        = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
+    public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null)
+        = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEMOVE_EVENT";
+    public static var ON_CANVAS_MOUSEUP_EVENT(default, null)
+        = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEUP_EVENT";
+    public static var ON_CANVAS_IMAGE_SELECTED_EVENT(default, null)
+        = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_IMAGE_SELECTED_EVENT";
+
+    private var mFocusedFigure(default,set):Draggable;
+    function set_mFocusedFigure(value:Draggable) {
+        this.mFocusedFigure = value;
+        if (listener != null) {
+            if (value != null && value.type == Image) {
+                listener.onCanvasImageSelected(cast value);
+            } else {
+                listener.onCanvasImageSelected(null);
+            }
+        }
+        return value;
+    }
+
+    public var isEditing(default,set): Bool = false;
+    private function set_isEditing(value:Bool) {
+        this.isEditing = value;
+        mFocusedFigure = value ? mFigures[mFigures.length-1] : null;
+        mBackground.visible = value;
+        mGrid.visible = value;
+        drawBoundingBox();
+        draw();
+        return value;
+    }
+
+    public function new(jq: JQuery) {
+        super(jq);
         var window: DOMWindow = js.Browser.window;
+        jq.on("mousedown", onCanvasMouseDown);
+        jq.on("mousemove", onCanvasMouseMove);
+        jq.on("mouseup", onCanvasMouseUp);
         window.addEventListener("keyup", onKeyUp);
-        var document: Document = js.Browser.document;
-        var canvas: CanvasElement = cast jq.get()[0];
-        canvas.addEventListener("mousedown", onCanvasMouseDown);
-        canvas.addEventListener("mousemove", onCanvasMouseMove);
-        canvas.addEventListener("mouseup", onCanvasMouseUp);
-        mCanvas = canvas;
-        mContext = canvas.getContext("2d");
+        window.addEventListener("keydown", onKeyDown);
+
+        mCanvas = cast jq.get()[0];
+        mContext = mCanvas.getContext("2d");
         mBgLayer = new Container();
         mFgLayer = new Container();
         mMainLayer = new Container();
@@ -82,8 +123,13 @@ class MainCanvas extends BackboneEvents implements BoundingBox.OnChangeListener 
         mStage.addChild(mMainLayer);
         mStage.addChild(mFgLayer);
 
+        Loader.loadImage("img/bullbones.jpg").done(function(img: js.html.Image) {
+            var bb = new figure.Image(img);
+            insertImage(bb,0,0);
+        }).fail(function(e){
+            trace(e);
+        });
         // KVO
-
         mStage.update();
     }
     function draw () {
@@ -127,38 +173,40 @@ class MainCanvas extends BackboneEvents implements BoundingBox.OnChangeListener 
             mBoundingBox.render(mFocusedFigure.bounds);
         }
     }
-    public function onSelectImage (src: String) {
-        var img = new Image();
-        img.onload = function (a) {
-            var document: Document = cast js.Browser.document;
-            var dummyCanvas: CanvasElement = cast document.createElement("canvas");
-            var dummyContext = dummyCanvas.getContext2d();
-            var w = img.width;
-            var h = img.height;
-            dummyCanvas.width = w;
-            dummyCanvas.height = h;
-            dummyContext.drawImage(img,0,0);
-            var input = dummyContext.getImageData(0,0,w,h);
-            var out = new cv.Filter(input,w,h).applyEdge2().applyNegaposi().applyGray().get();
-            dummyContext.putImageData(out,0,0);
-            var bm = new figure.Image(dummyCanvas.toDataURL("image/png"),w,h);
-            mFigures.push(bm);
-            mMainLayer.addChild(bm.display);
-            mStage.update();
+    function insertImage (img: figure.Image, x: Float, y: Float) {
+        img.bitmap.x = x;
+        img.bitmap.y = y;
+        mFigures.push(img);
+        mMainLayer.addChild(img.bitmap);
+        mStage.update();
+    }
+    public function onImageEditorChange(editor: ImageEditor):Void {
+        if (mFocusedFigure != null && mFocusedFigure.type == Image) {
+            var image: figure.Image = cast mFocusedFigure;
+            image.filter = editor.createFilter();
+            image.bitmap.alpha = editor.alpha;
+            trace(editor);
+            draw();
         }
-        img.onerror = function (e: Error) {
+    }
+
+    public function onSearchResultSelected(result:BingSearchResult):Void {
+        trace(result);
+        Loader.loadImage(result.MediaUrl)
+        .done(function(img: js.html.Image) {
+            var bm = new figure.Image(img);
+            bm.thumbSrc = result.Thumbnail.MediaUrl;
+            var x = (jq.width()-img.width)/2;
+            var y = (jq.height()-img.height)/2;
+            insertImage(bm,x,y);
+        }).fail(function(e){
             js.Lib.alert("画像の読み込みに失敗しました");
             trace(e);
-        }
-        img.src = 'proxy/$src';
+        });
     }
+
     public function toggleEditing() {
         isEditing = !isEditing;
-        mFocusedFigure = isEditing ? mFigures[mFigures.length-1] : null;
-        mBackground.visible = isEditing;
-        mGrid.visible = isEditing;
-        drawBoundingBox();
-        draw();
     }
     private var mDragBegan = false;
     private var mCapture = new MouseEventCapture();
@@ -170,8 +218,8 @@ class MainCanvas extends BackboneEvents implements BoundingBox.OnChangeListener 
                 drawBoundingBox();
             } else {
                 var f =  new Figure(e.clientX, e.clientY);
-                f.width = Main.App.brushWidth;
-                f.color = Main.App.brushColor;
+                f.width = Main.App.v.brush.width;
+                f.color = Main.App.v.brush.color;
                 mFigures.push(f);
                 mContext.beginPath();
                 f.render();
@@ -183,17 +231,19 @@ class MainCanvas extends BackboneEvents implements BoundingBox.OnChangeListener 
             }
         } else {
             var i = mFigures.length-1;
+            var tmp: Draggable = null;
             while (i > -1) {
                 var d = mFigures[i];
                 if (d.bounds.containsPoint(e.clientX,e.clientY)) {
                     d.onDragStart(e);
-                    mFocusedFigure = d;
+                    tmp = d;
                     mDragBegan = true;
-                    drawBoundingBox();
                     break;
                 }
                 i--;
             }
+            mFocusedFigure = tmp;
+            drawBoundingBox();
         }
         mCapture.down(e);
         trigger(ON_CANVAS_MOUSEDOWN_EVENT);
@@ -285,12 +335,25 @@ class MainCanvas extends BackboneEvents implements BoundingBox.OnChangeListener 
     public function onCornerUp (e: createjs.easeljs.MouseEvent, corner: Corner): Void {
 
     }
+    private var mCurrentKeyEvent: KeyboardEvent;
+    function onKeyDown (e: KeyboardEvent) {
+        if (mCurrentKeyEvent == null) {
+            switch e.keyCode {
+                case 16: {
+                    isEditing = true;
+                }
+            }
+            mCurrentKeyEvent = e;
+        }
+    }
     function onKeyUp (e: KeyboardEvent) {
-        e.preventDefault();
-        e.stopPropagation();
         switch e.keyCode {
             case 8: onDelete(e);
+            case 16: {
+                isEditing = false;
+            }
         }
+        mCurrentKeyEvent = null;
     }
     function onDelete (e: KeyboardEvent) {
         if (mFocusedFigure != null) {
