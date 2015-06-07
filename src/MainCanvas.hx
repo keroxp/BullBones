@@ -280,11 +280,13 @@ implements ImageEditorListener {
             toDraw = true;
         }
         if (mPressed) {
-            if (!isEditing && mDrawingFigure != null) {
-                mDrawingFigure.addPoint(e.clientX,e.clientY);
-                var i = mDrawingFigure.points.length-1;
-                var fp = mDrawingFigure.points[i];
-                toDraw = true;
+            if (!isEditing) {
+                if (mDrawingFigure != null) {
+                    mDrawingFigure.addPoint(e.clientX,e.clientY);
+                    var i = mDrawingFigure.points.length-1;
+                    var fp = mDrawingFigure.points[i];
+                    toDraw = true;
+                }
             } else {
                 if (mDragBegan) {
                     mFocusedFigure.onDragMove(e);
@@ -299,17 +301,20 @@ implements ImageEditorListener {
         trigger(ON_CANVAS_MOUSEMOVE_EVENT);
     }
     function onCanvasMouseUp (e: MouseEvent) {
-        if (!isEditing && mDrawingFigure != null) {
-            mDrawingFigure.addPoint(e.clientX, e.clientY);
-            mDrawingFigure.calcVertexes();
-            mDrawingFigure.isDrawing = false;
-            mDrawingFigure = null;
-            draw();
+        var toDraw = false;
+        if (!isEditing) {
+            if (mDrawingFigure != null) {
+                mDrawingFigure.addPoint(e.clientX, e.clientY);
+                mDrawingFigure.calcVertexes();
+                mDrawingFigure.isDrawing = false;
+                mDrawingFigure = null;
+                toDraw = true;
+            }
         } else {
             if (mDragBegan) {
                 mFocusedFigure.onDragEnd(e);
                 drawBoundingBox();
-                draw();
+                toDraw = true;
             }
         }
         mCapture.up(e);
