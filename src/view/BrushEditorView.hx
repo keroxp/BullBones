@@ -37,9 +37,11 @@ class BrushEditorView extends ViewModel {
         jThickInput = jq.find("#brushThickInput");
         jThickInput.attr("value", Main.App.v.brush.thickness);
         jq.find("input").on("input", function (e) {
-            Main.App.v.brush.thickness = thick();
-            Main.App.v.brush.width = width();
-            Main.App.v.brush.alpha = alpha();
+            var brush = new BrushEditor();
+            brush.thickness = thick();
+            brush.width = width();
+            brush.alpha = alpha();
+            Main.App.v.brush = brush;
             renderBrush(e);
         });
         jq.find("input").on("change", function (e: Event) {

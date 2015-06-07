@@ -21,9 +21,6 @@ class V extends Model {
     }
 
     function get_brush():BrushEditor {
-        if (brush == null) {
-            return set_brush(new BrushEditor());
-        }
         return get("brush");
     }
 

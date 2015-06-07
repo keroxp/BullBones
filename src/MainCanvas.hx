@@ -79,10 +79,13 @@ implements ImageEditorListener {
     public var isEditing(default,set): Bool = false;
     private function set_isEditing(value:Bool) {
         this.isEditing = value;
+        jq.attr("data-editing", value+"");
         mFocusedFigure = value ? mFigures[mFigures.length-1] : null;
         mBackground.visible = value;
         mGrid.visible = value;
+        mBrushCircle.visible = !value;
         drawBoundingBox();
+        drawBrushCircle();
         draw();
         return value;
     }
@@ -183,12 +186,15 @@ implements ImageEditorListener {
         }
     }
     function drawBrushCircle () {
-        trace("");
+        var w = Main.App.v.brush.width;
         mBrushCircle.graphics
+        .clear()
         .setStrokeStyle(1)
         .beginStroke("#000")
-        .drawCircle(0,0,Main.App.v.brush.width)
+        .drawCircle(0,0,w)
         .endStroke();
+        mBrushCircle.x = mCapture.prevX;
+        mBrushCircle.y = mCapture.prevY;
     }
     function insertImage (img: figure.Image, x: Float, y: Float) {
         img.bitmap.x = x;
@@ -269,8 +275,8 @@ implements ImageEditorListener {
     function onCanvasMouseMove (e: MouseEvent) {
         var toDraw = false;
         if (!isEditing) {
-            mBrushCircle.x = e.clientX-Main.App.v.brush.width/2;
-            mBrushCircle.y = e.clientY-Main.App.v.brush.width/2;
+            mBrushCircle.x = e.clientX;
+            mBrushCircle.y = e.clientY;
             toDraw = true;
         }
         if (mPressed) {
