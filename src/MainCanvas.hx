@@ -44,6 +44,7 @@ implements ImageEditorListener {
     var mFuzzySketchGraph: Shape;
     var mBackground: Shape;
     var mGrid: Shape;
+    var mBrushCircle: Shape;
     var mDrawingFigure: Figure;
     var mFigures: Array<Draggable> = new Array();
     var mCanvas: CanvasElement;
@@ -115,6 +116,10 @@ implements ImageEditorListener {
         mBoundingBox = new BoundingBox();
         mBoundingBox.listener = this;
         mFgLayer.addChild(mBoundingBox.shape);
+        // brush
+        mBrushCircle = new Shape();
+        mFgLayer.addChild(mBrushCircle);
+        drawBrushCircle();
         // ファジィグラフ
         mFuzzySketchGraph = new Shape();
         mFgLayer.addChild(mFuzzySketchGraph);
@@ -123,12 +128,16 @@ implements ImageEditorListener {
         mStage.addChild(mMainLayer);
         mStage.addChild(mFgLayer);
 
-        Loader.loadImage("img/bullbones.jpg").done(function(img: js.html.Image) {
-            var bb = new figure.Image(img);
-            insertImage(bb,0,0);
-        }).fail(function(e){
-            trace(e);
-        });
+        if (Main.App.v.isDebug) {
+            Loader.loadImage("img/bullbones.jpg").done(function(img: js.html.Image) {
+                var bb = new figure.Image(img);
+                insertImage(bb,0,0);
+            }).fail(function(e){
+                trace(e);
+            });
+        }
+
+        listenTo(Main.App.v, "change:brush", drawBrushCircle);
         // KVO
         mStage.update();
     }
@@ -172,6 +181,14 @@ implements ImageEditorListener {
         if (isEditing && mFocusedFigure != null) {
             mBoundingBox.render(mFocusedFigure.bounds);
         }
+    }
+    function drawBrushCircle () {
+        trace("");
+        mBrushCircle.graphics
+        .setStrokeStyle(1)
+        .beginStroke("#000")
+        .drawCircle(0,0,Main.App.v.brush.width)
+        .endStroke();
     }
     function insertImage (img: figure.Image, x: Float, y: Float) {
         img.bitmap.x = x;
@@ -250,24 +267,28 @@ implements ImageEditorListener {
         draw();
     }
     function onCanvasMouseMove (e: MouseEvent) {
+        var toDraw = false;
+        if (!isEditing) {
+            mBrushCircle.x = e.clientX-Main.App.v.brush.width/2;
+            mBrushCircle.y = e.clientY-Main.App.v.brush.width/2;
+            toDraw = true;
+        }
         if (mPressed) {
             if (!isEditing && mDrawingFigure != null) {
                 mDrawingFigure.addPoint(e.clientX,e.clientY);
                 var i = mDrawingFigure.points.length-1;
                 var fp = mDrawingFigure.points[i];
-                haxe.Timer.delay(function(){
-                    drawFuzzyPointGraph(fp,i);
-                },0);
-                draw();
+                toDraw = true;
             } else {
                 if (mDragBegan) {
                     mFocusedFigure.onDragMove(e);
                     mBoundingBox.shape.x += mCapture.getMoveX(e);
                     mBoundingBox.shape.y += mCapture.getMoveY(e);
-                    draw();
+                    toDraw = true;
                 }
             }
         }
+        if (toDraw) draw();
         mCapture.move(e);
         trigger(ON_CANVAS_MOUSEMOVE_EVENT);
     }
