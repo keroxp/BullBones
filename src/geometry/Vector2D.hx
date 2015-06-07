@@ -9,14 +9,14 @@ class Vector2D {
     public static function v(from :Point, to:Point): Vector2D {
         return new Vector2D(to.x-from.x,to.y-from.y);
     }
-    public function dot (v: Vector2D): Float {
-        return dx*v.dx + dy*v.dy;
+    public function dot (vec: Vector2D): Float {
+        return dx*vec.dx + dy*vec.dy;
     }
-    public function add (v: Vector2D): Vector2D {
-        return new Vector2D(dx+v.dx,dy+v.dy);
+    public function add (vec: Vector2D): Vector2D {
+        return new Vector2D(dx+vec.dx,dy+vec.dy);
     }
-    public function sub (v: Vector2D): Vector2D {
-        return new Vector2D(dx-v.dx,dy-v.dy);
+    public function sub (vec: Vector2D): Vector2D {
+        return new Vector2D(dx-vec.dx,dy-vec.dy);
     }
     public function power (): Float {
         return Math.sqrt(rawPower());

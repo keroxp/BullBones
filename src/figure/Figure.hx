@@ -10,14 +10,6 @@ import geometry.FuzzyPoint;
 import geometry.Rect;
 import createjs.easeljs.Shape;
 
-class Vertex {
-    public var point: FuzzyPoint;
-    public var radian: Float;
-    public function new (?p: FuzzyPoint = null, ?rad: Float = -1) {
-        point = p;
-        radian = rad;
-    }
-}
 class Figure implements Draggable {
     public function new(x: Float, y: Float) {
         addPoint(x,y);

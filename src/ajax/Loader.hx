@@ -1,9 +1,6 @@
 package ajax;
-import js.html.ImageData;
 import jQuery.Deferred;
-import js.html.Document;
 import js.html.Image;
-import js.html.CanvasElement;
 class Loader {
     public static function loadImage(src: String): Deferred {
         var def = new Deferred();

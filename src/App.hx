@@ -1,9 +1,9 @@
 package ;
 
+import model.BrushEditor;
+import view.MainCanvas;
 import view.ViewModel;
 import figure.Image;
-import ajax.BingSearch.BingSearchResult;
-import MainCanvas;
 import backbone.haxe.BackboneEvents;
 import view.ImageEditorView;
 import view.BrushEditorView;

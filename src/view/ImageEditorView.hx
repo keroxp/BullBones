@@ -1,9 +1,8 @@
 package view;
+import model.ImageEditor;
 import cv.ImageUtil;
-import ajax.BingSearch.BingSearchResult;
 import figure.Image;
 import ajax.Loader;
-import js.html.MouseEvent;
 import js.html.ImageData;
 import js.html.Event;
 import jQuery.JQuery;

@@ -1,4 +1,5 @@
-package ;
+package view;
+import model.ImageEditor;
 import createjs.easeljs.Bitmap;
 import cv.ImageUtil;
 import cv.FilterFactory;
@@ -55,13 +56,13 @@ implements ImageEditorListener {
     var vBackgroundColor = "#ddd";
     public var listener: MainCanvasListener;
     public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null)
-        = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
+        = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
     public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null)
-        = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEMOVE_EVENT";
+        = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEMOVE_EVENT";
     public static var ON_CANVAS_MOUSEUP_EVENT(default, null)
-        = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_MOUSEUP_EVENT";
+        = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEUP_EVENT";
     public static var ON_CANVAS_IMAGE_SELECTED_EVENT(default, null)
-        = "me.keroxp.app.BullBones:MainCanvas:ON_CANVAS_IMAGE_SELECTED_EVENT";
+        = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_IMAGE_SELECTED_EVENT";
 
     private var mFocusedFigure(default,set):Draggable;
     function set_mFocusedFigure(value:Draggable) {

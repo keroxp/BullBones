@@ -1,6 +1,8 @@
 package ;
-import view.BrushEditorView.BrushEditor;
-class V extends Model {
+import model.BrushEditor;
+import model.BBModel;
+
+class V extends BBModel {
 
     @:isVar public var isEditing(get, set):Bool = false;
 

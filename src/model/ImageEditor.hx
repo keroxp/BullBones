@@ -1,4 +1,4 @@
-package ;
+package model;
 import cv.Filter;
 import cv.FilterFactory;
 class ImageEditor {
