@@ -1,9 +1,10 @@
 package ajax;
-import jQuery.Deferred;
+import deferred.Promise;
+import deferred.Deferred;
 import js.html.Image;
 class Loader {
-    public static function loadImage(src: String): Deferred {
-        var def = new Deferred();
+    public static function loadImage(src: String): Promise<js.html.Image, Dynamic, Int> {
+        var def = new Deferred<js.html.Image, Dynamic, Int>();
         var img = new Image();
         img.onload = function (e) {
             try {

@@ -1,19 +1,17 @@
 package ajax;
-import jQuery.Deferred;
+import deferred.Promise;
+import js.html.DOMWindow;
 import jQuery.JQuery;
-import haxe.io.BytesData;
+import deferred.Deferred;
 class BingSearch {
     private static var URL = "https://api.datamarket.azure.com/Bing/Search/Image?$format=json&Query=";
     private static var KEY = "piWl0WnCx9b4HytksVqG3h0crLcki4MrY4XrwwS0Jo0";
 
-    public static function search(q:String):Deferred {
-        var ba = new BytesData();
-        var deferred:Deferred = new jQuery.Deferred();
-        var auth:String = KEY + ":" + KEY;
-        for (i in 0...auth.length) {
-            ba[i] = KEY.charCodeAt(i);
-        }
-        var encodedKey:String = js.Lib.eval('btoa(\"$auth\");');
+    public static function search(q:String): Promise<Array<BingSearchResult>, Dynamic, Int> {
+        var def = new Deferred<Array<BingSearchResult>, Dynamic, Int>();
+        var auth = KEY + ":" + KEY;
+        var window: DOMWindow = js.Browser.window;
+        var encodedKey = window.btoa(auth);
         JQuery._static.ajax({
             url: URL + "'" + q + "'",
             type: "PUT",
@@ -22,11 +20,11 @@ class BingSearch {
             },
             dataType: "json"
         }).done(function(data:Dynamic) {
-            deferred.resolve(data.d.results);
+            def.resolve(data.d.results);
         }).fail(function(xhr:jQuery.JqXHR) {
-            deferred.reject(xhr);
+            def.reject(xhr);
         });
-        return deferred;
+        return def;
     }
 }
 
