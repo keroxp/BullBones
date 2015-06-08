@@ -1,6 +1,6 @@
--main Main
--js public/js/main.js
--cp src
--cp lib
 -lib createjs
 -lib jQueryExtern
+-cp src
+-cp lib
+-main Main
+-js public/js/main.js
