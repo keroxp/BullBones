@@ -6,7 +6,7 @@
   "main": "app.coffee",
   "scripts": {
     "start": "coffee app.coffee",
-    "postinstall": "bower i && grunt stylus && haxe build.hxml"
+    "postinstall": "bower i && grunt stylus"
   },
   "cacheDirectories": [
     "node_modules",
