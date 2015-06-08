@@ -83,6 +83,6 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks "grunt-contrib-cssmin"
   grunt.loadNpmTasks "grunt-contrib-copy"
   grunt.loadNpmTasks "grunt-bower-concat"
-  grunt.registerTask "build", ["haxe", "bower_concat", "stylus", "copy"]
+  grunt.registerTask "build", ["bower_concat", "stylus", "copy"]
   grunt.registerTask "dest", ["build", "uglify", "cssmin"]
-  grunt.registerTask "default", ["build", "watch"]
+  grunt.registerTask "default", ["haxe", "build", "watch"]
