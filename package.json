@@ -5,6 +5,7 @@
   "repository": "https://github.com/keroxp/BullBones",
   "main": "app.coffee",
   "scripts": {
+    "preinstall": "scripts/install-haxe.sh y",
     "start": "coffee app.coffee",
     "postinstall": "bower i && grunt build"
   },
