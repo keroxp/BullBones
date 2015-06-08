@@ -3,5 +3,5 @@ node_modules
 .idea
 public/js/*
 public/css/*
-public/bower_components
-haxe-3.2.0*
+public/font/*
+bower_components
