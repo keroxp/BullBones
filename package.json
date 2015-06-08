@@ -6,12 +6,12 @@
   "main": "app.coffee",
   "scripts": {
     "start": "coffee app.coffee",
-    "postinstall": "bower i && grunt build"
+    "postinstall": "bower i && grunt stylus && haxe build.hxml"
   },
   "cacheDirectories": [
     "node_modules",
     "public/bower_components",
-    "haxe-3.2.0"
+    "vendor"
   ],
   "author": "keroxp",
   "license": "ISC",
