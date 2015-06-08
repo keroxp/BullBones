@@ -4,3 +4,4 @@ node_modules
 public/js/*
 public/css/*
 public/bower_components
+haxe-3.2.0*
