@@ -2,11 +2,14 @@
   "name": "BullBones",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "repository": "https://github.com/keroxp/BullBones",
+  "main": "app.coffee",
   "scripts": {
+    "start": "coffee app.coffee",
+    "prestart": "make",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "keroxp",
   "license": "ISC",
   "devDependencies": {
     "connect-livereload": "^0.5.3",

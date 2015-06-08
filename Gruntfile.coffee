@@ -54,7 +54,8 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks "grunt-contrib-watch"
   grunt.loadNpmTasks "grunt-contrib-stylus"
   grunt.loadNpmTasks "grunt-contrib-connect"
-  grunt.registerTask "default", ["haxe:build", "stylus:build", "watch"]
+  grunt.registerTask "build", ["haxe:build", "stylus:build"]
+  grunt.registerTask "default", ["build", "watch"]
 
 
 
