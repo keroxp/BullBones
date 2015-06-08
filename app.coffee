@@ -10,4 +10,4 @@ app.use express.static('public')
 app.use bodyParser.urlencoded(extended: true)
 app.use bodyParser.json()
 app.use xhr2proxy()
-app.listen 8000
+app.listen process.env.PORT || 8000
