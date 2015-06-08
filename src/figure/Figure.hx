@@ -1,7 +1,6 @@
 package figure;
 import figure.Draggable.DraggableType;
 import geometry.MouseEventCapture;
-import js.html.CanvasRenderingContext2D;
 import js.html.MouseEvent;
 import createjs.easeljs.Point;
 import geometry.Vector2D;
@@ -220,9 +219,9 @@ class Figure implements Draggable {
                 .drawCircle(s.x,s.y,3)
                 .drawCircle(e.x,e.y,3)
                 .endFill();
-                for (v in vertexes) {
+                for (vec in vertexes) {
                     shape.graphics.setStrokeStyle(3).beginStroke("red");
-                    shape.graphics.drawCircle(xx(v.point.x),yy(v.point.y),5);
+                    shape.graphics.drawCircle(xx(vec.point.x),yy(vec.point.y),5);
                     shape.graphics.endStroke();
                 }
                 var cp = getClosedPoint();

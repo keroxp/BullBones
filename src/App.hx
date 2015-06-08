@@ -1,9 +1,10 @@
 package ;
 
+import view.ViewUtil;
 import model.BrushEditor;
 import view.MainCanvas;
 import view.ViewModel;
-import figure.Image;
+import figure.ImageFigure;
 import backbone.haxe.BackboneEvents;
 import view.ImageEditorView;
 import view.BrushEditorView;
@@ -40,6 +41,8 @@ implements MainCanvasListener {
             var window: DOMWindow = Browser.window;
             var w: Float = window.innerWidth;
             var h: Float = window.innerHeight;
+            ViewUtil.on("appView", "dragover", onDragOver);
+            ViewUtil.on("appView", "drop", onDrop);
             var canvasDom = new JQuery("#mainCanvas");
             canvasDom.attr({
                 width : w,
@@ -99,11 +102,30 @@ implements MainCanvasListener {
         if (exclude != mBrushView) mBrushView.jq.hide();
     }
 
+    private function onDragOver (e: js.html.MouseEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+    }
+
+    private function onDrop (e: js.html.MouseEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        trace(e.dataTransfer.files);
+        var files = e.dataTransfer.files;
+        if (files.length > 0) {
+            var f = files.item(0);
+            if (f.type.indexOf("image/") > -1) {
+
+            }
+        }
+    }
+
     public function onBrushEditorChange(editor:BrushEditor):Void {
         this.v.brush = editor;
     }
 
-    public function onCanvasImageSelected(image:Image):Void {
+    public function onCanvasImageSelected(image:ImageFigure):Void {
         if (image != null) {
             jImageButton.show();
             mImageEditorView.setImage(image);

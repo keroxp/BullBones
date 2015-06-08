@@ -1,7 +1,7 @@
 package view;
 import model.ImageEditor;
 import cv.ImageUtil;
-import figure.Image;
+import figure.ImageFigure;
 import ajax.Loader;
 import js.html.ImageData;
 import js.html.Event;
@@ -43,8 +43,8 @@ class ImageEditorView extends ViewModel {
         });
     }
     private var mThumbData: ImageData;
-    private var mImage: Image;
-    public function setImage (value: Image) {
+    private var mImage: ImageFigure;
+    public function setImage (value: ImageFigure) {
         if (value != null && mImage != value) {
             Loader.loadImage(value.thumbSrc).done(function(img: js.html.Image) {
                 mThumbData = ImageUtil.getImageData(img);

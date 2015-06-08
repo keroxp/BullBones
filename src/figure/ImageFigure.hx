@@ -10,7 +10,7 @@ import figure.Draggable.DraggableType;
 import js.html.MouseEvent;
 import geometry.Rect;
 import createjs.easeljs.Bitmap;
-class Image implements Draggable {
+class ImageFigure implements Draggable {
     public var bitmap: Bitmap;
     public var src(default,null): String;
     public var thumbSrc: String;
@@ -18,7 +18,7 @@ class Image implements Draggable {
 
     @:isVar public var type(get, null):DraggableType;
     function get_type():DraggableType {
-        return Image;
+        return DraggableType.Image;
     }
 
     @:isVar public var bounds(get,null): Rect;

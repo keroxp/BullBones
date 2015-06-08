@@ -1,4 +1,5 @@
 package view;
+import figure.ImageFigure;
 import model.ImageEditor;
 import createjs.easeljs.Bitmap;
 import cv.ImageUtil;
@@ -31,7 +32,7 @@ import createjs.easeljs.Stage;
 import createjs.easeljs.Shape;
 
 interface MainCanvasListener {
-    public function onCanvasImageSelected(image: figure.Image): Void;
+    public function onCanvasImageSelected(image: ImageFigure): Void;
 }
 class MainCanvas extends ViewModel
 implements BoundingBox.OnChangeListener
@@ -133,8 +134,8 @@ implements ImageEditorListener {
         mStage.addChild(mFgLayer);
 
         if (Main.App.v.isDebug) {
-            Loader.loadImage("img/bullbones.jpg").done(function(img: js.html.Image) {
-                var bb = new figure.Image(img);
+            Loader.loadImage("img/bullbones.jpg").done(function(img: Image) {
+                var bb = new ImageFigure(img);
                 insertImage(bb,0,0);
             }).fail(function(e){
                 trace(e);
@@ -197,7 +198,7 @@ implements ImageEditorListener {
         mBrushCircle.x = mCapture.prevX;
         mBrushCircle.y = mCapture.prevY;
     }
-    function insertImage (img: figure.Image, x: Float, y: Float) {
+    function insertImage (img: ImageFigure, x: Float, y: Float) {
         img.bitmap.x = x;
         img.bitmap.y = y;
         mFigures.push(img);
@@ -206,7 +207,7 @@ implements ImageEditorListener {
     }
     public function onImageEditorChange(editor: ImageEditor):Void {
         if (mFocusedFigure != null && mFocusedFigure.type == Image) {
-            var image: figure.Image = cast mFocusedFigure;
+            var image: ImageFigure = cast mFocusedFigure;
             image.filter = editor.createFilter();
             image.bitmap.alpha = editor.alpha;
             trace(editor);
@@ -217,8 +218,8 @@ implements ImageEditorListener {
     public function onSearchResultSelected(result:BingSearchResult):Void {
         trace(result);
         Loader.loadImage(result.MediaUrl)
-        .done(function(img: js.html.Image) {
-            var bm = new figure.Image(img);
+        .done(function(img: Image) {
+            var bm = new ImageFigure(img);
             bm.thumbSrc = result.Thumbnail.MediaUrl;
             var x = (jq.width()-img.width)/2;
             var y = (jq.height()-img.height)/2;
