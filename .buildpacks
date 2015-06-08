@@ -1,1 +1,2 @@
 git://github.com/keroxp/heroku-buildpack-haxe.git
+git://github.com/heroku/heroku-buildpack-nodejs.git
