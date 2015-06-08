@@ -1,0 +1,1 @@
+PATH=$PATH:$HOME/haxe-3.2.0
