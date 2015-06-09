@@ -136,7 +136,7 @@ implements ImageEditorListener {
 
         if (Main.App.v.isDebug) {
             Loader.loadImage("img/bullbones.jpg").done(function(img: Image) {
-                var bb = new ImageFigure(img);
+                var bb = ImageFigure.fromImage(img);
                 insertImage(bb,0,0);
             }).fail(function(e){
                 trace(e);
@@ -145,6 +145,7 @@ implements ImageEditorListener {
         // event observing
         listenTo(Main.App.v, "change:brush", drawBrushCircle);
         listenTo(Main.App, App.APP_WINDOW_RESIZE_EVENT, resizeCanvas);
+        Main.App.onFileLoad = onFileLoad;
         // reset drawing
         resizeCanvas();
         invalidate();
@@ -168,12 +169,14 @@ implements ImageEditorListener {
     }
     function drawBackground () {
         mBackground.graphics
+        .clear()
         .beginFill(vBackgroundColor)
         .drawRoundRect(0,0,mCanvas.width,mCanvas.height,0)
         .endFill();
     }
     function drawGrid () {
         mGrid.graphics
+        .clear()
         .setStrokeStyle(1)
         .beginStroke("#fff");
         var i = vGridUnit;
@@ -225,22 +228,17 @@ implements ImageEditorListener {
         }
     }
 
-    public function onSearchResultSelected(result:BingSearchResult):Void {
-        trace(result);
-        Loader.loadImage(result.MediaUrl)
-        .done(function(img: Image) {
-            var bm = new ImageFigure(img);
-            bm.thumbSrc = result.Thumbnail.MediaUrl;
-            var x = (jq.width()-img.width)/2;
-            var y = (jq.height()-img.height)/2;
-            insertImage(bm,x,y);
-        }).fail(function(e){
-            var msg = "画像の読み込みに失敗しました";
-            js.Lib.alert(msg);
-            Rollbar.warning(msg, function (e2) {
-                trace(msg,e);
-            });
-        });
+    public function onSearchResultLoad(img: Image, result: BingSearchResult):Void {
+        var bm = ImageFigure.fromImage(img);
+        bm.thumbSrc = result.Thumbnail.MediaUrl;
+        var x = (jq.width()-img.width)/2;
+        var y = (jq.height()-img.height)/2;
+        insertImage(bm,x,y);
+    }
+
+    function onFileLoad (dataUrl: String) {
+        var im = ImageFigure.fromUrl(dataUrl);
+        insertImage(im,0,0);
     }
 
     private function resizeCanvas () {
@@ -343,6 +341,7 @@ implements ImageEditorListener {
                 toDraw = true;
             }
         }
+        if (toDraw) draw();
         mCapture.up(e);
         mDrawingFigure = null;
         mPressed = false;

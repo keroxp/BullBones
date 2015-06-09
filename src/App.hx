@@ -1,5 +1,8 @@
 package ;
 
+import js.html.ProgressEvent;
+import js.html.fs.FileError;
+import ajax.Loader;
 import createjs.easeljs.Event;
 import view.ViewUtil;
 import model.BrushEditor;
@@ -15,10 +18,13 @@ import js.html.MouseEvent;
 import view.SearchView;
 import js.Browser;
 
+typedef OnFileLoadListenr = String -> Void
+
 class App extends BackboneEvents
 implements BrushEditorListener
 implements MainCanvasListener {
     public var v(default, null): V;
+    private var jModalLoading: JQuery;
     private var jSearchButton: JQuery;
     private var jBrushButton: JQuery;
     private var jEditButton: JQuery;
@@ -30,7 +36,7 @@ implements MainCanvasListener {
     private var mImageEditorView: ImageEditorView;
     var window: DOMWindow = Browser.window;
     var document = Browser.document;
-
+    public var onFileLoad: OnFileLoadListenr;
     public static var APP_WINDOW_RESIZE_EVENT = "BullBones:APP_WINDOW_RESIZE_EVENT";
 
     public function new(attr: Dynamic) {
@@ -44,8 +50,10 @@ implements MainCanvasListener {
         trigger("app:start");
         new JQuery(function () {
             new JQuery(window).resize(onWindowResize);
-            ViewUtil.on("appView", "dragover", onDragOver);
-            ViewUtil.on("appView", "drop", onDrop);
+            window.addEventListener("dragover", onDragOver);
+            window.addEventListener("drop", onDrop);
+            // Loading View
+            jModalLoading = new JQuery("#modalLoadingView");
             // メインキャンバス
             mMainCanvas = new MainCanvas(new JQuery("#mainCanvas"));
             mMainCanvas.listener = this;
@@ -91,7 +99,15 @@ implements MainCanvasListener {
             new JQuery("#debugButton").on("click", function (e: MouseEvent){
                 this.v.isDebug = !this.v.isDebug;
             });
+            // hide loading
+            haxe.Timer.delay(function() {
+                jModalLoading.fadeOut(700);
+            }, 2400);
         });
+    }
+
+    public function toggleModalLoading () {
+        jModalLoading.toggle();
     }
 
     private function hidePanels (?exclude: ViewModel) {
@@ -120,13 +136,19 @@ implements MainCanvasListener {
     private function onDrop (e: MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
-        trace(e.dataTransfer.files);
+        trace("file dopped");
         var files = e.dataTransfer.files;
         if (files.length > 0) {
             var f = files.item(0);
-            if (f.type.indexOf("image/") > -1) {
-
-            }
+            Loader.loadFile(f)
+            .done(function (url: String) {
+                if (onFileLoad != null) onFileLoad(url);
+            }).fail(function (e: FileError) {
+                trace(e);
+                js.Lib.alert("読み込めない形式です");
+            }).progress(function (p: ProgressEvent) {
+                trace(p);
+            });
         }
     }
 

@@ -26,11 +26,23 @@ class ImageFigure implements Draggable {
         return new Rect(bitmap.x,bitmap.y,bitmap.x+bitmap.image.width,bitmap.y+bitmap.image.height);
     }
 
-    public function new(img: ImageElement) {
-        this.src = img.src;
-        this.thumbSrc = src;
-        bitmap = new Bitmap(src);
+    public static function fromUrl (dataurl: String): ImageFigure {
+        var ret = new ImageFigure();
+        ret.src = dataurl;
+        ret.thumbSrc = dataurl;
+        ret.bitmap = new Bitmap(dataurl);
+        return ret;
     }
+
+    public static function fromImage (img: ImageElement): ImageFigure {
+        var ret = new ImageFigure();
+        ret.src = img.src;
+        ret.thumbSrc = img.src;
+        ret.bitmap = new Bitmap(img);
+        return ret;
+    }
+
+    private function new () {}
 
     private var mCapture: MouseEventCapture = new MouseEventCapture();
     public function onDragStart(e:MouseEvent):Void {
