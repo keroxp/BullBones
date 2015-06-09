@@ -11,6 +11,12 @@ interface Draggable {
     public function onDragEnd(e: js.html.MouseEvent): Void;
 }
 
+class DraggableUtil {
+    public static function isImageFigure (d: Draggable): Bool {
+        return d != null && d.type == DraggableType.Image;
+    }
+}
+
 enum DraggableType {
     Figure;
     Image;

@@ -1,4 +1,7 @@
 package view;
+import rollbar.Rollbar;
+import js.html.Image;
+import figure.Draggable;
 import model.ImageEditor;
 import cv.ImageUtil;
 import figure.ImageFigure;
@@ -6,6 +9,7 @@ import ajax.Loader;
 import js.html.ImageData;
 import js.html.Event;
 import jQuery.JQuery;
+using figure.Draggable.DraggableUtil;
 
 interface ImageEditorListener {
     public function onImageEditorChange (editor: ImageEditor): Void;
@@ -42,17 +46,23 @@ class ImageEditorView extends ViewModel {
             postOnChange(mEditor);
         });
     }
+
+    override public function init() {
+        listenTo(Main.App.mainCanvas, "change:activeFigure", onactiveFigureChange);
+    }
+
     private var mThumbData: ImageData;
     private var mImage: ImageFigure;
-    public function setImage (value: ImageFigure) {
-        if (value != null && mImage != value) {
-            Loader.loadImage(value.thumbSrc).done(function(img: js.html.Image) {
+    public function onactiveFigureChange (canvas: MainCanvas, value: Draggable) {
+        if (value.isImageFigure() && value != mImage) {
+            var fig: ImageFigure = cast value;
+            Loader.loadImage(fig.thumbSrc).done(function(img: Image) {
                 mThumbData = ImageUtil.getImageData(img);
                 jImg.attr("src", ImageUtil.toDataUrl(mThumbData,"image/png"));
             }).fail(function (e: Dynamic) {
-                trace(e);
+                Rollbar.error(e);
             });
-            mImage = value;
+            mImage = fig;
         }
         if (mThumbData != null) {
             renderThumb();

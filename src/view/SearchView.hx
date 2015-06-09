@@ -52,6 +52,9 @@ class SearchView extends ViewModel {
     private function onSearch(e:Event) {
         e.preventDefault();
         e.stopPropagation();
+        if (mSelectedCell != null) {
+            mSelectedCell.removeClass("selected");
+        }
         var q:String = cast jInput.val();
         if (!mLoading && q.length > 0 && q != mCurrentQ) {
             trace('start searching \"$q\"');
@@ -59,7 +62,7 @@ class SearchView extends ViewModel {
             mLoading = true;
             ajax.BingSearch.search(q).done(function(data:Array<BingSearchResult>) {
                 setLoading(false);
-                _render(data.map(function(e:BingSearchResult) { return e.Thumbnail.MediaUrl; }));
+                render(data.map(function(e:BingSearchResult) { return e.Thumbnail.MediaUrl; }));
                 mImages = data;
             }).fail(function(jxhr:jQuery.JqXHR) {
                 setLoading(false);
@@ -98,6 +101,8 @@ class SearchView extends ViewModel {
             Rollbar.warning(msg, function (e2) {
                 trace(msg,e);
             });
+        }).always(function(){
+            jq.hide();
         });
         mLoadingOverlay.jq.show();
     }
@@ -119,7 +124,7 @@ class SearchView extends ViewModel {
     }
     private static var WHITE_IMG = "data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
 
-    public function _render(urls:Array<String>) {
+    public function render(urls:Array<String>) {
         var document:Document = js.Browser.document;
         var fragment = document.createDocumentFragment();
         var imgs:Array<Dynamic> = jResults.find("img").get();
