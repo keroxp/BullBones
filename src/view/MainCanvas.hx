@@ -1,4 +1,5 @@
 package view;
+import rollbar.Rollbar;
 import js.Browser;
 import figure.ImageFigure;
 import model.ImageEditor;
@@ -234,8 +235,11 @@ implements ImageEditorListener {
             var y = (jq.height()-img.height)/2;
             insertImage(bm,x,y);
         }).fail(function(e){
-            js.Lib.alert("画像の読み込みに失敗しました");
-            trace(e);
+            var msg = "画像の読み込みに失敗しました";
+            js.Lib.alert(msg);
+            Rollbar.warning(msg, function (e2) {
+                trace(msg,e);
+            });
         });
     }
 
