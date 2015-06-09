@@ -7,6 +7,8 @@ class ImageEditor {
     public var alpha: Float = 1.0;
     public var useLaplacian8: Bool = false;
 
+    public function new () {}
+
     public function createFilter (): Filter {
         var f = new Filter();
         if (lineExtraction) {

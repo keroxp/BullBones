@@ -4,6 +4,9 @@ class BrushEditor {
     public var alpha: Float = 1.0;
     public var width: Float = 3;
     public var color(get, null): String;
+
+    public function new () {}
+
     function get_color (): String {
         var thick = 255-thickness;
         var ret = 'rgba($thick,$thick,$thick,$alpha)';
