@@ -1,5 +1,6 @@
 package ;
 
+import createjs.easeljs.Event;
 import view.ViewUtil;
 import model.BrushEditor;
 import view.MainCanvas;
@@ -27,6 +28,11 @@ implements MainCanvasListener {
     private var mSearchView: SearchView;
     private var mBrushView: BrushEditorView;
     private var mImageEditorView: ImageEditorView;
+    var window: DOMWindow = Browser.window;
+    var document = Browser.document;
+
+    public static var APP_WINDOW_RESIZE_EVENT = "BullBones:APP_WINDOW_RESIZE_EVENT";
+
     public function new(attr: Dynamic) {
         super();
         this.v = new V(attr);
@@ -37,19 +43,11 @@ implements MainCanvasListener {
         });
         trigger("app:start");
         new JQuery(function () {
-            var document = Browser.document;
-            var window: DOMWindow = Browser.window;
-            var w: Float = window.innerWidth;
-            var h: Float = window.innerHeight;
+            new JQuery(window).resize(onWindowResize);
             ViewUtil.on("appView", "dragover", onDragOver);
             ViewUtil.on("appView", "drop", onDrop);
-            var canvasDom = new JQuery("#mainCanvas");
-            canvasDom.attr({
-                width : w,
-                height: h
-            });
             // メインキャンバス
-            mMainCanvas = new MainCanvas(canvasDom);
+            mMainCanvas = new MainCanvas(new JQuery("#mainCanvas"));
             mMainCanvas.listener = this;
             listenTo(mMainCanvas, MainCanvas.ON_CANVAS_MOUSEDOWN_EVENT, function (e: Dynamic) {
                 mBrushView.jq.hide();
@@ -102,6 +100,17 @@ implements MainCanvasListener {
         if (exclude != mBrushView) mBrushView.jq.hide();
     }
 
+    // Global Event Handlers
+    private var mTimer: Int = -1;
+    private function onWindowResize (e: jQuery.Event) {
+        if (mTimer > -1) {
+            window.clearTimeout(mTimer);
+        }
+        mTimer = window.setTimeout(function () {
+            trigger(APP_WINDOW_RESIZE_EVENT);
+        }, 400);
+    }
+
     private function onDragOver (e: MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
@@ -120,6 +129,8 @@ implements MainCanvasListener {
             }
         }
     }
+
+    // Listeners
 
     public function onBrushEditorChange(editor:BrushEditor):Void {
         this.v.brush = editor;

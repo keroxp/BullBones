@@ -1,4 +1,5 @@
 package view;
+import js.Browser;
 import figure.ImageFigure;
 import model.ImageEditor;
 import createjs.easeljs.Bitmap;
@@ -55,6 +56,8 @@ implements ImageEditorListener {
     var vGridDivision = 10;
     var mPressed = false;
     var vBackgroundColor = "#ddd";
+    var window: DOMWindow = Browser.window;
+
     public var listener: MainCanvasListener;
     public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null)
         = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
@@ -110,12 +113,10 @@ implements ImageEditorListener {
         // 背景
         mBackground = new Shape();
         mBackground.visible = false;
-        drawBackground();
         mBgLayer.addChild(mBackground);
         // グリッド
         mGrid = new Shape();
         mGrid.visible = false;
-        drawGrid();
         mBgLayer.addChild(mGrid);
         // バウンディングボックス
         mBoundingBox = new BoundingBox();
@@ -124,7 +125,6 @@ implements ImageEditorListener {
         // brush
         mBrushCircle = new Shape();
         mFgLayer.addChild(mBrushCircle);
-        drawBrushCircle();
         // ファジィグラフ
         mFuzzySketchGraph = new Shape();
         mFgLayer.addChild(mFuzzySketchGraph);
@@ -141,10 +141,19 @@ implements ImageEditorListener {
                 trace(e);
             });
         }
-
+        // event observing
         listenTo(Main.App.v, "change:brush", drawBrushCircle);
-        // KVO
-        mStage.update();
+        listenTo(Main.App, App.APP_WINDOW_RESIZE_EVENT, resizeCanvas);
+        // reset drawing
+        resizeCanvas();
+        invalidate();
+    }
+    function invalidate () {
+        drawBackground();
+        drawGrid();
+        drawBrushCircle();
+        drawBoundingBox();
+        draw();
     }
     function draw () {
         mStage.update();
@@ -228,6 +237,17 @@ implements ImageEditorListener {
             js.Lib.alert("画像の読み込みに失敗しました");
             trace(e);
         });
+    }
+
+    private function resizeCanvas () {
+        var w: Float = window.innerWidth;
+        var h: Float = window.innerHeight;
+        this.jq.attr({
+            width : w,
+            height: h
+        });
+        invalidate();
+        trace("onWindowChange",w,h);
     }
 
     public function toggleEditing() {
