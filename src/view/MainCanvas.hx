@@ -1,4 +1,6 @@
 package view;
+import rollbar.Rollbar;
+import js.Browser;
 import figure.ImageFigure;
 import model.ImageEditor;
 import createjs.easeljs.Bitmap;
@@ -55,6 +57,8 @@ implements ImageEditorListener {
     var vGridDivision = 10;
     var mPressed = false;
     var vBackgroundColor = "#ddd";
+    var window: DOMWindow = Browser.window;
+
     public var listener: MainCanvasListener;
     public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null)
         = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
@@ -110,12 +114,10 @@ implements ImageEditorListener {
         // 背景
         mBackground = new Shape();
         mBackground.visible = false;
-        drawBackground();
         mBgLayer.addChild(mBackground);
         // グリッド
         mGrid = new Shape();
         mGrid.visible = false;
-        drawGrid();
         mBgLayer.addChild(mGrid);
         // バウンディングボックス
         mBoundingBox = new BoundingBox();
@@ -124,7 +126,6 @@ implements ImageEditorListener {
         // brush
         mBrushCircle = new Shape();
         mFgLayer.addChild(mBrushCircle);
-        drawBrushCircle();
         // ファジィグラフ
         mFuzzySketchGraph = new Shape();
         mFgLayer.addChild(mFuzzySketchGraph);
@@ -135,16 +136,26 @@ implements ImageEditorListener {
 
         if (Main.App.v.isDebug) {
             Loader.loadImage("img/bullbones.jpg").done(function(img: Image) {
-                var bb = new ImageFigure(img);
+                var bb = ImageFigure.fromImage(img);
                 insertImage(bb,0,0);
             }).fail(function(e){
                 trace(e);
             });
         }
-
+        // event observing
         listenTo(Main.App.v, "change:brush", drawBrushCircle);
-        // KVO
-        mStage.update();
+        listenTo(Main.App, App.APP_WINDOW_RESIZE_EVENT, resizeCanvas);
+        Main.App.onFileLoad = onFileLoad;
+        // reset drawing
+        resizeCanvas();
+        invalidate();
+    }
+    function invalidate () {
+        drawBackground();
+        drawGrid();
+        drawBrushCircle();
+        drawBoundingBox();
+        draw();
     }
     function draw () {
         mStage.update();
@@ -158,12 +169,14 @@ implements ImageEditorListener {
     }
     function drawBackground () {
         mBackground.graphics
+        .clear()
         .beginFill(vBackgroundColor)
         .drawRoundRect(0,0,mCanvas.width,mCanvas.height,0)
         .endFill();
     }
     function drawGrid () {
         mGrid.graphics
+        .clear()
         .setStrokeStyle(1)
         .beginStroke("#fff");
         var i = vGridUnit;
@@ -215,19 +228,28 @@ implements ImageEditorListener {
         }
     }
 
-    public function onSearchResultSelected(result:BingSearchResult):Void {
-        trace(result);
-        Loader.loadImage(result.MediaUrl)
-        .done(function(img: Image) {
-            var bm = new ImageFigure(img);
-            bm.thumbSrc = result.Thumbnail.MediaUrl;
-            var x = (jq.width()-img.width)/2;
-            var y = (jq.height()-img.height)/2;
-            insertImage(bm,x,y);
-        }).fail(function(e){
-            js.Lib.alert("画像の読み込みに失敗しました");
-            trace(e);
+    public function onSearchResultLoad(img: Image, result: BingSearchResult):Void {
+        var bm = ImageFigure.fromImage(img);
+        bm.thumbSrc = result.Thumbnail.MediaUrl;
+        var x = (jq.width()-img.width)/2;
+        var y = (jq.height()-img.height)/2;
+        insertImage(bm,x,y);
+    }
+
+    function onFileLoad (dataUrl: String) {
+        var im = ImageFigure.fromUrl(dataUrl);
+        insertImage(im,0,0);
+    }
+
+    private function resizeCanvas () {
+        var w: Float = window.innerWidth;
+        var h: Float = window.innerHeight;
+        this.jq.attr({
+            width : w,
+            height: h
         });
+        invalidate();
+        trace("onWindowChange",w,h);
     }
 
     public function toggleEditing() {
@@ -319,6 +341,7 @@ implements ImageEditorListener {
                 toDraw = true;
             }
         }
+        if (toDraw) draw();
         mCapture.up(e);
         mDrawingFigure = null;
         mPressed = false;

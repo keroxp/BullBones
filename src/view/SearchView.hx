@@ -1,4 +1,7 @@
 package view;
+import rollbar.Rollbar;
+import ajax.Loader;
+import view.LoadingOverlay;
 import js.html.Document;
 import ajax.BingSearch.BingSearchResult;
 import js.html.EventTarget;
@@ -9,7 +12,7 @@ import createjs.easeljs.Event;
 import js.html.Image;
 
 interface SearchResultListener {
-    public function onSearchResultSelected(result: BingSearchResult): Void;
+    public function onSearchResultLoad(img: Image, result: BingSearchResult): Void;
 }
 
 class SearchView extends ViewModel {
@@ -19,6 +22,7 @@ class SearchView extends ViewModel {
     private var mImages:Array<BingSearchResult> = [];
     private var mLoading:Bool;
     private var mCurrentQ:String;
+    private var mLoadingOverlay: LoadingOverlay;
     public var listener: SearchResultListener;
 
     public function new(jq:JQuery) {
@@ -28,6 +32,9 @@ class SearchView extends ViewModel {
         jResults = jq.find("#searchResults");
         jInput.bind("change", onSearch);
         jInput.bind("input", onInput);
+        var builder = new LoadingOverlayBuilder("searchViewOverlay");
+        mLoadingOverlay = builder.type(LoadingOverlayType.Bar).width(50).color("rgba(0,0,0,0.4").build();
+        jq.append(mLoadingOverlay.jq);
     }
 
     private function onInput(e:Event) {
@@ -76,9 +83,23 @@ class SearchView extends ViewModel {
         cell.addClass("selected");
         mSelectedCell = cell;
         var index:Int = cell.data("index");
-        if (listener != null) {
-            listener.onSearchResultSelected(mImages[index]);
-        }
+        var result = mImages[index];
+        mLoadingOverlay.jq.css("height", jq.outerHeight()).show();
+        Loader.loadImage(result.MediaUrl)
+        .done(function(img: Image) {
+            mLoadingOverlay.jq.hide();
+            if (listener != null) {
+                listener.onSearchResultLoad(img, result);
+            }
+        }).fail(function(e){
+            mLoadingOverlay.jq.hide();
+            var msg = "画像の読み込みに失敗しました";
+            js.Lib.alert(msg);
+            Rollbar.warning(msg, function (e2) {
+                trace(msg,e);
+            });
+        });
+        mLoadingOverlay.jq.show();
     }
 
     public function setLoading(loading:Bool) {
@@ -93,6 +114,7 @@ class SearchView extends ViewModel {
 
     public function toggle() {
         jq.toggle();
+        mLoadingOverlay.jq.hide();
         jInput.focus();
     }
     private static var WHITE_IMG = "data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";

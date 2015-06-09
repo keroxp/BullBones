@@ -1,4 +1,9 @@
 package ajax;
+import js.html.ProgressEvent;
+import js.html.fs.FileError;
+import js.html.File;
+import js.html.FileList;
+import js.html.FileReader;
 import deferred.Promise;
 import deferred.Deferred;
 import js.html.Image;
@@ -22,5 +27,23 @@ class Loader {
             img.src = src;
         }
         return def;
+    }
+    public static function loadFile(file: File): Promise<String, FileError, ProgressEvent> {
+        var reader = new FileReader();
+        if (file.type.indexOf("image/") > -1) {
+            var def = new Deferred<String, FileError, ProgressEvent>();
+            reader.onload = function (ev) {
+                def.resolve(reader.result);
+            };
+            reader.onprogress = function(p) {
+                def.notify(p);
+            }
+            reader.onerror = function (ev) {
+                def.reject(reader.error);
+            }
+            reader.readAsDataURL(file);
+            return cast def;
+        }
+        return null;
     }
 }

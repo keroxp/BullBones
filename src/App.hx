@@ -1,5 +1,9 @@
 package ;
 
+import js.html.ProgressEvent;
+import js.html.fs.FileError;
+import ajax.Loader;
+import createjs.easeljs.Event;
 import view.ViewUtil;
 import model.BrushEditor;
 import view.MainCanvas;
@@ -14,10 +18,13 @@ import js.html.MouseEvent;
 import view.SearchView;
 import js.Browser;
 
+typedef OnFileLoadListenr = String -> Void
+
 class App extends BackboneEvents
 implements BrushEditorListener
 implements MainCanvasListener {
     public var v(default, null): V;
+    private var jModalLoading: JQuery;
     private var jSearchButton: JQuery;
     private var jBrushButton: JQuery;
     private var jEditButton: JQuery;
@@ -27,6 +34,11 @@ implements MainCanvasListener {
     private var mSearchView: SearchView;
     private var mBrushView: BrushEditorView;
     private var mImageEditorView: ImageEditorView;
+    var window: DOMWindow = Browser.window;
+    var document = Browser.document;
+    public var onFileLoad: OnFileLoadListenr;
+    public static var APP_WINDOW_RESIZE_EVENT = "BullBones:APP_WINDOW_RESIZE_EVENT";
+
     public function new(attr: Dynamic) {
         super();
         this.v = new V(attr);
@@ -37,19 +49,13 @@ implements MainCanvasListener {
         });
         trigger("app:start");
         new JQuery(function () {
-            var document = Browser.document;
-            var window: DOMWindow = Browser.window;
-            var w: Float = window.innerWidth;
-            var h: Float = window.innerHeight;
-            ViewUtil.on("appView", "dragover", onDragOver);
-            ViewUtil.on("appView", "drop", onDrop);
-            var canvasDom = new JQuery("#mainCanvas");
-            canvasDom.attr({
-                width : w,
-                height: h
-            });
+            new JQuery(window).resize(onWindowResize);
+            window.addEventListener("dragover", onDragOver);
+            window.addEventListener("drop", onDrop);
+            // Loading View
+            jModalLoading = new JQuery("#modalLoadingView");
             // メインキャンバス
-            mMainCanvas = new MainCanvas(canvasDom);
+            mMainCanvas = new MainCanvas(new JQuery("#mainCanvas"));
             mMainCanvas.listener = this;
             listenTo(mMainCanvas, MainCanvas.ON_CANVAS_MOUSEDOWN_EVENT, function (e: Dynamic) {
                 mBrushView.jq.hide();
@@ -93,13 +99,32 @@ implements MainCanvasListener {
             new JQuery("#debugButton").on("click", function (e: MouseEvent){
                 this.v.isDebug = !this.v.isDebug;
             });
+            // hide loading
+            haxe.Timer.delay(function() {
+                jModalLoading.fadeOut(700);
+            }, 2400);
         });
+    }
+
+    public function toggleModalLoading () {
+        jModalLoading.toggle();
     }
 
     private function hidePanels (?exclude: ViewModel) {
         if (exclude != mImageEditorView) mImageEditorView.jq.hide();
         if (exclude != mSearchView ) mSearchView.jq.hide();
         if (exclude != mBrushView) mBrushView.jq.hide();
+    }
+
+    // Global Event Handlers
+    private var mTimer: Int = -1;
+    private function onWindowResize (e: jQuery.Event) {
+        if (mTimer > -1) {
+            window.clearTimeout(mTimer);
+        }
+        mTimer = window.setTimeout(function () {
+            trigger(APP_WINDOW_RESIZE_EVENT);
+        }, 400);
     }
 
     private function onDragOver (e: MouseEvent) {
@@ -111,15 +136,23 @@ implements MainCanvasListener {
     private function onDrop (e: MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
-        trace(e.dataTransfer.files);
+        trace("file dopped");
         var files = e.dataTransfer.files;
         if (files.length > 0) {
             var f = files.item(0);
-            if (f.type.indexOf("image/") > -1) {
-
-            }
+            Loader.loadFile(f)
+            .done(function (url: String) {
+                if (onFileLoad != null) onFileLoad(url);
+            }).fail(function (e: FileError) {
+                trace(e);
+                js.Lib.alert("読み込めない形式です");
+            }).progress(function (p: ProgressEvent) {
+                trace(p);
+            });
         }
     }
+
+    // Listeners
 
     public function onBrushEditorChange(editor:BrushEditor):Void {
         this.v.brush = editor;

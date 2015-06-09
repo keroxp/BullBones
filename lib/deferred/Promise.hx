@@ -10,12 +10,12 @@ extern class Promise <D,E,P> {
 		 Add handlers to be called when the Deferred object is rejected.
 	**/
     @:jQueryVersion({ added : "1.5" })
-    public function fail(failCallbacks: E -> Void):Deferred<D,E,P>;
+    public function fail(failCallbacks: E -> Void):Promise<D,E,P>;
     /**
 		 Add handlers to be called when the Deferred object generates progress notifications.
 	**/
     @:jQueryVersion({ added : "1.7" })
-    public function progress(progressCallbacks: P -> Void, ?progressCallbacks: Array<P->Void>): Deferred<D,E,P>;
+    public function progress(progressCallbacks: P -> Void, ?progressCallbacks: Array<P->Void>): Promise<D,E,P>;
     /**
 		Determine the current state of a Deferred object.
 	**/
