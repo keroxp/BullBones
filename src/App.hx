@@ -102,13 +102,13 @@ implements MainCanvasListener {
         if (exclude != mBrushView) mBrushView.jq.hide();
     }
 
-    private function onDragOver (e: js.html.MouseEvent) {
+    private function onDragOver (e: MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
         e.dataTransfer.dropEffect = 'copy';
     }
 
-    private function onDrop (e: js.html.MouseEvent) {
+    private function onDrop (e: MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
         trace(e.dataTransfer.files);
