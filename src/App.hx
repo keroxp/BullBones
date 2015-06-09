@@ -1,5 +1,7 @@
 package ;
 
+import figure.Draggable;
+import model.BBModel;
 import js.html.ProgressEvent;
 import js.html.fs.FileError;
 import ajax.Loader;
@@ -17,12 +19,10 @@ import jQuery.JQuery;
 import js.html.MouseEvent;
 import view.SearchView;
 import js.Browser;
-
+using figure.Draggable.DraggableUtil;
 typedef OnFileLoadListenr = String -> Void
 
-class App extends BackboneEvents
-implements BrushEditorListener
-implements MainCanvasListener {
+class App extends BackboneEvents implements BrushEditorListener {
     public var v(default, null): V;
     private var jModalLoading: JQuery;
     private var jSearchButton: JQuery;
@@ -30,10 +30,10 @@ implements MainCanvasListener {
     private var jEditButton: JQuery;
     private var jImageButton: JQuery;
     private var jDebugButton: JQuery;
-    private var mMainCanvas: MainCanvas;
-    private var mSearchView: SearchView;
-    private var mBrushView: BrushEditorView;
-    private var mImageEditorView: ImageEditorView;
+    public var mainCanvas: MainCanvas;
+    public var searchView: SearchView;
+    public var brushEditorView: BrushEditorView;
+    public var imageEditorView: ImageEditorView;
     var window: DOMWindow = Browser.window;
     var document = Browser.document;
     public var onFileLoad: OnFileLoadListenr;
@@ -55,50 +55,65 @@ implements MainCanvasListener {
             // Loading View
             jModalLoading = new JQuery("#modalLoadingView");
             // メインキャンバス
-            mMainCanvas = new MainCanvas(new JQuery("#mainCanvas"));
-            mMainCanvas.listener = this;
-            listenTo(mMainCanvas, MainCanvas.ON_CANVAS_MOUSEDOWN_EVENT, function (e: Dynamic) {
-                mBrushView.jq.hide();
-                mSearchView.jq.hide();
-                mImageEditorView.jq.hide();
+            mainCanvas = new MainCanvas(new JQuery("#mainCanvas"));
+            listenTo(mainCanvas, MainCanvas.ON_CANVAS_MOUSEDOWN_EVENT, function (e: Dynamic) {
+                brushEditorView.jq.hide();
+                searchView.jq.hide();
+                imageEditorView.jq.hide();
+            });
+            listenTo(mainCanvas, "change:isEditing", function (mode: BBModel, value: Bool) {
+                hidePanels();
+            });
+            listenTo(mainCanvas, "change:activeFigure", function (c: MainCanvas, value: Draggable) {
+                if (value.isImageFigure()) {
+                    jImageButton.show();
+                } else {
+                    jImageButton.hide();
+                }
             });
             // 検索ビュー
-            mSearchView = new SearchView(new JQuery("#searchView"));
-            mSearchView.listener = mMainCanvas;
+            searchView = new SearchView(new JQuery("#searchView"));
+            searchView.listener = mainCanvas;
             // ブラシ
-            mBrushView = new BrushEditorView(new JQuery("#brushWrapper"));
-            mBrushView.listener = this;
+            brushEditorView = new BrushEditorView(new JQuery("#brushWrapper"));
+            brushEditorView.listener = this;
             // 画像エディタ
-            mImageEditorView = new ImageEditorView(new JQuery("#imageEditorView"));
-            mImageEditorView.listener = mMainCanvas;
+            imageEditorView = new ImageEditorView(new JQuery("#imageEditorView"));
+            imageEditorView.listener = mainCanvas;
             // 検索ボタン
             jSearchButton = new JQuery("#searchButton");
             jSearchButton.on("click", function (e: MouseEvent) {
-                hidePanels(mSearchView);
-                mSearchView.toggle();
+                hidePanels(searchView);
+                searchView.toggle();
             });
             // ブラシボタン
             var brushButton = new JQuery("#brushButton");
             brushButton.on("click", function(e: MouseEvent) {
-                hidePanels(mBrushView);
-                mBrushView.jq.toggle();
+                hidePanels(brushEditorView);
+                brushEditorView.jq.toggle();
             });
             // 編集ボタン
             jEditButton = new JQuery("#editButton");
             jEditButton.on("click", function (e: MouseEvent) {
                 hidePanels();
-                mMainCanvas.toggleEditing();
+                mainCanvas.toggleEditing();
             });
             // 画像ボタン
             jImageButton = new JQuery("#imageEditorButton");
             jImageButton.on("click", function(e: MouseEvent) {
-                hidePanels(mImageEditorView);
-                mImageEditorView.jq.toggle();
+                hidePanels(imageEditorView);
+                imageEditorView.jq.toggle();
             });
             // デバッグボタン
             new JQuery("#debugButton").on("click", function (e: MouseEvent){
                 this.v.isDebug = !this.v.isDebug;
             });
+
+            mainCanvas.init();
+            searchView.init();
+            imageEditorView.init();
+            brushEditorView.init();
+
             // hide loading
             haxe.Timer.delay(function() {
                 jModalLoading.fadeOut(700);
@@ -111,9 +126,9 @@ implements MainCanvasListener {
     }
 
     private function hidePanels (?exclude: ViewModel) {
-        if (exclude != mImageEditorView) mImageEditorView.jq.hide();
-        if (exclude != mSearchView ) mSearchView.jq.hide();
-        if (exclude != mBrushView) mBrushView.jq.hide();
+        if (exclude != imageEditorView) imageEditorView.jq.hide();
+        if (exclude != searchView ) searchView.jq.hide();
+        if (exclude != brushEditorView) brushEditorView.jq.hide();
     }
 
     // Global Event Handlers
@@ -158,13 +173,5 @@ implements MainCanvasListener {
         this.v.brush = editor;
     }
 
-    public function onCanvasImageSelected(image:ImageFigure):Void {
-        if (image != null) {
-            jImageButton.show();
-            mImageEditorView.setImage(image);
-        } else {
-            jImageButton.hide();
-        }
-    }
 
 }

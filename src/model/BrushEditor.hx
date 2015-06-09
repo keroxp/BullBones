@@ -4,6 +4,7 @@ class BrushEditor {
     public var alpha: Float = 1.0;
     public var width: Float = 3;
     public var color(get, null): String;
+    public var supplemnt: Bool = true;
 
     public function new () {}
 

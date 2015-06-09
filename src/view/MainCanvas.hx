@@ -33,9 +33,6 @@ import figure.Figure;
 import createjs.easeljs.Stage;
 import createjs.easeljs.Shape;
 
-interface MainCanvasListener {
-    public function onCanvasImageSelected(image: ImageFigure): Void;
-}
 class MainCanvas extends ViewModel
 implements BoundingBox.OnChangeListener
 implements SearchResultListener
@@ -59,40 +56,37 @@ implements ImageEditorListener {
     var vBackgroundColor = "#ddd";
     var window: DOMWindow = Browser.window;
 
-    public var listener: MainCanvasListener;
     public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null)
         = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
     public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null)
         = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEMOVE_EVENT";
     public static var ON_CANVAS_MOUSEUP_EVENT(default, null)
         = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEUP_EVENT";
-    public static var ON_CANVAS_IMAGE_SELECTED_EVENT(default, null)
-        = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_IMAGE_SELECTED_EVENT";
 
-    private var mFocusedFigure(default,set):Draggable;
-    function set_mFocusedFigure(value:Draggable) {
-        this.mFocusedFigure = value;
-        if (listener != null) {
-            if (value != null && value.type == Image) {
-                listener.onCanvasImageSelected(cast value);
-            } else {
-                listener.onCanvasImageSelected(null);
-            }
-        }
-        return value;
+    @:isVar public var activeFigure(get,set):Draggable;
+    function get_activeFigure(): Draggable {
+        return get("activeFigure");
+    }
+    function set_activeFigure(value:Draggable) {
+        set("activeFigure", value);
+        return this.activeFigure = value;
     }
 
-    public var isEditing(default,set): Bool = false;
-    private function set_isEditing(value:Bool) {
+    @:isVar public var isEditing(get,set): Bool = false;
+    function get_isEditing(): Bool {
+        return get("isEditing");
+    }
+    function set_isEditing(value:Bool) {
         this.isEditing = value;
         jq.attr("data-editing", value+"");
-        mFocusedFigure = value ? mFigures[mFigures.length-1] : null;
+        activeFigure = value ? mFigures[mFigures.length-1] : null;
         mBackground.visible = value;
         mGrid.visible = value;
         mBrushCircle.visible = !value;
         drawBoundingBox();
         drawBrushCircle();
         draw();
+        set("isEditing", value);
         return value;
     }
 
@@ -142,14 +136,18 @@ implements ImageEditorListener {
                 trace(e);
             });
         }
-        // event observing
-        listenTo(Main.App.v, "change:brush", drawBrushCircle);
-        listenTo(Main.App, App.APP_WINDOW_RESIZE_EVENT, resizeCanvas);
-        Main.App.onFileLoad = onFileLoad;
         // reset drawing
         resizeCanvas();
         invalidate();
     }
+
+    override public function init() {
+        // event observing
+        listenTo(Main.App.v, "change:brush", drawBrushCircle);
+        listenTo(Main.App, App.APP_WINDOW_RESIZE_EVENT, resizeCanvas);
+        Main.App.onFileLoad = onFileLoad;
+    }
+
     function invalidate () {
         drawBackground();
         drawGrid();
@@ -196,8 +194,8 @@ implements ImageEditorListener {
         mBoundingBox.clear();
         mBoundingBox.shape.x = 0;
         mBoundingBox.shape.y = 0;
-        if (isEditing && mFocusedFigure != null) {
-            mBoundingBox.render(mFocusedFigure.bounds);
+        if (activeFigure != null) {
+            mBoundingBox.render(activeFigure.bounds);
         }
     }
     function drawBrushCircle () {
@@ -219,8 +217,8 @@ implements ImageEditorListener {
         mStage.update();
     }
     public function onImageEditorChange(editor: ImageEditor):Void {
-        if (mFocusedFigure != null && mFocusedFigure.type == Image) {
-            var image: ImageFigure = cast mFocusedFigure;
+        if (activeFigure != null && activeFigure.type == Image) {
+            var image: ImageFigure = cast activeFigure;
             image.filter = editor.createFilter();
             image.bitmap.alpha = editor.alpha;
             trace(editor);
@@ -260,8 +258,8 @@ implements ImageEditorListener {
     function onCanvasMouseDown (e: MouseEvent) {
         mPressed = true;
         if (!isEditing) {
-            if (mFocusedFigure != null) {
-                mFocusedFigure = null;
+            if (activeFigure != null) {
+                activeFigure = null;
                 drawBoundingBox();
             } else {
                 var f =  new Figure(e.clientX, e.clientY);
@@ -289,7 +287,7 @@ implements ImageEditorListener {
                 }
                 i--;
             }
-            mFocusedFigure = tmp;
+            activeFigure = tmp;
             drawBoundingBox();
         }
         mCapture.down(e);
@@ -313,7 +311,7 @@ implements ImageEditorListener {
                 }
             } else {
                 if (mDragBegan) {
-                    mFocusedFigure.onDragMove(e);
+                    activeFigure.onDragMove(e);
                     mBoundingBox.shape.x += mCapture.getMoveX(e);
                     mBoundingBox.shape.y += mCapture.getMoveY(e);
                     toDraw = true;
@@ -336,7 +334,7 @@ implements ImageEditorListener {
             }
         } else {
             if (mDragBegan) {
-                mFocusedFigure.onDragEnd(e);
+                activeFigure.onDragEnd(e);
                 drawBoundingBox();
                 toDraw = true;
             }
@@ -352,7 +350,7 @@ implements ImageEditorListener {
 
     }
     public function onCornerMove (e: createjs.easeljs.MouseEvent, corner: Corner, dx: Float, dy: Float): Void {
-        var f: Draggable = cast mFocusedFigure;
+        var f: Draggable = cast activeFigure;
         var w = f.bounds.width();
         var h = f.bounds.height();
         var px: Float = 0;
@@ -386,7 +384,7 @@ implements ImageEditorListener {
         }
         var scaleX = f.bounds.width()/w;
         var scaleY = f.bounds.height()/h;
-//        mFocusedFigure.setScale(scaleX,scaleY,px,py);
+//        mactiveFigure.setScale(scaleX,scaleY,px,py);
         draw();
     }
     public function onCornerUp (e: createjs.easeljs.MouseEvent, corner: Corner): Void {
@@ -413,11 +411,11 @@ implements ImageEditorListener {
         mCurrentKeyEvent = null;
     }
     function onDelete (e: KeyboardEvent) {
-        if (mFocusedFigure != null) {
-            mFigures.remove(mFocusedFigure);
-            mMainLayer.removeChild(mFocusedFigure.display);
+        if (activeFigure != null) {
+            mFigures.remove(activeFigure);
+            mMainLayer.removeChild(activeFigure.display);
             mBoundingBox.clear();
-            mFocusedFigure = null;
+            activeFigure = null;
             draw();
         }
     }

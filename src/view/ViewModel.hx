@@ -1,10 +1,13 @@
 package view;
-import backbone.haxe.BackboneEvents;
+import backbone.Model;
 import jQuery.JQuery;
-class ViewModel extends BackboneEvents {
+class ViewModel extends Model {
     public var jq: JQuery;
     public function new(?jq: JQuery) {
         super();
         this.jq = jq;
+    }
+    public function init() {
+
     }
 }
