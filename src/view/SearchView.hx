@@ -147,7 +147,7 @@ class SearchView extends ViewModel {
             img.src = j < urls.length ? urls[j] : WHITE_IMG;
             i++;
         }
-        while (i < urls.length - 1) {
+        while (i < urls.length) {
             var row = new JQuery("<div class='searchResultsRow'></div>");
             for (j in 0...3) {
                 var url = i < urls.length ? urls[i] : WHITE_IMG;
