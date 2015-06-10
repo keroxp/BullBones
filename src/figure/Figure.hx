@@ -198,7 +198,7 @@ class Figure implements Draggable {
         var sy = shape.y;
         if (isDrawing && mDirtyPoints.length > 0) {
             var ds = points[mDirtyPoints[0]-1];
-            shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
+            shape.graphics.setStrokeStyle(width,"round",1).beginStroke(color);
             shape.graphics.moveTo(xx(ds.x),yy(ds.y));
             for (i in mDirtyPoints) {
                 var dp = points[i];
@@ -207,9 +207,13 @@ class Figure implements Draggable {
             mDirtyPoints = new Array();
         } else {
             shape.graphics.clear();
-            shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
+            shape.graphics.setStrokeStyle(width,"round",1).beginStroke(color);
             shape.graphics.moveTo(xx(s.x),yy(s.y));
-            drawMovingAverage();
+            if (Main.App.v.brush.supplemnt) {
+                drawMovingAverage();
+            } else {
+                drawLines();
+            }
         }
         shape.graphics.endStroke();
         if (!isDrawing) {
@@ -233,13 +237,11 @@ class Figure implements Draggable {
             }
         }
     }
-    private function drawQuadraticCurve () {
+    private function drawLines () {
         for (i in 1...points.length-1) {
             var p = points[i];
             var n = points[i+1];
-            var c = (p.x+n.x)/2;
-            var d = (p.y+n.y)/2;
-            shape.graphics.quadraticCurveTo(p.x,p.y,c,d);
+            shape.graphics.lineTo(xx(p.x),yy(p.y));
         }
     }
     public var supplementLength = 5;
