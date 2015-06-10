@@ -83,7 +83,7 @@ class App extends BackboneEvents implements BrushEditorListener {
             // 検索ボタン
             jSearchButton = new JQuery("#searchButton");
             jSearchButton.on("click", function (e: MouseEvent) {
-                hidePanels(searchView);
+                mainCanvas.isEditing = false;
                 searchView.toggle();
             });
             // ブラシボタン
