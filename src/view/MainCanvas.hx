@@ -1,23 +1,28 @@
 package view;
-import util.BrowserUtil;
-import hammer.HammerEvent;
-import hammer.Hammer;
+import rollbar.Rollbar;
 import js.Browser;
 import figure.ImageFigure;
 import model.ImageEditor;
 import createjs.easeljs.Bitmap;
+import cv.ImageUtil;
+import cv.FilterFactory;
 import view.ImageEditorView.ImageEditorListener;
 import view.SearchView.SearchResultListener;
 import ajax.Loader;
+import jQuery.Event;
 import view.ViewModel;
 import ajax.BingSearch.BingSearchResult;
 import jQuery.JQuery;
-import event.MouseEventCapture;
+import geometry.MouseEventCapture;
+import js.html.Document;
 import figure.Draggable;
+import js.html.Document;
 import js.html.Element;
 import js.html.DOMWindow;
+import js.Error;
 import js.html.MouseEvent;
 import createjs.easeljs.Container;
+import js.html.ImageData;
 import js.html.Image;
 import geometry.FuzzyPoint;
 import figure.BoundingBox;
@@ -28,7 +33,6 @@ import figure.Figure;
 import createjs.easeljs.Stage;
 import createjs.easeljs.Shape;
 
-using view.ViewUtil;
 class MainCanvas extends ViewModel
 implements BoundingBox.OnChangeListener
 implements SearchResultListener
@@ -89,25 +93,9 @@ implements ImageEditorListener {
     public function new(jq: JQuery) {
         super(jq);
         var window: DOMWindow = js.Browser.window;
-        var hm = new Hammer(el);
-        hm.on("panstart", function (e: HammerEvent) {
-            if (e.pointers.length == 1) {
-                onPanStart(e);
-            }
-        });
-        hm.on("panmove", function (e: HammerEvent) {
-            if (e.pointers.length == 1) {
-                onPanMove(e);
-            }
-        });
-        hm.on("panend", function (e: HammerEvent) {
-            if (e.pointers.length == 1) {
-                onPanEnd(e);
-            }
-        });
-        if (!BrowserUtil.isTable() && !BrowserUtil.isMobile()) {
-            el.on("mousemove", onMouseMove);
-        }
+        jq.on("mousedown", onCanvasMouseDown);
+        jq.on("mousemove", onCanvasMouseMove);
+        jq.on("mouseup", onCanvasMouseUp);
         window.addEventListener("keyup", onKeyUp);
         window.addEventListener("keydown", onKeyDown);
 
@@ -267,14 +255,14 @@ implements ImageEditorListener {
     }
     private var mDragBegan = false;
     private var mCapture = new MouseEventCapture();
-    function onPanStart (e: HammerEvent) {
+    function onCanvasMouseDown (e: MouseEvent) {
         mPressed = true;
         if (!isEditing) {
             if (activeFigure != null) {
                 activeFigure = null;
                 drawBoundingBox();
             } else {
-                var f =  new Figure(e.center.x, e.center.y);
+                var f =  new Figure(e.clientX, e.clientY);
                 f.width = Main.App.v.brush.width;
                 f.color = Main.App.v.brush.color;
                 mFigures.push(f);
@@ -291,7 +279,7 @@ implements ImageEditorListener {
             var tmp: Draggable = null;
             while (i > -1) {
                 var d = mFigures[i];
-                if (d.bounds.containsPoint(e.center.x,e.center.y)) {
+                if (d.bounds.containsPoint(e.clientX,e.clientY)) {
                     d.onDragStart(e);
                     tmp = d;
                     mDragBegan = true;
@@ -306,19 +294,17 @@ implements ImageEditorListener {
         trigger(ON_CANVAS_MOUSEDOWN_EVENT);
         draw();
     }
-    function onMouseMove (e: MouseEvent) {
+    function onCanvasMouseMove (e: MouseEvent) {
+        var toDraw = false;
         if (!isEditing) {
             mBrushCircle.x = e.clientX;
             mBrushCircle.y = e.clientY;
-            draw();
+            toDraw = true;
         }
-    }
-    function onPanMove (e: HammerEvent) {
-        var toDraw = false;
         if (mPressed) {
             if (!isEditing) {
                 if (mDrawingFigure != null) {
-                    mDrawingFigure.addPoint(e.center.x,e.center.y);
+                    mDrawingFigure.addPoint(e.clientX,e.clientY);
                     var i = mDrawingFigure.points.length-1;
                     var fp = mDrawingFigure.points[i];
                     toDraw = true;
@@ -336,11 +322,11 @@ implements ImageEditorListener {
         mCapture.move(e);
         trigger(ON_CANVAS_MOUSEMOVE_EVENT);
     }
-    function onPanEnd (e: HammerEvent) {
+    function onCanvasMouseUp (e: MouseEvent) {
         var toDraw = false;
         if (!isEditing) {
             if (mDrawingFigure != null) {
-                mDrawingFigure.addPoint(e.center.x, e.center.y);
+                mDrawingFigure.addPoint(e.clientX, e.clientY);
                 mDrawingFigure.calcVertexes();
                 mDrawingFigure.isDrawing = false;
                 mDrawingFigure = null;

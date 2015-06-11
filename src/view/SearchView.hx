@@ -45,6 +45,10 @@ class SearchView extends ViewModel {
         }
     }
 
+    private function onClicke(e) {
+        js.Lib.alert(e);
+    }
+
     private function onSearch(e:Event) {
         e.preventDefault();
         e.stopPropagation();
