@@ -1,16 +1,15 @@
 package ;
 
+import util.BrowserUtil;
+import view.ModalView;
 import figure.Draggable;
 import model.BBModel;
 import js.html.ProgressEvent;
 import js.html.fs.FileError;
 import ajax.Loader;
-import createjs.easeljs.Event;
-import view.ViewUtil;
 import model.BrushEditor;
 import view.MainCanvas;
 import view.ViewModel;
-import figure.ImageFigure;
 import backbone.haxe.BackboneEvents;
 import view.ImageEditorView;
 import view.BrushEditorView;
@@ -30,6 +29,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     private var jEditButton: JQuery;
     private var jImageButton: JQuery;
     private var jDebugButton: JQuery;
+    public var modalView: ModalView;
     public var mainCanvas: MainCanvas;
     public var searchView: SearchView;
     public var brushEditorView: BrushEditorView;
@@ -38,6 +38,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     var document = Browser.document;
     public var onFileLoad: OnFileLoadListenr;
     public static var APP_WINDOW_RESIZE_EVENT = "BullBones:APP_WINDOW_RESIZE_EVENT";
+    public static var APP_ON_START_EVENT = "BullBones:APP_ON_START";
 
     public function new(attr: Dynamic) {
         super();
@@ -55,6 +56,8 @@ class App extends BackboneEvents implements BrushEditorListener {
             window.addEventListener("drop", onDrop);
             // Loading View
             jModalLoading = new JQuery("#modalLoadingView");
+            // Modal View
+            modalView = new ModalView(new JQuery("#modalView"));
             // メインキャンバス
             mainCanvas = new MainCanvas(new JQuery("#mainCanvas"));
             listenTo(mainCanvas, MainCanvas.ON_CANVAS_MOUSEDOWN_EVENT, function (e: Dynamic) {
@@ -117,7 +120,11 @@ class App extends BackboneEvents implements BrushEditorListener {
 
             // hide loading
             haxe.Timer.delay(function() {
-                jModalLoading.fadeOut(700);
+                jModalLoading.fadeOut(700, function(){
+                    if (this.v.isDebug || !BrowserUtil.isBrowser()) {
+                        modalView.openOnce(ModalView.ADD_TO_HOMESCREEN);
+                    }
+                });
             }, 2400);
         });
     }

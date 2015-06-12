@@ -38,6 +38,10 @@
     </div>
   </div>
   <div id="wrapper">
+    <!-- Modal Structure -->
+    <div id="modalView" class="modal modal-fixed-footer scrollable">
+    </div>
+    <!-- App View -->
     <div id="appView">
       <div id="searchView" class="bb-panel z-depth-1" style="display:none">
         <div class="input-field col s12">
@@ -45,7 +49,7 @@
           <input id="searchInput" type="text" class="validate" autocomplete="off">
           <label for="searchInput">描きたいモチーフを検索</label>
         </div>
-        <div id="searchResultsWrapper">
+        <div id="searchResultsWrapper" class="scrollable">
           <div id="searchingIndicator" class="hidden">
             <img src="img/loading-dot.svg" width="50" height="50" />
           </div>
@@ -130,5 +134,8 @@
   <script src="http://localhost:35729/livereload.js"></script>
   <script src="js/bower.js"></script>
   <script src="js/main.js"></script>
+  <script>
+     $('.modal-trigger').leanModal();
+  </script>
 </body>
 </html>
