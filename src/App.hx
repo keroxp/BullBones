@@ -50,6 +50,7 @@ class App extends BackboneEvents implements BrushEditorListener {
         trigger("app:start");
         new JQuery(function () {
             new JQuery(window).resize(onWindowResize);
+            window.scrollTo(0,0);
             window.addEventListener("dragover", onDragOver);
             window.addEventListener("drop", onDrop);
             // Loading View
