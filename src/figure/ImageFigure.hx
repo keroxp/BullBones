@@ -1,11 +1,12 @@
 package figure;
+import event.MouseEventCapture;
+import hammer.HammerEvent;
 import js.html.ImageElement;
 import cv.ImageUtil;
 import cv.Filter;
 import cv.FilterFactory;
 import js.html.CanvasElement;
 import js.html.ImageData;
-import geometry.MouseEventCapture;
 import figure.Draggable.DraggableType;
 import js.html.MouseEvent;
 import geometry.Rect;
@@ -44,20 +45,16 @@ class ImageFigure implements Draggable {
 
     private function new () {}
 
-    private var mCapture: MouseEventCapture = new MouseEventCapture();
-    public function onDragStart(e:MouseEvent):Void {
+    public function onDragStart(e:MouseEventCapture):Void {
         bitmap.cache(0,0,bitmap.image.width,bitmap.image.height);
-        mCapture.down(e);
     }
 
-    public function onDragMove(e:MouseEvent):Void {
-        bitmap.x += mCapture.getMoveX(e);
-        bitmap.y += mCapture.getMoveY(e);
-        mCapture.move(e);
+    public function onDragMove(e:MouseEventCapture):Void {
+        bitmap.x += e.deltaX;
+        bitmap.y += e.deltaY;
     }
 
-    public function onDragEnd(e:MouseEvent):Void {
-        mCapture.up(e);
+    public function onDragEnd(e:MouseEventCapture):Void {
     }
 
     @:isVar public var display(get, null):createjs.easeljs.DisplayObject;

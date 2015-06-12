@@ -1,6 +1,6 @@
 package rollbar;
-@:native("Rollbar")
 typedef RollbarCallback = Dynamic -> Dynamic -> Void;
+@:native("Rollbar")
 extern class Rollbar {
     @:overload(function (error: Dynamic, ?callback: RollbarCallback): Void{})
     public static function critical(error: Dynamic, ?options: Dynamic): Void;

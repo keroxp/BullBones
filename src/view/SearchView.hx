@@ -33,7 +33,7 @@ class SearchView extends ViewModel {
         jInput.bind("change", onSearch);
         jInput.bind("input", onInput);
         var builder = new LoadingOverlayBuilder("searchViewOverlay");
-        mLoadingOverlay = builder.type(LoadingOverlayType.Bar).width(50).color("rgba(0,0,0,0.4").build();
+        mLoadingOverlay = builder.type(LoadingOverlayType.Bar).width(50).color("rgba(0,0,0,0.4)").build();
         jq.append(mLoadingOverlay.jq);
     }
 
@@ -43,10 +43,6 @@ class SearchView extends ViewModel {
             jResults.addClass("hidden");
             mCurrentQ = null;
         }
-    }
-
-    private function onClicke(e) {
-        js.Lib.alert(e);
     }
 
     private function onSearch(e:Event) {
