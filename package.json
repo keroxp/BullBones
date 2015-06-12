@@ -1,6 +1,6 @@
 {
   "name": "BullBones",
-  "version": "1.0.0",
+  "version": "0.1.1",
   "description": "",
   "repository": "https://github.com/keroxp/BullBones",
   "main": "app.coffee",
@@ -12,8 +12,8 @@
     "node_modules",
     "bower_components"
   ],
-  "author": "keroxp",
-  "license": "ISC",
+  "author": "Yusuke Sakurai<kerokerokerop@gmail.com>",
+  "license": "MIT",
   "devDependencies": {},
   "dependencies": {
     "body-parser": "^1.12.4",
