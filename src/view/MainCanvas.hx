@@ -1,28 +1,21 @@
 package view;
-import rollbar.Rollbar;
+import util.BrowserUtil;
 import js.Browser;
 import figure.ImageFigure;
 import model.ImageEditor;
 import createjs.easeljs.Bitmap;
-import cv.ImageUtil;
-import cv.FilterFactory;
 import view.ImageEditorView.ImageEditorListener;
 import view.SearchView.SearchResultListener;
 import ajax.Loader;
-import jQuery.Event;
 import view.ViewModel;
 import ajax.BingSearch.BingSearchResult;
 import jQuery.JQuery;
-import geometry.MouseEventCapture;
-import js.html.Document;
+import event.MouseEventCapture;
 import figure.Draggable;
-import js.html.Document;
 import js.html.Element;
 import js.html.DOMWindow;
-import js.Error;
 import js.html.MouseEvent;
 import createjs.easeljs.Container;
-import js.html.ImageData;
 import js.html.Image;
 import geometry.FuzzyPoint;
 import figure.BoundingBox;
@@ -54,8 +47,9 @@ implements ImageEditorListener {
     var vGridDivision = 10;
     var mPressed = false;
     var vBackgroundColor = "#ddd";
+    var mDragBegan = false;
+    var mCapture: MouseEventCapture;
     var window: DOMWindow = Browser.window;
-
     public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null)
         = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
     public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null)
@@ -93,9 +87,11 @@ implements ImageEditorListener {
     public function new(jq: JQuery) {
         super(jq);
         var window: DOMWindow = js.Browser.window;
-        jq.on("mousedown", onCanvasMouseDown);
-        jq.on("mousemove", onCanvasMouseMove);
-        jq.on("mouseup", onCanvasMouseUp);
+        var cap = new MouseEventCapture();
+        cap.onDown(el,onMouseDown);
+        cap.onMove(el,onMouseMove);
+        cap.onUp(el,onMouseUp);
+        mCapture = cap;
         window.addEventListener("keyup", onKeyUp);
         window.addEventListener("keydown", onKeyDown);
 
@@ -206,8 +202,8 @@ implements ImageEditorListener {
         .beginStroke("#000")
         .drawCircle(0,0,w)
         .endStroke();
-        mBrushCircle.x = mCapture.prevX;
-        mBrushCircle.y = mCapture.prevY;
+        mBrushCircle.x = mCapture.x;
+        mBrushCircle.y = mCapture.y;
     }
     function insertImage (img: ImageFigure, x: Float, y: Float) {
         img.bitmap.x = x;
@@ -253,16 +249,14 @@ implements ImageEditorListener {
     public function toggleEditing() {
         isEditing = !isEditing;
     }
-    private var mDragBegan = false;
-    private var mCapture = new MouseEventCapture();
-    function onCanvasMouseDown (e: MouseEvent) {
+    function onMouseDown (e: MouseEventCapture) {
         mPressed = true;
         if (!isEditing) {
             if (activeFigure != null) {
                 activeFigure = null;
                 drawBoundingBox();
             } else {
-                var f =  new Figure(e.clientX, e.clientY);
+                var f =  new Figure(e.x, e.y);
                 f.width = Main.App.v.brush.width;
                 f.color = Main.App.v.brush.color;
                 mFigures.push(f);
@@ -279,7 +273,7 @@ implements ImageEditorListener {
             var tmp: Draggable = null;
             while (i > -1) {
                 var d = mFigures[i];
-                if (d.bounds.containsPoint(e.clientX,e.clientY)) {
+                if (d.bounds.containsPoint(e.x,e.y)) {
                     d.onDragStart(e);
                     tmp = d;
                     mDragBegan = true;
@@ -290,21 +284,24 @@ implements ImageEditorListener {
             activeFigure = tmp;
             drawBoundingBox();
         }
-        mCapture.down(e);
         trigger(ON_CANVAS_MOUSEDOWN_EVENT);
+        mBrushCircle.visible = true;
         draw();
     }
-    function onCanvasMouseMove (e: MouseEvent) {
+    function onMouseMove (e: MouseEventCapture) {
         var toDraw = false;
+        if (!BrowserUtil.isBrowser()) {
+            e.srcEvent.preventDefault();
+        }
         if (!isEditing) {
-            mBrushCircle.x = e.clientX;
-            mBrushCircle.y = e.clientY;
+            mBrushCircle.x = e.x;
+            mBrushCircle.y = e.y;
             toDraw = true;
         }
         if (mPressed) {
             if (!isEditing) {
                 if (mDrawingFigure != null) {
-                    mDrawingFigure.addPoint(e.clientX,e.clientY);
+                    mDrawingFigure.addPoint(e.x,e.y);
                     var i = mDrawingFigure.points.length-1;
                     var fp = mDrawingFigure.points[i];
                     toDraw = true;
@@ -312,21 +309,20 @@ implements ImageEditorListener {
             } else {
                 if (mDragBegan) {
                     activeFigure.onDragMove(e);
-                    mBoundingBox.shape.x += mCapture.getMoveX(e);
-                    mBoundingBox.shape.y += mCapture.getMoveY(e);
+                    mBoundingBox.shape.x += mCapture.deltaX;
+                    mBoundingBox.shape.y += mCapture.deltaY;
                     toDraw = true;
                 }
             }
         }
         if (toDraw) draw();
-        mCapture.move(e);
         trigger(ON_CANVAS_MOUSEMOVE_EVENT);
     }
-    function onCanvasMouseUp (e: MouseEvent) {
+    function onMouseUp (e: MouseEventCapture) {
         var toDraw = false;
         if (!isEditing) {
             if (mDrawingFigure != null) {
-                mDrawingFigure.addPoint(e.clientX, e.clientY);
+                mDrawingFigure.addPoint(e.x, e.y);
                 mDrawingFigure.calcVertexes();
                 mDrawingFigure.isDrawing = false;
                 mDrawingFigure = null;
@@ -339,12 +335,12 @@ implements ImageEditorListener {
                 toDraw = true;
             }
         }
-        if (toDraw) draw();
-        mCapture.up(e);
         mDrawingFigure = null;
         mPressed = false;
         mDragBegan = false;
+        mBrushCircle.visible = BrowserUtil.isBrowser();
         trigger(ON_CANVAS_MOUSEUP_EVENT);
+        if (toDraw) draw();
     }
     public function onCornerDown (e: createjs.easeljs.MouseEvent, corner: Corner): Void {
 

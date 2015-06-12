@@ -30,11 +30,17 @@ body
     div
       display table-cell
       vertical-align middle
+.scrollable
+  overflow : scroll;
+  -webkit-overflow-scrolling : touch;
 #wrapper
   position relative
   overflow visible
   max-width 100%
   max-height 100%
+  #modal
+    img
+      max-width 100%
   #searchButton
     position fixed
     right 25px
@@ -85,7 +91,6 @@ body
     overflow hidden
     #searchResultsWrapper
       max-height 400px
-      overflow auto
       #searchingIndicator
         text-align center
         margin 10px auto

@@ -1,6 +1,7 @@
 package figure;
+import hammer.HammerEvent;
 import figure.Draggable.DraggableType;
-import geometry.MouseEventCapture;
+import event.MouseEventCapture;
 import js.html.MouseEvent;
 import createjs.easeljs.Point;
 import geometry.Vector2D;
@@ -261,20 +262,17 @@ class Figure implements Draggable {
         shape.graphics.lineTo(xx(e.x),yy(e.y));
     }
 
-    private var mCapture: MouseEventCapture = new MouseEventCapture();
-    public function onDragStart(e:MouseEvent):Void {
-        mCapture.down(e);
+    public function onDragStart(e:MouseEventCapture):Void {
     }
 
-    public function onDragMove(e:MouseEvent):Void {
-        shape.x += mCapture.getMoveX(e);
-        shape.y += mCapture.getMoveY(e);
-        mCapture.move(e);
+    public function onDragMove(e:MouseEventCapture):Void {
+        shape.x += e.deltaX;
+        shape.y += e.deltaY;
     }
 
-    public function onDragEnd(e:MouseEvent):Void {
-        var dx = mCapture.getTotalMoveX(e);
-        var dy = mCapture.getTotalMoveY(e);
+    public function onDragEnd(e:MouseEventCapture):Void {
+        var dx = e.totalDeltaX;
+        var dy = e.totalDeltaY;
         for (p in points) {
             p.x += dx;
             p.y += dy;
@@ -282,6 +280,5 @@ class Figure implements Draggable {
         resetBounds();
         shape.graphics.clear();
         render();
-        mCapture.up(e);
     }
 }
