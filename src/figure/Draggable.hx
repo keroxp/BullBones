@@ -1,14 +1,15 @@
 package figure;
 
+import event.MouseEventCapture;
 import geometry.Rect;
 
 interface Draggable {
     public var bounds(get,null): Rect;
     public var display(get, null): createjs.easeljs.DisplayObject;
     public var type(get, null): DraggableType;
-    public function onDragStart(e: js.html.MouseEvent): Void;
-    public function onDragMove(e: js.html.MouseEvent): Void;
-    public function onDragEnd(e: js.html.MouseEvent): Void;
+    public function onDragStart(e: MouseEventCapture): Void;
+    public function onDragMove(e: MouseEventCapture): Void;
+    public function onDragEnd(e: MouseEventCapture): Void;
 }
 
 class DraggableUtil {
