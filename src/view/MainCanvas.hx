@@ -124,14 +124,6 @@ implements ImageEditorListener {
         mStage.addChild(mMainLayer);
         mStage.addChild(mFgLayer);
 
-        if (Main.App.v.isDebug) {
-            Loader.loadImage("img/bullbones.jpg").done(function(img: Image) {
-                var bb = ImageFigure.fromImage(img);
-                insertImage(bb,0,0);
-            }).fail(function(e){
-                trace(e);
-            });
-        }
         // reset drawing
         resizeCanvas();
         invalidate();
@@ -171,7 +163,7 @@ implements ImageEditorListener {
     function drawGrid () {
         mGrid.graphics
         .clear()
-        .setStrokeStyle(1)
+        .setStrokeStyle(1,0)
         .beginStroke("#fff");
         var i = vGridUnit;
         var max = Math.max(mCanvas.width,mCanvas.height);
