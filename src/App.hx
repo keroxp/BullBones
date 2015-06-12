@@ -1,5 +1,7 @@
 package ;
 
+import js.html.PopStateEvent;
+import js.html.UIEvent;
 import util.BrowserUtil;
 import view.ModalView;
 import figure.Draggable;
@@ -43,6 +45,9 @@ class App extends BackboneEvents implements BrushEditorListener {
     public function new(attr: Dynamic) {
         super();
         this.v = new V(attr);
+        if (window.location.href.indexOf("http://localhost:8000") == 0) {
+            this.v.isDebug = true;
+        }
     }
     public function start () {
         once("app:start", function (a: Dynamic) {
@@ -126,6 +131,21 @@ class App extends BackboneEvents implements BrushEditorListener {
                     }
                 });
             }, 2400);
+            // diable back action
+            window.onunload = function (a) {};
+            if (!this.v.isDebug) {
+                window.onbeforeunload = function (a) {
+                    return "ページを再読み込みしようとしています。\n保存されていないデータは消えてしまいます。";
+                };
+            }
+            window.history.pushState( "nohb", null, "" );
+            window.addEventListener("popstate", function(e: PopStateEvent){
+                if(!e.state) {
+                    window.history.pushState( "nohb", null, "" );
+                    return;
+                }
+            });
+            window.history.forward();
         });
     }
 
