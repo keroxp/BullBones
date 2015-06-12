@@ -13,12 +13,12 @@ class MouseEventCapture {
     public var y(default, null): Int = 0;
     public var deltaX(default, null): Int = 0;
     public var deltaY(default, null): Int = 0;
-    public var totalDeltaX(default, null): Int;
-    function get_totalMoveX(): Int {
+    public var totalDeltaX(get, null): Int;
+    function get_totalDeltaX(): Int {
         return x - startX;
     }
-    public var totalDeltaY(default, null): Int;
-    function get_totalMoveY(): Int {
+    public var totalDeltaY(get, null): Int;
+    function get_totalDeltaY(): Int {
         return y - startY;
     }
     public var srcEvent: UIEvent;
