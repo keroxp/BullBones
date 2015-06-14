@@ -1,5 +1,7 @@
 package ;
 
+import js.html.DragEvent;
+import js.html.DOMError;
 import js.html.PopStateEvent;
 import js.html.UIEvent;
 import util.BrowserUtil;
@@ -7,7 +9,6 @@ import view.ModalView;
 import figure.Draggable;
 import model.BBModel;
 import js.html.ProgressEvent;
-import js.html.fs.FileError;
 import ajax.Loader;
 import model.BrushEditor;
 import view.MainCanvas;
@@ -21,6 +22,7 @@ import js.html.MouseEvent;
 import view.SearchView;
 import js.Browser;
 using figure.Draggable.DraggableUtil;
+
 typedef OnFileLoadListenr = String -> Void
 
 class App extends BackboneEvents implements BrushEditorListener {
@@ -170,13 +172,13 @@ class App extends BackboneEvents implements BrushEditorListener {
         }, 400);
     }
 
-    private function onDragOver (e: MouseEvent) {
+    private function onDragOver (e: DragEvent) {
         e.preventDefault();
         e.stopPropagation();
         e.dataTransfer.dropEffect = 'copy';
     }
 
-    private function onDrop (e: MouseEvent) {
+    private function onDrop (e: DragEvent) {
         e.preventDefault();
         e.stopPropagation();
         trace("file dopped");
@@ -186,9 +188,9 @@ class App extends BackboneEvents implements BrushEditorListener {
             Loader.loadFile(f)
             .done(function (url: String) {
                 if (onFileLoad != null) onFileLoad(url);
-            }).fail(function (e: FileError) {
+            }).fail(function (e: DOMError) {
                 trace(e);
-                js.Lib.alert("読み込めない形式です");
+                Browser.alert("読み込めない形式です");
             }).progress(function (p: ProgressEvent) {
                 trace(p);
             });
