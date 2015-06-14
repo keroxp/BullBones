@@ -1,4 +1,5 @@
 package view;
+import js.Browser;
 import rollbar.Rollbar;
 import ajax.Loader;
 import view.LoadingOverlay;
@@ -93,7 +94,7 @@ class SearchView extends ViewModel {
         }).fail(function(e){
             mLoadingOverlay.jq.hide();
             var msg = "画像の読み込みに失敗しました";
-            js.Lib.alert(msg);
+            Browser.alert(msg);
             Rollbar.warning(msg, function (e2) {
                 trace(msg,e);
             });
