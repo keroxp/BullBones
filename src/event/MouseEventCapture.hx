@@ -11,6 +11,8 @@ class MouseEventCapture {
     public var startY(default, null): Int = 0;
     public var x(default, null): Int = 0;
     public var y(default, null): Int = 0;
+    public var prevX(default, null): Int = 0;
+    public var prevY(default, null): Int = 0;
     public var deltaX(default, null): Int = 0;
     public var deltaY(default, null): Int = 0;
     public var totalDeltaX(get, null): Int;
@@ -40,25 +42,32 @@ class MouseEventCapture {
             return te.touches.item(0).clientY;
         }
     }
-    private function down(e: UIEvent): MouseEventCapture {
-        startX = getClientX(e);
-        startY = getClientY(e);
-        this.x = startX;
-        this.y = startY;
-        srcEvent = e;
-        return this;
-    }
-    private function move(e: UIEvent): MouseEventCapture {
+    private function savePoint (e: UIEvent) {
         var _x = getClientX(e);
         var _y = getClientY(e);
         deltaX = _x - x;
         deltaY = _y - y;
-        this.x = _x;
-        this.y = _y;
+        prevX = x;
+        prevY = y;
+        x = _x;
+        y = _y;
+    }
+    private function down(e: UIEvent): MouseEventCapture {
+        startX = getClientX(e);
+        startY = getClientY(e);
+        x = startX;
+        y = startY;
+        savePoint(e);
+        srcEvent = e;
+        return this;
+    }
+    private function move(e: UIEvent): MouseEventCapture {
+        savePoint(e);
         srcEvent = e;
         return this;
     }
     private function up(e: UIEvent): MouseEventCapture {
+        savePoint(e);
         srcEvent = e;
         return this;
     }

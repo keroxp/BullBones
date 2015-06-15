@@ -11,7 +11,6 @@ import js.html.CanvasElement;
 import js.html.ImageData;
 import figure.Draggable.DraggableType;
 import js.html.MouseEvent;
-import geometry.Rect;
 import createjs.easeljs.Bitmap;
 class ImageFigure implements Draggable {
     public var bitmap: Bitmap;
@@ -24,16 +23,13 @@ class ImageFigure implements Draggable {
         return DraggableType.Image;
     }
 
-    @:isVar public var bounds(get,null): Rect;
-    function get_bounds(): Rect {
-        return new Rect(bitmap.x,bitmap.y,bitmap.x+bitmap.image.width,bitmap.y+bitmap.image.height);
-    }
-
     public static function fromUrl (dataurl: String): ImageFigure {
         var ret = new ImageFigure();
         ret.src = dataurl;
         ret.thumbSrc = dataurl;
         ret.bitmap = new Bitmap(dataurl);
+        ret.bitmap.cache(0,0,ret.bitmap.image.width,ret.bitmap.image.height);
+        ret.bitmap.updateCache();
         return ret;
     }
 
@@ -42,13 +38,14 @@ class ImageFigure implements Draggable {
         ret.src = img.src;
         ret.thumbSrc = img.src;
         ret.bitmap = new Bitmap(img);
+        ret.bitmap.cache(0,0,img.width,img.height);
+        ret.bitmap.updateCache();
         return ret;
     }
 
     private function new () {}
 
     public function onDragStart(e:MouseEventCapture):Void {
-        bitmap.cache(0,0,bitmap.image.width,bitmap.image.height);
     }
 
     public function onDragMove(e:MouseEventCapture):Void {
@@ -89,5 +86,4 @@ class ImageFigure implements Draggable {
     function get_filter():Filter {
         return filter;
     }
-
 }

@@ -1,4 +1,6 @@
 package figure;
+import createjs.easeljs.Rectangle;
+import createjs.easeljs.DisplayObject;
 import hammer.HammerEvent;
 import figure.Draggable.DraggableType;
 import event.MouseEventCapture;
@@ -7,9 +9,8 @@ import createjs.easeljs.Point;
 import geometry.Vector2D;
 import createjs.easeljs.Matrix2D;
 import geometry.FuzzyPoint;
-import geometry.Rect;
 import createjs.easeljs.Shape;
-
+using util.RectangleUtil;
 class Figure implements Draggable {
     public function new(x: Float, y: Float) {
         addPoint(x,y);
@@ -27,8 +28,8 @@ class Figure implements Draggable {
     }
 
 
-    @:isVar public var display(get, null):createjs.easeljs.DisplayObject;
-    function get_display():createjs.easeljs.DisplayObject {
+    @:isVar public var display(get, null): DisplayObject;
+    function get_display(): DisplayObject {
         return this.shape;
     }
     // 色
@@ -45,31 +46,6 @@ class Figure implements Draggable {
         shape.graphics.clear();
         render();
         return width;
-    }
-    // bounds
-    public var bounds(get, null): Rect;
-    function get_bounds () return bounds;
-    public var scaleX(default, null): Float = 1.0;
-    public var scaleY(default, null): Float = 1.0;
-    public function setScale (sx: Float, sy: Float, px: Float, py: Float) {
-        var m = new Matrix2D();
-        for (p in points) {
-            var vx = px-p.x;
-            var vy = py-p.y;
-            m.identity();
-            m.translate(vx,vy);
-            m.scale(sx,sy);
-            m.translate(-vx,-vy);
-            m.transformPoint(p.x,p.y,p);
-        }
-        bounds = null;
-        for (p in points) {
-            calcBounds(p.x,p.y);
-        }
-        scaleX = sx;
-        scaleY = sy;
-        shape.graphics.clear();
-        render();
     }
     // 描画中か？
     public var isDrawing: Bool = true;
@@ -129,6 +105,7 @@ class Figure implements Draggable {
     private static var PI_4 = Math.PI/4;
     private static var PI_4_5 = Math.PI/4.5;
     public var mDirtyPoints: Array<Int> = new Array();
+    private var mBounds: Rectangle;
     public function addPoint (x: Float, y: Float) {
         calcBounds(x,y);
         if (points.length == 0) {
@@ -141,14 +118,26 @@ class Figure implements Draggable {
                 mDirtyPoints.push(points.length-1);
             }
         }
-        render();
     }
     private function calcBounds (x: Float, y: Float) {
-        if (bounds == null) bounds = new Rect(x,y,x,y);
-        if (x < bounds.left) bounds.left = x;
-        if (bounds.right < x) bounds.right = x;
-        if (y < bounds.top) bounds.top = y;
-        if (bounds.bottom < y) bounds.bottom = y;
+        if (mBounds == null) {
+            mBounds = new Rectangle(x,y,0,0);
+        }
+        if (x < mBounds.x) {
+            mBounds.width += mBounds.x-x;
+            mBounds.x = x;
+        }
+        if (mBounds.right() < x){
+            mBounds.width = x-mBounds.x;
+        }
+        if (y < mBounds.y) {
+            mBounds.height += mBounds.y - y;
+            mBounds.y = y;
+        }
+        if (mBounds.bottom() < y) {
+            mBounds.height = y-mBounds.y;
+        }
+        shape.setBounds(0,0,mBounds.width,mBounds.height);
     }
     private function resetBounds () {
         var l = points[0].x;
@@ -161,7 +150,7 @@ class Figure implements Draggable {
             if (p.y < t) t = p.y;
             if (b < p.y) b = p.y;
         }
-        bounds = new Rect(l,t,r,b);
+        shape.setBounds(0,0,r-l,b-t);
     }
     public function s2e (): Vector2D {
         var s = points[0];
@@ -170,27 +159,17 @@ class Figure implements Draggable {
     }
     private static var LINE_LENGTH_THRESH: Float = 150*150;
     private static var LINE_RECOGNIZE_THRESH = 20;
-    public function render () {
-        if (points.length < 2) return;
+    public function render (): Figure {
+        if (points.length < 2) return this;
         var i = 0;
-        var s = points[0];
-        var e = points[points.length-1];
-//        if (isLine || (s2e().rawPower() > LINE_LENGTH_THRESH
-//            && Recognition.line(cast points) < LINE_RECOGNIZE_THRESH))
-//        {
-//            if (!isLine) {
-//                isLine = true;
-//            }
-//            shape.graphics.clear();
-//            shape.graphics.setStrokeStyle(width,"round").beginStroke(color);
-//            shape.graphics.moveTo(s.x,s.y);
-//            shape.graphics.lineTo(e.x,e.y);
-//        } else {
-            renderPolygon();
-//        }
+        var bounds = shape.getBounds();
+        shape.x = mBounds.x;
+        shape.y = mBounds.y;
+        renderPolygon();
+        return this;
     }
-    private function xx(x: Float): Float return x-shape.x;
-    private function yy(y: Float): Float return y-shape.y;
+    private inline function xx(x: Float): Float return x-shape.x;
+    private inline function yy(y: Float): Float return y-shape.y;
 
     private function renderPolygon () {
         var s = points[0];
@@ -268,17 +247,10 @@ class Figure implements Draggable {
     public function onDragMove(e:MouseEventCapture):Void {
         shape.x += e.deltaX;
         shape.y += e.deltaY;
+        mBounds.x += e.deltaX;
+        mBounds.y += e.deltaY;
     }
 
     public function onDragEnd(e:MouseEventCapture):Void {
-        var dx = e.totalDeltaX;
-        var dy = e.totalDeltaY;
-        for (p in points) {
-            p.x += dx;
-            p.y += dy;
-        }
-        resetBounds();
-        shape.graphics.clear();
-        render();
     }
 }
