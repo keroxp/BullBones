@@ -41,7 +41,7 @@ class BoundingBox {
         mBox.graphics
         .setStrokeStyle(1)
         .beginStroke(color)
-        .drawRoundRect(0,0,bounds.width,bounds.height,0)
+        .drawRoundRect(0.5,0.5,bounds.width,bounds.height,0)
         .endStroke();
         drawCorner(mLTCorner,0,0);
         drawCorner(mRTCorner,bounds.width,0);
