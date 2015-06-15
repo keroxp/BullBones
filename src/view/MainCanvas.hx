@@ -281,7 +281,7 @@ implements ImageEditorListener {
             drawBoundingBox();
         }
         trigger(ON_CANVAS_MOUSEDOWN_EVENT);
-        mBrushCircle.visible = true;
+        mBrushCircle.visible = !isEditing;
         draw();
     }
     function onMouseMove (e: MouseEventCapture) {
@@ -334,7 +334,7 @@ implements ImageEditorListener {
         mDrawingFigure = null;
         mPressed = false;
         mDragBegan = false;
-        mBrushCircle.visible = BrowserUtil.isBrowser();
+        mBrushCircle.visible = BrowserUtil.isBrowser() && !isEditing;
         trigger(ON_CANVAS_MOUSEUP_EVENT);
         if (toDraw) draw();
     }
