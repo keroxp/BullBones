@@ -53,6 +53,7 @@ implements ImageEditorListener {
     var vBackgroundColor = "#ddd";
     var mDragBegan = false;
     var mScaleBegan = false;
+    var mGrabBegan = false;
     var mScaleCorner: Corner;
     var mCapture: MouseEventCapture;
     var window: DOMWindow = Browser.window;
@@ -207,8 +208,9 @@ implements ImageEditorListener {
         .endStroke();
         mBrushCircle.cache(-2*w,-2*w,w*4,w*4);
         mBrushCircle.updateCache();
-        mBrushCircle.x = mCapture.x;
-        mBrushCircle.y = mCapture.y;
+        var p = mFgLayer.globalToLocal(mCapture.x,mCapture.y);
+        mBrushCircle.x = p.x;
+        mBrushCircle.y = p.y;
     }
     function insertImage (img: ImageFigure, x: Float, y: Float) {
         img.bitmap.x = x;
@@ -258,16 +260,19 @@ implements ImageEditorListener {
     }
     function onMouseDown (e: MouseEventCapture) {
         mPressed = true;
+        var p = mMainLayer.globalToLocal(e.x,e.y);
         if (!isEditing) {
             if (activeFigure != null) {
                 activeFigure = null;
                 drawBoundingBox();
             } else {
-                var f =  new Figure(e.x, e.y);
+                var f =  new Figure(p.x,p.y);
                 f.width = Main.App.v.brush.width;
                 f.color = Main.App.v.brush.color;
                 mFigures.push(f);
-                drawFuzzyPointGraph(f.points[0],0);
+                if (Main.App.v.isDebug) {
+                    drawFuzzyPointGraph(f.points[0],0);
+                }
                 mDrawingFigure = f;
             }
         } else {
@@ -275,7 +280,7 @@ implements ImageEditorListener {
             var tmp: Draggable = null;
             while (i > -1) {
                 var d = mFigures[i];
-                if (d.display.getTransformedBounds().containsPoint(e.x,e.y)) {
+                if (d.display.getTransformedBounds().containsPoint(p.x,p.y)) {
                     d.onDragStart(e);
                     tmp = d;
                     mDragBegan = true;
@@ -283,13 +288,17 @@ implements ImageEditorListener {
                 }
                 i--;
             }
-            mScaleCorner = mBoundingBox.hitsCorner(e.x,e.y);
+            mScaleCorner = mBoundingBox.hitsCorner(p.x,p.y);
             mScaleBegan = mScaleCorner != null;
             if (mScaleBegan) {
                 mDragBegan = false;
-            }
-            if (!mScaleBegan) {
+            } else {
                 activeFigure = tmp;
+                mGrabBegan = true;
+                jq.css("cursor",mCurrentPointerCSS = BrowserUtil.grabbingCursor());
+            }
+            if (mDragBegan) {
+                jq.css("cursor", mCurrentPointerCSS = "move");
             }
             if (activeFigure != null) {
                 mBoundingBox.shape.x = activeFigure.display.x;
@@ -301,37 +310,46 @@ implements ImageEditorListener {
         mBrushCircle.visible = !isEditing;
         draw();
     }
+    private var mCurrentPointerCSS: String;
     function onMouseMove (e: MouseEventCapture) {
         var toDraw = false;
         if (!BrowserUtil.isBrowser()) {
             e.srcEvent.preventDefault();
         }
+        var localP = mMainLayer.globalToLocal(e.x,e.y);
+        var localPrevP = mMainLayer.globalToLocal(e.prevX,e.prevY);
         if (!isEditing) {
-            mBrushCircle.x = e.x;
-            mBrushCircle.y = e.y;
+            var fp = mFgLayer.globalToLocal(e.x,e.y);
+            mBrushCircle.x = fp.x;
+            mBrushCircle.y = fp.y;
             toDraw = true;
         } else {
             if (this.activeFigure != null) {
-                var c = mBoundingBox.hitsCorner(e.x,e.y);
+                if (mScaleBegan) {}
+                var c = mBoundingBox.hitsCorner(localP.x,localP.y);
                 if (c != null) {
-                    jq.css("cursor", BoundingBox.getPointerCSS(c));
-                } else if (activeFigure.display.getTransformedBounds().containsPoint(e.x,e.y)){
-                    jq.css("cursor", "move");
-                } else if (jq.css("cursor") != "pointer"){
-                    jq.css("cursor", "pointer");
+                    if (mCurrentPointerCSS != BoundingBox.getPointerCSS(c)) {
+                        jq.css("cursor", mCurrentPointerCSS = BoundingBox.getPointerCSS(c));
+                    }
+                } else if (activeFigure.display.getTransformedBounds().containsPoint(localP.x,localP.y)){
+                    if (mCurrentPointerCSS != "move") {
+                        jq.css("cursor", mCurrentPointerCSS = "move");
+                    }
+                } else if (mCurrentPointerCSS != BrowserUtil.grabCursor()) {
+                    jq.css("cursor", mCurrentPointerCSS = BrowserUtil.grabCursor());
                 }
             }
         }
         if (mPressed) {
             if (!isEditing) {
                 if (mDrawingFigure != null) {
-                    mDrawingFigure.addPoint(e.x,e.y);
+                    mDrawingFigure.addPoint(localP.x,localP.y);
                     var b = Main.App.v.brush;
                     mBufferShape.graphics
                     .setStrokeStyle(b.width,"round",1)
                     .beginStroke(b.color)
-                    .moveTo(e.prevX,e.prevY)
-                    .lineTo(e.x,e.y);
+                    .moveTo(localPrevP.x,localPrevP.y)
+                    .lineTo(localP.x,localP.y);
                     var i = mDrawingFigure.points.length-1;
                     var fp = mDrawingFigure.points[i];
                     toDraw = true;
@@ -342,7 +360,13 @@ implements ImageEditorListener {
                     mBoundingBox.shape.x += e.deltaX;
                     mBoundingBox.shape.y += e.deltaY;
                     toDraw = true;
-                }else if (mScaleBegan) {
+                }else if(mGrabBegan) {
+                    mMainLayer.x += e.deltaX;
+                    mMainLayer.y += e.deltaY;
+                    mFgLayer.x += e.deltaX;
+                    mFgLayer.y += e.deltaY;
+                    toDraw = true;
+                } else if (mScaleBegan) {
                     var tBounds = activeFigure.display.getTransformedBounds().clone();
                     inline function doScaleX (width: Float) {
                         var sx = width/tBounds.width;
@@ -357,23 +381,23 @@ implements ImageEditorListener {
                         }
                     }
                     inline function constrainScaleX () {
-                        if (e.x < tBounds.right()) {
-                            if (tBounds.right() < e.prevX) {
+                        if (localP.x < tBounds.right()) {
+                            if (tBounds.right() < localPrevP.x) {
                                 doScaleX(tBounds.right()-e.x);
                             } else {
                                 doScaleX(tBounds.width-e.deltaX);
                             }
-                            activeFigure.display.x = e.x;
+                            activeFigure.display.x = localP.x;
                         }
                     }
                     inline function constrainScaleY () {
-                        if (e.y < tBounds.bottom()) {
-                            if (tBounds.bottom() < e.prevY) {
-                                doScaleY(tBounds.bottom()-e.y);
+                        if (localP.y < tBounds.bottom()) {
+                            if (tBounds.bottom() < localPrevP.y) {
+                                doScaleY(tBounds.bottom()-localP.y);
                             } else {
                                 doScaleY(tBounds.height-e.deltaY);
                             }
-                            activeFigure.display.y = e.y;
+                            activeFigure.display.y = localP.y;
                         }
                     }
                     mScaleCorner.isLeft? constrainScaleX() : doScaleX(tBounds.width+e.deltaX);
@@ -404,7 +428,6 @@ implements ImageEditorListener {
         var toDraw = false;
         if (!isEditing) {
             if (mDrawingFigure != null) {
-                mDrawingFigure.addPoint(e.x, e.y);
                 mDrawingFigure.calcVertexes();
                 mDrawingFigure.isDrawing = false;
                 mMainLayer.addChild(mDrawingFigure.render().display);
@@ -419,6 +442,8 @@ implements ImageEditorListener {
             } else if (mScaleBegan) {
                 drawBoundingBox();
                 toDraw = true;
+            } else if (mGrabBegan) {
+                jq.css("cursor", BrowserUtil.grabCursor());
             }
         }
         mDrawingFigure = null;
@@ -427,6 +452,7 @@ implements ImageEditorListener {
         mDragBegan = false;
         mScaleCorner = null;
         mScaleBegan = false;
+        mGrabBegan = false;
         mBrushCircle.visible = BrowserUtil.isBrowser() && !isEditing;
         trigger(ON_CANVAS_MOUSEUP_EVENT);
         if (toDraw) draw();

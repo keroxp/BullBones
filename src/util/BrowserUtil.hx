@@ -28,4 +28,20 @@ class BrowserUtil {
         || u.indexOf("silk") != -1
         || u.indexOf("playbook") != -1;
     }
+    public static function isFireFox () {
+        return ua().indexOf("firefox") > -1;
+    }
+    public static function isWebKit() {
+        return ua().indexOf("webkit") > -1;
+    }
+    public static function grabCursor(): String {
+        if (isFireFox()) return "-moz-grab";
+        if (isWebKit()) return "-webkit-grab";
+        return "pointer";
+    }
+    public static function grabbingCursor(): String {
+        if (isFireFox()) return "-moz-grabbing";
+        if (isWebKit()) return "-webkit-grabbing";
+        return "pointer";
+    }
 }

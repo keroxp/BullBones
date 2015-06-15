@@ -2,7 +2,7 @@ package model;
 class BrushEditor {
     public var thickness: Int = 255;
     public var alpha: Float = 1.0;
-    public var width: Float = 3;
+    public var width: Float = 2;
     public var color(get, null): String;
     public var supplemnt: Bool = true;
 
