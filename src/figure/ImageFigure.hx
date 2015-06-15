@@ -1,4 +1,6 @@
 package figure;
+import deferred.Deferred;
+import deferred.Promise;
 import event.MouseEventCapture;
 import hammer.HammerEvent;
 import js.html.ImageElement;
@@ -62,17 +64,26 @@ class ImageFigure implements Draggable {
         return bitmap;
     }
 
-    @:isVar public var filter(get, set):Filter;
+    public var filter(default, null):Filter;
 
-    function set_filter(value:Filter) {
+    public function setFilterAsync(filter: Filter): Promise<ImageElement,Dynamic,Float> {
         if (orgCache == null) {
             orgCache = ImageUtil.getImageData(bitmap.image);
         }
-        var out = value.applyToImageData(orgCache);
-        this.bitmap.image.src = ImageUtil.toDataUrl(out, "image/png");
-        this.bitmap.cache(0,0,out.width,out.height);
-        this.bitmap.updateCache();
-        return this.filter = value;
+        this.filter = filter;
+        var pr = new Deferred<ImageElement,Dynamic,Float>();
+        this.bitmap.image.onload = function (e) {
+            var w = this.bitmap.image.width;
+            var h = this.bitmap.image.height;
+            this.bitmap.cache(0,0,w,h);
+            this.bitmap.updateCache();
+            pr.resolve(this.bitmap.image);
+        };
+        this.bitmap.image.onerror = function (e) {
+            pr.reject(e);
+        };
+        this.bitmap.image.src = ImageUtil.toDataUrl(filter.applyToImageData(orgCache));
+        return pr;
     }
 
     function get_filter():Filter {
