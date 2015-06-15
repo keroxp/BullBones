@@ -24,7 +24,7 @@ class ImageEditor {
                 FilterFactory.gray()
             ];
         }
-        f.funcs.push(FilterFactory.alpha(cast alpha*255));
+        f.funcs.push(FilterFactory.alpha(cast(alpha*255)));
         return f;
     }
 }

@@ -1,4 +1,5 @@
 package view;
+import js.html.ImageElement;
 import util.BrowserUtil;
 import js.Browser;
 import figure.ImageFigure;
@@ -25,6 +26,7 @@ import js.html.KeyboardEvent;
 import figure.Figure;
 import createjs.easeljs.Stage;
 import createjs.easeljs.Shape;
+using figure.Draggable.DraggableUtil;
 
 class MainCanvas extends ViewModel
 implements BoundingBox.OnChangeListener
@@ -205,12 +207,14 @@ implements ImageEditorListener {
         mStage.update();
     }
     public function onImageEditorChange(editor: ImageEditor):Void {
-        if (activeFigure != null && activeFigure.type == Image) {
+        if (activeFigure.isImageFigure()) {
             var image: ImageFigure = cast activeFigure;
-            image.filter = editor.createFilter();
-            image.bitmap.alpha = editor.alpha;
-            trace(editor);
-            draw();
+            image.setFilterAsync(editor.createFilter())
+            .done(function(img: ImageElement) {
+                draw();
+            }).fail(function(e) {
+                trace(e);
+            });
         }
     }
 
