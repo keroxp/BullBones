@@ -25,7 +25,8 @@ class Loader {
         }
         if (src.substr(0,4) == "http" && src.indexOf(BrowserUtil.window.location.href) == -1) {
             // external resource
-            img.src = '/proxy/$src';
+            var encoded: String = js.Lib.eval('encodeURIComponent("$src")');
+            img.src = '/proxy?url=$encoded';
         } else {
             img.src = src;
         }
