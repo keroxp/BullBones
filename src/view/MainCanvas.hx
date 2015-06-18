@@ -34,17 +34,19 @@ class MainCanvas extends ViewModel
 implements SearchResultListener
 implements ImageEditorListener {
     var mStage: Stage;
-    var mFgLayer: Container;
-    var mBgLayer: Container;
-    var mMainLayer: Container;
-    var mBoundingBox: BoundingBox;
-    var mFuzzySketchGraph: Shape;
-    var mBackground: Shape;
-    var mGrid: Shape;
-    var mBrushCircle: Shape;
+    var mFgLayer: Container = new Container();
+    var mBgLayer: Container = new Container();
+    var mMainLayer: Container = new Container();
+    var mImageLayer: Container = new Container();
+    var mFigureLayer: Container = new Container();
+    var mBoundingBox: BoundingBox = new BoundingBox();
+    var mFuzzySketchGraph: Shape = new Shape();
+    var mBackground: Shape = new Shape();
+    var mGrid: Shape = new Shape();
+    var mBrushCircle: Shape = new Shape();
+    var mBufferShape: Shape = new Shape();
     var mDrawingFigure: Figure;
     var mFigures: Array<Draggable> = new Array();
-    var mBufferShape: Shape;
     var mCanvas: CanvasElement;
     var mContext: CanvasRenderingContext2D;
     var vGridUnit = 10;
@@ -105,30 +107,23 @@ implements ImageEditorListener {
 
         mCanvas = cast jq.get()[0];
         mContext = mCanvas.getContext("2d");
-        mBgLayer = new Container();
-        mFgLayer = new Container();
-        mBufferShape = new Shape();
-        mMainLayer = new Container();
-        mMainLayer.addChild(mBufferShape);
         mStage = new Stage(jq.attr("id"));
         // 背景
-        mBackground = new Shape();
         mBackground.visible = false;
         mBgLayer.addChild(mBackground);
         // グリッド
-        mGrid = new Shape();
         mGrid.visible = false;
         mBgLayer.addChild(mGrid);
         // バウンディングボックス
-        mBoundingBox = new BoundingBox();
         mFgLayer.addChild(mBoundingBox.shape);
         // brush
-        mBrushCircle = new Shape();
         mFgLayer.addChild(mBrushCircle);
+        // buffer shape
+        mFgLayer.addChild(mBufferShape);
         // ファジィグラフ
-        mFuzzySketchGraph = new Shape();
         mFgLayer.addChild(mFuzzySketchGraph);
-
+        mMainLayer.addChild(mImageLayer);
+        mMainLayer.addChild(mFigureLayer);
         mStage.addChild(mBgLayer);
         mStage.addChild(mMainLayer);
         mStage.addChild(mFgLayer);
@@ -216,7 +211,7 @@ implements ImageEditorListener {
         img.bitmap.x = x;
         img.bitmap.y = y;
         mFigures.push(img);
-        mMainLayer.addChild(img.bitmap);
+        mImageLayer.addChild(img.bitmap);
         mStage.update();
     }
     public function onImageEditorChange(editor: ImageEditor):Void {
@@ -429,7 +424,7 @@ implements ImageEditorListener {
             if (mDrawingFigure != null) {
                 mDrawingFigure.calcVertexes();
                 mDrawingFigure.isDrawing = false;
-                mMainLayer.addChild(mDrawingFigure.render().display);
+                mFigureLayer.addChild(mDrawingFigure.render().display);
                 mDrawingFigure = null;
                 toDraw = true;
             }
@@ -494,7 +489,11 @@ implements ImageEditorListener {
     function onDelete (e: KeyboardEvent) {
         if (activeFigure != null) {
             mFigures.remove(activeFigure);
-            mMainLayer.removeChild(activeFigure.display);
+            if (activeFigure.type == DraggableType.Image) {
+                mImageLayer.removeChild(activeFigure.display);
+            } else if (activeFigure.type == DraggableType.Figure) {
+                mFigureLayer.removeChild(activeFigure.display);
+            }
             mBoundingBox.clear();
             activeFigure = null;
             draw();
