@@ -94,7 +94,7 @@ class SearchView extends ViewModel {
         Loader.loadImage(result.MediaUrl)
         .done(done).fail(function(e){
             // if failed, try to retrieve thumb
-            Rollbar.warning(trace(e));
+            Rollbar.warning(e);
             Loader.loadImage(result.Thumbnail.MediaUrl)
             .done(done).fail(function(e){
                 mLoadingOverlay.jq.hide();
