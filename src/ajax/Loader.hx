@@ -1,4 +1,6 @@
 package ajax;
+import util.BrowserUtil;
+import js.Browser;
 import js.html.DOMError;
 import js.html.ProgressEvent;
 import js.html.File;
@@ -21,8 +23,10 @@ class Loader {
         img.onerror = function (e) {
             def.reject(e);
         }
-        if (src.substr(0,4) == "http") {
-            img.src = "proxy/"+src;
+        if (src.substr(0,4) == "http" && src.indexOf(BrowserUtil.window.location.href) == -1) {
+            // external resource
+            img.crossOrigin = "anonymous";
+            img.src = '/proxy/$src';
         } else {
             img.src = src;
         }

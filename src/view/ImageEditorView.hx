@@ -1,4 +1,6 @@
 package view;
+import cv.ImageWrap.AspectPolicy;
+import js.html.CanvasElement;
 import rollbar.Rollbar;
 import js.html.Image;
 import figure.Draggable;
@@ -16,13 +18,13 @@ interface ImageEditorListener {
 }
 
 class ImageEditorView extends ViewModel {
-    private var jImg: JQuery;
+    private var mCanvas: CanvasElement;
     private var mEditor: ImageEditor = new ImageEditor();
     public var listener: ImageEditorListener;
     public function new(jq: JQuery) {
         super(jq);
         // img
-        jImg = new JQuery("#imageEditorPreviewImage");
+        mCanvas = cast jq.find("#imageEditorPreviewCanvas").get()[0];
         jq.find("#grayInput").on("change", function(e){
             mEditor.gray = !mEditor.gray;
             renderThumb();
@@ -56,12 +58,7 @@ class ImageEditorView extends ViewModel {
     public function onactiveFigureChange (canvas: MainCanvas, value: Draggable) {
         if (value.isImageFigure() && value != mImage) {
             var fig: ImageFigure = cast value;
-            Loader.loadImage(fig.thumbSrc).done(function(img: Image) {
-                mThumbData = ImageUtil.getImageData(img);
-                jImg.attr("src", ImageUtil.toDataUrl(mThumbData,"image/png"));
-            }).fail(function (e: Dynamic) {
-                Rollbar.error(e);
-            });
+            mThumbData = fig.image.getResizedImageData(220,100,AspectPolicy.AspectToFit);
             mImage = fig;
         }
         if (mThumbData != null) {
@@ -71,7 +68,11 @@ class ImageEditorView extends ViewModel {
     private function renderThumb() {
         var f = mEditor.createFilter();
         var id = f.applyToImageData(mThumbData);
-        jImg.attr("src", ImageUtil.toDataUrl(id,"image/png"));
+        var x = (220-id.width)*0.5;
+        var y = (100-id.height)*0.5;
+        var ctx = mCanvas.getContext2d();
+        ctx.clearRect(0,0,220,100);
+        ctx.putImageData(id,x,y);
     }
     private function postOnChange (editor: ImageEditor) {
         if (listener != null) {
