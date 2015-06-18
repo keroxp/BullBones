@@ -1,4 +1,5 @@
 package figure;
+import cv.ImageWrap;
 import deferred.Deferred;
 import deferred.Promise;
 import event.MouseEventCapture;
@@ -14,9 +15,7 @@ import js.html.MouseEvent;
 import createjs.easeljs.Bitmap;
 class ImageFigure implements Draggable {
     public var bitmap: Bitmap;
-    public var src(default,null): String;
-    public var thumbSrc: String;
-    public var orgCache: ImageData;
+    public var image(default,null): ImageWrap;
 
     @:isVar public var type(get, null):DraggableType;
     function get_type():DraggableType {
@@ -24,9 +23,10 @@ class ImageFigure implements Draggable {
     }
 
     public static function fromUrl (dataurl: String): ImageFigure {
-        var ret = new ImageFigure();
-        ret.src = dataurl;
-        ret.thumbSrc = dataurl;
+        var ret = new ImageFigure(dataurl);
+        if (dataurl.substr(0,4) != "data") {
+            throw new js.Error("dataUrl should be 'data' format, but got $dataurl");
+        }
         ret.bitmap = new Bitmap(dataurl);
         ret.bitmap.cache(0,0,ret.bitmap.image.width,ret.bitmap.image.height);
         ret.bitmap.updateCache();
@@ -34,16 +34,16 @@ class ImageFigure implements Draggable {
     }
 
     public static function fromImage (img: ImageElement): ImageFigure {
-        var ret = new ImageFigure();
-        ret.src = img.src;
-        ret.thumbSrc = img.src;
+        var ret = new ImageFigure(img.src);
         ret.bitmap = new Bitmap(img);
         ret.bitmap.cache(0,0,img.width,img.height);
         ret.bitmap.updateCache();
         return ret;
     }
 
-    private function new () {}
+    private function new (src: String) {
+        image = new ImageWrap(src);
+    }
 
     public function onDragStart(e:MouseEventCapture):Void {
     }
@@ -64,9 +64,6 @@ class ImageFigure implements Draggable {
     public var filter(default, null):Filter;
 
     public function setFilterAsync(filter: Filter): Promise<ImageElement,Dynamic,Float> {
-        if (orgCache == null) {
-            orgCache = ImageUtil.getImageData(bitmap.image);
-        }
         this.filter = filter;
         var pr = new Deferred<ImageElement,Dynamic,Float>();
         this.bitmap.image.onload = function (e) {
@@ -79,7 +76,7 @@ class ImageFigure implements Draggable {
         this.bitmap.image.onerror = function (e) {
             pr.reject(e);
         };
-        this.bitmap.image.src = ImageUtil.toDataUrl(filter.applyToImageData(orgCache));
+        this.bitmap.image.src = ImageUtil.toDataUrl(filter.applyToImageData(image.getImageData()));
         return pr;
     }
 

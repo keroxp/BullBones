@@ -85,18 +85,21 @@ class SearchView extends ViewModel {
         var index:Int = cell.data("index");
         var result = mImages[index];
         mLoadingOverlay.jq.css("height", jq.outerHeight()).show();
-        Loader.loadImage(result.MediaUrl)
-        .done(function(img: Image) {
+        var done = function(img: Image) {
             mLoadingOverlay.jq.hide();
             if (listener != null) {
                 listener.onSearchResultLoad(img, result);
             }
-        }).fail(function(e){
-            mLoadingOverlay.jq.hide();
-            var msg = "画像の読み込みに失敗しました";
-            Browser.alert(msg);
-            Rollbar.warning(msg, function (e2) {
-                trace(msg,e);
+        }
+        Loader.loadImage(result.MediaUrl)
+        .done(done).fail(function(e){
+            // if failed, try to retrieve thumb
+            Rollbar.warning(trace(e));
+            Loader.loadImage(result.Thumbnail.MediaUrl)
+            .done(done).fail(function(e){
+                mLoadingOverlay.jq.hide();
+                var msg = "画像の読み込みに失敗しました";
+                Browser.alert(msg);
             });
         }).always(function(){
             jq.hide();

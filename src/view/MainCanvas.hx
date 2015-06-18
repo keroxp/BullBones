@@ -233,7 +233,6 @@ implements ImageEditorListener {
 
     public function onSearchResultLoad(img: Image, result: BingSearchResult):Void {
         var bm = ImageFigure.fromImage(img);
-        bm.thumbSrc = result.Thumbnail.MediaUrl;
         var x = (jq.width()-img.width)/2;
         var y = (jq.height()-img.height)/2;
         insertImage(bm,x,y);

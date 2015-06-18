@@ -1,6 +1,5 @@
 package cv;
 
-import js.html.ImageElement;
 import cv.FilterFactory.FilterFunc;
 import js.html.ImageData;
 
@@ -19,8 +18,4 @@ class Filter {
         }
         return out;
     }
-    public function apply(image: ImageElement): ImageData {
-        return applyToImageData(ImageUtil.getImageData(image));
-    }
-
 }
