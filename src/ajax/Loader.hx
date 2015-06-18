@@ -25,7 +25,6 @@ class Loader {
         }
         if (src.substr(0,4) == "http" && src.indexOf(BrowserUtil.window.location.href) == -1) {
             // external resource
-            img.crossOrigin = "anonymous";
             img.src = '/proxy/$src';
         } else {
             img.src = src;
