@@ -35,6 +35,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     private var jEditButton: JQuery;
     private var jImageButton: JQuery;
     private var jDebugButton: JQuery;
+    public var jq: JQuery;
     public var modalView: ModalView;
     public var mainCanvas: MainCanvas;
     public var searchView: SearchView;
@@ -59,6 +60,7 @@ class App extends BackboneEvents implements BrushEditorListener {
         });
         trigger("app:start");
         new JQuery(function () {
+            jq = new JQuery("#appView");
             new JQuery(window).resize(onWindowResize);
             window.scrollTo(0,0);
             window.addEventListener("dragover", onDragOver);
