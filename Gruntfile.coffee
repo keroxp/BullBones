@@ -43,6 +43,7 @@ module.exports = (grunt) ->
           "jQueryExtern"
         ]
         classpath: ["lib","src"]
+        misc: ["-debug"]
         output: "public/js/main.js"
     stylus:
       build:

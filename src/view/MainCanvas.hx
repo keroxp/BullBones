@@ -1,4 +1,5 @@
 package view;
+import util.Log;
 import createjs.easeljs.Rectangle;
 import createjs.easeljs.Matrix2D;
 import js.html.ImageElement;
@@ -221,7 +222,7 @@ implements ImageEditorListener {
             .done(function(img: ImageElement) {
                 draw();
             }).fail(function(e) {
-                trace(e);
+                Log.e(e);
             });
         }
     }
@@ -246,7 +247,7 @@ implements ImageEditorListener {
             height: h
         });
         invalidate();
-        trace("onWindowChange",w,h);
+        Log.d("onWindowChange"+w+","+h);
     }
 
     public function toggleEditing() {
