@@ -1,4 +1,5 @@
 package view;
+import util.Log;
 import js.Browser;
 import rollbar.Rollbar;
 import ajax.Loader;
@@ -54,7 +55,7 @@ class SearchView extends ViewModel {
         }
         var q:String = cast jInput.val();
         if (!mLoading && q.length > 0 && q != mCurrentQ) {
-            trace('start searching \"$q\"');
+            Log.i('start searching \"$q\"');
             setLoading(true);
             mLoading = true;
             ajax.BingSearch.search(q).done(function(data:Array<BingSearchResult>) {
@@ -63,7 +64,7 @@ class SearchView extends ViewModel {
                 mImages = data;
             }).fail(function(jxhr:jQuery.JqXHR) {
                 setLoading(false);
-                trace("error!");
+                Log.e("error!");
             }).always(function() {
                 mLoading = false;
             });

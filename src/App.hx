@@ -1,5 +1,7 @@
 package ;
 
+import rollbar.Rollbar;
+import util.Log;
 import js.html.DragEvent;
 import js.html.DOMError;
 import js.html.PopStateEvent;
@@ -53,7 +55,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     }
     public function start () {
         once("app:start", function (a: Dynamic) {
-            trace("BullBones started!");
+            Log.d("BullBones started!");
         });
         trigger("app:start");
         new JQuery(function () {
@@ -181,7 +183,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     private function onDrop (e: DragEvent) {
         e.preventDefault();
         e.stopPropagation();
-        trace("file dopped");
+        Log.d("file dopped");
         var files = e.dataTransfer.files;
         if (files.length > 0) {
             var f = files.item(0);
@@ -189,10 +191,8 @@ class App extends BackboneEvents implements BrushEditorListener {
             .done(function (url: String) {
                 if (onFileLoad != null) onFileLoad(url);
             }).fail(function (e: DOMError) {
-                trace(e);
+                Log.e(e);
                 Browser.alert("読み込めない形式です");
-            }).progress(function (p: ProgressEvent) {
-                trace(p);
             });
         }
     }

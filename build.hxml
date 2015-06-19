@@ -3,4 +3,5 @@
 -cp src
 -cp lib
 -main Main
+-debug
 -js public/js/main.js
