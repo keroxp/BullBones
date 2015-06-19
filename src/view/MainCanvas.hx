@@ -1,4 +1,6 @@
 package view;
+import jQuery.JQuery;
+import view.PopupMenu.PopupItem;
 import util.Log;
 import createjs.easeljs.Rectangle;
 import createjs.easeljs.Matrix2D;
@@ -54,18 +56,20 @@ implements ImageEditorListener {
     var vGridDivision = 10;
     var mPressed = false;
     var vBackgroundColor = "#ddd";
+    var mMoved = false;
     var mDragBegan = false;
     var mScaleBegan = false;
     var mGrabBegan = false;
     var mScaleCorner: Corner;
     var mCapture: MouseEventCapture;
     var window: DOMWindow = Browser.window;
+    var mPopupMenu: PopupMenu;
     public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null)
-        = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
+    = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
     public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null)
-        = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEMOVE_EVENT";
+    = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEMOVE_EVENT";
     public static var ON_CANVAS_MOUSEUP_EVENT(default, null)
-        = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEUP_EVENT";
+    = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEUP_EVENT";
 
     @:isVar public var activeFigure(get,set):Draggable;
     function get_activeFigure(): Draggable {
@@ -73,6 +77,9 @@ implements ImageEditorListener {
     }
     function set_activeFigure(value:Draggable) {
         set("activeFigure", value);
+        if (value == null && mPopupMenu.isShown) {
+            mPopupMenu.dismiss(200);
+        }
         return this.activeFigure = value;
     }
 
@@ -129,6 +136,8 @@ implements ImageEditorListener {
         mStage.addChild(mMainLayer);
         mStage.addChild(mFgLayer);
 
+        // UI
+        mPopupMenu = new PopupMenu(Main.App.jq);
         // reset drawing
         resizeCanvas();
         invalidate();
@@ -250,6 +259,23 @@ implements ImageEditorListener {
         Log.d("onWindowChange"+w+","+h);
     }
 
+    function showPopupMenu () {
+        var p = mMainLayer.localToGlobal(
+            activeFigure.display.x,
+            activeFigure.display.y
+        );
+        var b = activeFigure.display.getTransformedBounds();
+        var w = mPopupMenu.jq.outerWidth();
+        var h = mPopupMenu.jq.outerHeight();
+        mPopupMenu.render([
+            new PopupItem("aaa", function(i) {Browser.alert("aaa"); }),
+            new PopupItem("bbb", function(i) {Browser.alert("bbb"); })
+        ]).showAt(
+            cast(p.x+(b.width-w)*0.5),
+            cast(p.y-h-20),
+            300
+        );
+    }
     public function toggleEditing() {
         isEditing = !isEditing;
     }
@@ -306,6 +332,7 @@ implements ImageEditorListener {
         draw();
     }
     private var mCurrentPointerCSS: String;
+    private static var MOVED_THRESH = 2*2;
     function onMouseMove (e: MouseEventCapture) {
         var toDraw = false;
         if (!BrowserUtil.isBrowser()) {
@@ -336,84 +363,91 @@ implements ImageEditorListener {
             }
         }
         if (mPressed) {
-            if (!isEditing) {
-                if (mDrawingFigure != null) {
-                    mDrawingFigure.addPoint(localP.x,localP.y);
-                    var b = Main.App.v.brush;
-                    mBufferShape.graphics
-                    .setStrokeStyle(b.width,"round",1)
-                    .beginStroke(b.color)
-                    .moveTo(localPrevP.x,localPrevP.y)
-                    .lineTo(localP.x,localP.y);
-                    var i = mDrawingFigure.points.length-1;
-                    var fp = mDrawingFigure.points[i];
-                    toDraw = true;
-                }
-            } else {
-                if (mDragBegan) {
-                    activeFigure.onDragMove(e);
-                    mBoundingBox.shape.x += e.deltaX;
-                    mBoundingBox.shape.y += e.deltaY;
-                    toDraw = true;
-                }else if(mGrabBegan) {
-                    mMainLayer.x += e.deltaX;
-                    mMainLayer.y += e.deltaY;
-                    mFgLayer.x += e.deltaX;
-                    mFgLayer.y += e.deltaY;
-                    toDraw = true;
-                } else if (mScaleBegan) {
-                    var tBounds = activeFigure.display.getTransformedBounds().clone();
-                    inline function doScaleX (width: Float) {
-                        var sx = width/tBounds.width;
-                        if (0 < sx) {
-                            activeFigure.display.scaleX *= sx;
-                        }
+            if (mMoved) {
+                if (!isEditing) {
+                    if (mDrawingFigure != null) {
+                        mDrawingFigure.addPoint(localP.x,localP.y);
+                        var b = Main.App.v.brush;
+                        mBufferShape.graphics
+                        .setStrokeStyle(b.width,"round",1)
+                        .beginStroke(b.color)
+                        .moveTo(localPrevP.x,localPrevP.y)
+                        .lineTo(localP.x,localP.y);
+                        var i = mDrawingFigure.points.length-1;
+                        var fp = mDrawingFigure.points[i];
+                        toDraw = true;
                     }
-                    inline function doScaleY (height: Float) {
-                        var sy = height/tBounds.height;
-                        if (0 < sy) {
-                            activeFigure.display.scaleY *= sy;
-                        }
-                    }
-                    inline function constrainScaleX () {
-                        if (localP.x < tBounds.right()) {
-                            if (tBounds.right() < localPrevP.x) {
-                                doScaleX(tBounds.right()-e.x);
-                            } else {
-                                doScaleX(tBounds.width-e.deltaX);
+                } else {
+                    if (mDragBegan) {
+                        activeFigure.onDragMove(e);
+                        mBoundingBox.shape.x += e.deltaX;
+                        mBoundingBox.shape.y += e.deltaY;
+                        toDraw = true;
+                    }else if(mGrabBegan) {
+                        mMainLayer.x += e.deltaX;
+                        mMainLayer.y += e.deltaY;
+                        mFgLayer.x += e.deltaX;
+                        mFgLayer.y += e.deltaY;
+                        toDraw = true;
+                    } else if (mScaleBegan) {
+                        var tBounds = activeFigure.display.getTransformedBounds().clone();
+                        inline function doScaleX (width: Float) {
+                            var sx = width/tBounds.width;
+                            if (0 < sx) {
+                                activeFigure.display.scaleX *= sx;
                             }
-                            activeFigure.display.x = localP.x;
                         }
-                    }
-                    inline function constrainScaleY () {
-                        if (localP.y < tBounds.bottom()) {
-                            if (tBounds.bottom() < localPrevP.y) {
-                                doScaleY(tBounds.bottom()-localP.y);
-                            } else {
-                                doScaleY(tBounds.height-e.deltaY);
+                        inline function doScaleY (height: Float) {
+                            var sy = height/tBounds.height;
+                            if (0 < sy) {
+                                activeFigure.display.scaleY *= sy;
                             }
-                            activeFigure.display.y = localP.y;
                         }
+                        inline function constrainScaleX () {
+                            if (localP.x < tBounds.right()) {
+                                if (tBounds.right() < localPrevP.x) {
+                                    doScaleX(tBounds.right()-e.x);
+                                } else {
+                                    doScaleX(tBounds.width-e.deltaX);
+                                }
+                                activeFigure.display.x = localP.x;
+                            }
+                        }
+                        inline function constrainScaleY () {
+                            if (localP.y < tBounds.bottom()) {
+                                if (tBounds.bottom() < localPrevP.y) {
+                                    doScaleY(tBounds.bottom()-localP.y);
+                                } else {
+                                    doScaleY(tBounds.height-e.deltaY);
+                                }
+                                activeFigure.display.y = localP.y;
+                            }
+                        }
+                        mScaleCorner.isLeft? constrainScaleX() : doScaleX(tBounds.width+e.deltaX);
+                        mScaleCorner.isTop? constrainScaleY() : doScaleY(tBounds.height+e.deltaY);
+                        if (modifiedByShift()) {
+                            var d = activeFigure.display;
+                            var s = (d.scaleX+d.scaleY)*0.5;
+                            var oBounds = d.getBounds();
+                            d.scaleX = d.scaleY = s;
+                            var w = oBounds.width*s;
+                            var h = oBounds.height*s;
+                            if (mScaleCorner.isLeft) {
+                                d.x = tBounds.right()-w;
+                            }
+                            if (mScaleCorner.isTop) {
+                                d.y = tBounds.bottom()-h;
+                            }
+                        }
+                        drawBoundingBox();
+                        toDraw = true;
                     }
-                    mScaleCorner.isLeft? constrainScaleX() : doScaleX(tBounds.width+e.deltaX);
-                    mScaleCorner.isTop? constrainScaleY() : doScaleY(tBounds.height+e.deltaY);
-                    if (modifiedByShift()) {
-                        var d = activeFigure.display;
-                        var s = (d.scaleX+d.scaleY)*0.5;
-                        var oBounds = d.getBounds();
-                        d.scaleX = d.scaleY = s;
-                        var w = oBounds.width*s;
-                        var h = oBounds.height*s;
-                        if (mScaleCorner.isLeft) {
-                            d.x = tBounds.right()-w;
-                        }
-                        if (mScaleCorner.isTop) {
-                            d.y = tBounds.bottom()-h;
-                        }
-                    }
-                    drawBoundingBox();
-                    toDraw = true;
                 }
+            } else if (Math.pow(e.totalDeltaX,2)+Math.pow(e.totalDeltaY,2) > MOVED_THRESH) {
+                if (mPopupMenu.isShown) {
+                    mPopupMenu.dismiss(200);
+                }
+                mMoved = true;
             }
         }
         if (toDraw) draw();
@@ -430,20 +464,26 @@ implements ImageEditorListener {
                 toDraw = true;
             }
         } else {
-            if (mDragBegan) {
-                activeFigure.onDragEnd(e);
-                drawBoundingBox();
-                toDraw = true;
-            } else if (mScaleBegan) {
-                drawBoundingBox();
-                toDraw = true;
-            } else if (mGrabBegan) {
-                jq.css("cursor", BrowserUtil.grabCursor());
+            if (mMoved) {
+                if (mDragBegan) {
+                    activeFigure.onDragEnd(e);
+                    drawBoundingBox();
+                    toDraw = true;
+                } else if (mScaleBegan) {
+                    drawBoundingBox();
+                    toDraw = true;
+                } else if (mGrabBegan) {
+                    jq.css("cursor", BrowserUtil.grabCursor());
+                }
+            }
+            if (activeFigure != null) {
+                showPopupMenu();
             }
         }
         mDrawingFigure = null;
         mBufferShape.graphics.clear();
         mPressed = false;
+        mMoved = false;
         mDragBegan = false;
         mScaleCorner = null;
         mScaleBegan = false;
