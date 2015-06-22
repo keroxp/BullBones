@@ -1,12 +1,14 @@
 package view;
 import util.BrowserUtil;
 import jQuery.JQuery;
+
 class PopupMenu extends ViewModel {
     public var isShown = false;
+    private var dir = "bottom";
     public function new(parent: JQuery) {
         var html =
         '<div class="arrow_box_wrapper" style="display:none" >
-            <div class="arrow_box_bottom">
+            <div class="arrow_box">
               <ul></ul>
             </div>
         </div>';
@@ -18,15 +20,17 @@ class PopupMenu extends ViewModel {
         var frag = BrowserUtil.document.createDocumentFragment();
         for(item in items) {
             var li = BrowserUtil.document.createElement("li");
-            li.innerText = item.title;
+            li.innerHTML = item.title;
             li.onclick = item.onclick;
             frag.appendChild(li);
         }
         jq.find("ul").get()[0].appendChild(frag);
         return this;
     }
-    public function showAt(left: Int, top: Int, ?duration: Int = 0): PopupMenu {
+    public function showAt(left: Float, top: Float, ?dir: String = "bottom", ?duration: Int = 0): PopupMenu {
+        jq.find(".arrow_box").removeClass('arrow_box_${this.dir}').addClass('arrow_box_$dir');
         jq.css({"left": left, "top": top}).fadeIn(duration);
+        this.dir= dir;
         this.isShown = true;
         return this;
     }

@@ -30,16 +30,25 @@ body
     div
       display table-cell
       vertical-align middle
+#floatingThumbnailView
+  position fixed
+  top 15px
+  left 15px
+  .floating-thumb
+    cursor pointer
+    background-color white
+    margin-bottom 15px
+    width 55px
+    height 55px
 .scrollable
   overflow scroll
   -webkit-overflow-scrolling touch
 .arrow_box_wrapper
   position absolute
-  .arrow_box_bottom
+  .arrow_box
     position relative
     background #4db6ac
     border-radius 6px
-    min-width 200px
     height 44px
     ul
       width 100%
@@ -48,7 +57,8 @@ body
       display table
     li
       cursor pointer
-      padding 5px
+      padding 5px 15px
+      min-width 50px
       display table-cell
       border-right 1px solid #fff
       text-align center
@@ -56,9 +66,7 @@ body
       color white
       &:last-child
         border-right none
-  .arrow_box_bottom:after
-    top 100%
-    left 50%
+  .arrow_box:after
     border solid transparent
     content " "
     height 0
@@ -66,8 +74,16 @@ body
     position absolute
     pointer-events none
     border-color rgba(0, 0, 0, 0)
-    border-top-color #4db6ac
     border-width 10px
+  .arrow_box_bottom:after
+    top 100%
+    left 50%
+    border-top-color #4db6ac
+    margin-left -10px
+  .arrow_box_top:after
+    bottom 100%
+    left 50%
+    border-bottom-color #4db6ac
     margin-left -10px
 #wrapper
   position relative

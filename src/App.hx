@@ -1,5 +1,6 @@
 package ;
 
+import view.FloatingThumbnailView;
 import rollbar.Rollbar;
 import util.Log;
 import js.html.DragEvent;
@@ -41,6 +42,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     public var searchView: SearchView;
     public var brushEditorView: BrushEditorView;
     public var imageEditorView: ImageEditorView;
+    public var floatingThumbnailView: FloatingThumbnailView;
     var window: DOMWindow = Browser.window;
     var document = Browser.document;
     public var onFileLoad: OnFileLoadListenr;
@@ -95,6 +97,8 @@ class App extends BackboneEvents implements BrushEditorListener {
             // 画像エディタ
             imageEditorView = new ImageEditorView(new JQuery("#imageEditorView"));
             imageEditorView.listener = mainCanvas;
+            // ThumbView
+            floatingThumbnailView = new FloatingThumbnailView(new JQuery("#floatingThumbnailView"));
             // 検索ボタン
             jSearchButton = new JQuery("#searchButton");
             jSearchButton.on("click", function (e: MouseEvent) {
@@ -111,7 +115,7 @@ class App extends BackboneEvents implements BrushEditorListener {
             jEditButton = new JQuery("#editButton");
             jEditButton.on("click", function (e: MouseEvent) {
                 hidePanels();
-                mainCanvas.toggleEditing();
+                mainCanvas.isEditing = !mainCanvas.isEditing;
             });
             // 画像ボタン
             jImageButton = new JQuery("#imageEditorButton");
