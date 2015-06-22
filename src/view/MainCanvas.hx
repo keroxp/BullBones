@@ -1,4 +1,5 @@
 package view;
+import view.PopupMenu.PopupItem;
 import jQuery.JQuery;
 import view.PopupMenu.PopupItem;
 import util.Log;
@@ -71,37 +72,6 @@ implements ImageEditorListener {
     public static var ON_CANVAS_MOUSEUP_EVENT(default, null)
     = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEUP_EVENT";
 
-    @:isVar public var activeFigure(get,set):Draggable;
-    function get_activeFigure(): Draggable {
-        return get("activeFigure");
-    }
-    function set_activeFigure(value:Draggable) {
-        set("activeFigure", value);
-        if (value == null && mPopupMenu.isShown) {
-            mPopupMenu.dismiss(200);
-        }
-        return this.activeFigure = value;
-    }
-
-    @:isVar public var isEditing(get,set): Bool = false;
-    function get_isEditing(): Bool {
-        return get("isEditing");
-    }
-    function set_isEditing(value:Bool) {
-        this.isEditing = value;
-        jq.attr("data-editing", value+"");
-        activeFigure = value ? mFigures[mFigures.length-1] : null;
-        mBackground.visible = value;
-        mGrid.visible = value;
-        mBrushCircle.visible = !value;
-        jq.css("cursor","");
-        drawBoundingBox();
-        drawBrushCircle();
-        draw();
-        set("isEditing", value);
-        return value;
-    }
-
     public function new(jq: JQuery) {
         super(jq);
         var window: DOMWindow = js.Browser.window;
@@ -148,6 +118,38 @@ implements ImageEditorListener {
         listenTo(Main.App.v, "change:brush", drawBrushCircle);
         listenTo(Main.App, App.APP_WINDOW_RESIZE_EVENT, resizeCanvas);
         Main.App.onFileLoad = onFileLoad;
+    }
+
+    @:isVar public var activeFigure(get,set):Draggable;
+    function get_activeFigure(): Draggable {
+        return get("activeFigure");
+    }
+    function set_activeFigure(value:Draggable) {
+        set("activeFigure", value);
+        if (value == null && mPopupMenu.isShown) {
+            mPopupMenu.dismiss(200);
+        }
+        invalidate();
+        return this.activeFigure = value;
+    }
+
+    @:isVar public var isEditing(get,set): Bool = false;
+    function get_isEditing(): Bool {
+        return get("isEditing");
+    }
+    function set_isEditing(value:Bool) {
+        this.isEditing = value;
+        jq.attr("data-editing", value+"");
+        activeFigure = value ? mFigures[mFigures.length-1] : null;
+        mBackground.visible = value;
+        mGrid.visible = value;
+        mBrushCircle.visible = !value;
+        jq.css("cursor","");
+        drawBoundingBox();
+        drawBrushCircle();
+        draw();
+        set("isEditing", value);
+        return value;
     }
 
     function invalidate () {
@@ -217,13 +219,53 @@ implements ImageEditorListener {
         mBrushCircle.x = p.x;
         mBrushCircle.y = p.y;
     }
-    function insertImage (img: ImageFigure, x: Float, y: Float) {
-        img.bitmap.x = x;
-        img.bitmap.y = y;
-        mFigures.push(img);
-        mImageLayer.addChild(img.bitmap);
-        mStage.update();
+    function insertFigure (fig: Draggable, x: Float, y: Float) {
+        var p = mMainLayer.globalToLocal(x,y);
+        fig.display.x = p.x;
+        fig.display.y = p.y;
+        mFigures.push(fig);
+        if (fig.isImageFigure()) {
+            mImageLayer.addChild(fig.display);
+        } else {
+            mFigureLayer.addChild(fig.display);
+        }
+        draw();
     }
+    function deleteFigure(f: Draggable) {
+        mFigures.remove(activeFigure);
+        if (activeFigure.type == DraggableType.Image) {
+            mImageLayer.removeChild(activeFigure.display);
+        } else if (activeFigure.type == DraggableType.Figure) {
+            mFigureLayer.removeChild(activeFigure.display);
+        }
+        mBoundingBox.clear();
+        activeFigure = null;
+        if (f.isImageFigure()) {
+            var imf: ImageFigure = cast f;
+            Main.App.floatingThumbnailView.remove(imf.image);
+        }
+        draw();
+    }
+
+    function copyFigure(f: Draggable) {
+        Log.d("copy");
+    }
+
+    function thumbnalzieImage(f: ImageFigure) {
+        f.display.visible = false;
+        var tv = Main.App.floatingThumbnailView;
+        if (!tv.contains(f.image)) {
+            tv.add(f.image, function () {
+                f.display.visible = true;
+                tv.hide(f.image);
+                draw();
+            });
+        } else {
+            tv.show(f.image);
+        }
+        draw();
+    }
+
     public function onImageEditorChange(editor: ImageEditor):Void {
         if (activeFigure.isImageFigure()) {
             var image: ImageFigure = cast activeFigure;
@@ -240,15 +282,17 @@ implements ImageEditorListener {
         var bm = ImageFigure.fromImage(img);
         var x = (jq.width()-img.width)/2;
         var y = (jq.height()-img.height)/2;
-        insertImage(bm,x,y);
+        insertFigure(bm,x,y);
     }
 
     function onFileLoad (dataUrl: String) {
         var im = ImageFigure.fromUrl(dataUrl);
-        insertImage(im,0,0);
+        var x = mCanvas.width/2;
+        var y = mCanvas.height/2;
+        insertFigure(im,x,y);
     }
 
-    private function resizeCanvas () {
+    function resizeCanvas () {
         var w: Float = window.innerWidth;
         var h: Float = window.innerHeight;
         this.jq.attr({
@@ -264,21 +308,43 @@ implements ImageEditorListener {
             activeFigure.display.x,
             activeFigure.display.y
         );
+        var margin = 20;
         var b = activeFigure.display.getTransformedBounds();
         var w = mPopupMenu.jq.outerWidth();
         var h = mPopupMenu.jq.outerHeight();
-        mPopupMenu.render([
-            new PopupItem("aaa", function(i) {Browser.alert("aaa"); }),
-            new PopupItem("bbb", function(i) {Browser.alert("bbb"); })
-        ]).showAt(
-            cast(p.x+(b.width-w)*0.5),
-            cast(p.y-h-20),
-            300
-        );
+        var x = p.x+(b.width-w)*0.5;
+        var y = p.y-h-margin;
+        var dir = "bottom";
+        var o = mMainLayer.globalToLocal(0,0);
+        if (p.y < h && mCanvas.height-h < p.y+b.height) {
+            dir = "top";
+            y = p.y+b.height*0.5;
+        } else {
+            if (y < o.y) {
+                dir = "top";
+                y = p.y+b.height+margin;
+            }
+        }
+        mPopupMenu.render(getPopupItmes(activeFigure)).showAt(x,y,dir,300);
     }
-    public function toggleEditing() {
-        isEditing = !isEditing;
+
+    function getPopupItmes (fig: Draggable): Array<PopupItem> {
+        var ret: Array<PopupItem> = [];
+        if (fig.type == DraggableType.Image) {
+            var hide = new PopupItem("隠す",function(p: PopupItem) {
+                thumbnalzieImage(cast fig);
+                activeFigure = null;
+            });
+            ret.push(hide);
+        }
+        var delete = new PopupItem("削除", function (p) {
+            deleteFigure(fig);
+            activeFigure = null;
+        });
+        ret.push(delete);
+        return ret;
     }
+
     function onMouseDown (e: MouseEventCapture) {
         mPressed = true;
         var p = mMainLayer.globalToLocal(e.x,e.y);
@@ -301,7 +367,7 @@ implements ImageEditorListener {
             var tmp: Draggable = null;
             while (i > -1) {
                 var d = mFigures[i];
-                if (d.display.getTransformedBounds().containsPoint(p.x,p.y)) {
+                if (d.display.visible && d.display.getTransformedBounds().containsPoint(p.x,p.y)) {
                     d.onDragStart(e);
                     tmp = d;
                     mDragBegan = true;
@@ -529,15 +595,7 @@ implements ImageEditorListener {
     }
     function onDelete (e: KeyboardEvent) {
         if (activeFigure != null) {
-            mFigures.remove(activeFigure);
-            if (activeFigure.type == DraggableType.Image) {
-                mImageLayer.removeChild(activeFigure.display);
-            } else if (activeFigure.type == DraggableType.Figure) {
-                mFigureLayer.removeChild(activeFigure.display);
-            }
-            mBoundingBox.clear();
-            activeFigure = null;
-            draw();
+            deleteFigure(activeFigure);
         }
     }
 }

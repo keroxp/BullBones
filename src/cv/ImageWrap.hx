@@ -1,4 +1,5 @@
 package cv;
+import util.StringUtil;
 import deferred.Deferred;
 import createjs.easeljs.Rectangle;
 import js.html.ImageData;
@@ -19,11 +20,13 @@ class ImageWrap {
     public var canvas: CanvasElement;
     public var src(default, null): String;
     public var image: Image;
+    public var id: String;
     public var onload: ImageWrap -> Void;
     public var onerror: Error -> Void;
     public function new(src: String) {
         canvas = cast BrowserUtil.document.createElement("canvas");
         this.src = src;
+        this.id = StringUtil.UUID();
         var self = this;
         Loader.loadImage(src).done(function(img: Image) {
             image = img;
@@ -63,25 +66,34 @@ class ImageWrap {
         if (asp == null){
             asp = AspectPolicy.AspectToFit;
         }
-        var ctx = canvas.getContext2d({alpha: true});
+        var ctx = canvas.getContext2d();
         ctx.save();
+        ctx.clearRect(0,0,image.width,image.height);
         var _w = w;
         var _h = h;
-        var horizontal = w > h;
+        var ratio = 1.0;
         switch (asp) {
             case AspectPolicy.AspectToFit: {
-                var ratio = horizontal ? h/image.height : w/image.width;
+                var ratio = 0.0;
+                if (image.width > image.height) {
+                    ratio = w > h ? w/image.width : h/image.height;
+                } else {
+                    ratio = w > h ? h/image.height : w/image.width;
+                }
                 _w = image.width * ratio;
                 _h = image.height * ratio;
             }
             case AspectPolicy.AspectToFill: {
-                var ratio = horizontal ? w/image.width : h/image.height;
+                if (image.width > image.height) {
+                    ratio = w > h ? h/image.width : w/image.height;
+                } else {
+                    ratio = w > h ? w/image.height : h/image.width;
+                }
                 _w = image.width * ratio;
                 _h = image.height * ratio;
             }
             case AspectPolicy.ScaleToFit: {}
         }
-        ctx.clearRect(0,0,w,h);
         ctx.drawImage(image,0,0,_w,_h);
         callback(ctx.canvas,new Rectangle(0,0,_w,_h));
         ctx.restore();
@@ -94,7 +106,7 @@ class ImageWrap {
     ): String {
         var ret: String;
         resize(w,h,function(c:CanvasElement,r:Rectangle){
-           ret = c.toDataURL(type);
+           ret = canvas.toDataURL(type);
         });
         return ret;
     }

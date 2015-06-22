@@ -1,4 +1,5 @@
 package figure;
+import createjs.easeljs.DisplayObject;
 import cv.ImageWrap;
 import deferred.Deferred;
 import deferred.Promise;
@@ -56,7 +57,7 @@ class ImageFigure implements Draggable {
     public function onDragEnd(e:MouseEventCapture):Void {
     }
 
-    @:isVar public var display(get, null):createjs.easeljs.DisplayObject;
+    @:isVar public var display(get, null): DisplayObject;
     function get_display():createjs.easeljs.DisplayObject {
         return bitmap;
     }
