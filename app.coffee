@@ -12,6 +12,10 @@ app.get '/proxy', (req, res) ->
   # url?=http://example.com/hoge.png# url?=http://example.com/hoge.png
   url = req.query.url
   x = request(url)
-  req.pipe(x)
+  onerror = (e) ->
+    console.log "error for url: #{url}"
+    res.writeHead(500)
+    res.end()
+  req.pipe(x).on("error", onerror)
   x.pipe(res)
 app.listen process.env.PORT || 8000
