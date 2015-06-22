@@ -34,6 +34,7 @@ import createjs.easeljs.Stage;
 import createjs.easeljs.Shape;
 using figure.Draggable.DraggableUtil;
 using util.RectangleUtil;
+using util.ArrayUtil;
 class MainCanvas extends ViewModel
 implements SearchResultListener
 implements ImageEditorListener {
@@ -140,7 +141,11 @@ implements ImageEditorListener {
     function set_isEditing(value:Bool) {
         this.isEditing = value;
         jq.attr("data-editing", value+"");
-        activeFigure = value ? mFigures[mFigures.length-1] : null;
+        if (value) {
+            activeFigure = mFigures.findLast(function(e: Draggable) { return e.display.visible; });
+        } else {
+            activeFigure = null;
+        }
         mBackground.visible = value;
         mGrid.visible = value;
         mBrushCircle.visible = !value;
