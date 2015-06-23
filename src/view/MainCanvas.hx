@@ -368,33 +368,31 @@ implements ImageEditorListener {
                 mDrawingFigure = f;
             }
         } else {
-            var i = mFigures.length-1;
-            var tmp: Draggable = null;
-            while (i > -1) {
-                var d = mFigures[i];
-                if (d.display.visible && d.display.getTransformedBounds().containsPoint(p.x,p.y)) {
-                    d.onDragStart(e);
-                    tmp = d;
-                    mDragBegan = true;
-                    break;
-                }
-                i--;
-            }
-            mScaleCorner = mBoundingBox.hitsCorner(p.x,p.y);
-            mScaleBegan = mScaleCorner != null;
-            if (mScaleBegan) {
-                mDragBegan = false;
+            var hitted: Draggable = mFigures.findLast(function(d: Draggable) {
+                return d.display.visible && d.display.getTransformedBounds().containsPoint(p.x,p.y);
+            });
+            if (hitted != null) {
+                hitted.onDragStart(e);
+                mDragBegan = true;
+                jq.css("cursor", mCurrentPointerCSS = "move");
             } else {
-                activeFigure = tmp;
                 mGrabBegan = true;
                 jq.css("cursor",mCurrentPointerCSS = BrowserUtil.grabbingCursor());
             }
-            if (mDragBegan) {
-                jq.css("cursor", mCurrentPointerCSS = "move");
-            }
             if (activeFigure != null) {
-                mBoundingBox.shape.x = activeFigure.display.x;
-                mBoundingBox.shape.y = activeFigure.display.y;
+                mScaleCorner = mBoundingBox.hitsCorner(p.x,p.y);
+                mScaleBegan = mScaleCorner != null;
+                if (mScaleBegan) {
+                    mDragBegan = false;
+                    mGrabBegan = false;
+                }
+            }
+            if (hitted != null) {
+                mBoundingBox.shape.x = hitted.display.x;
+                mBoundingBox.shape.y = hitted.display.y;
+            }
+            if (!mScaleBegan) {
+                activeFigure = hitted;
             }
             drawBoundingBox();
         }
