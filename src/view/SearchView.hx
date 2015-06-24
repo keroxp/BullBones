@@ -5,7 +5,7 @@ import rollbar.Rollbar;
 import ajax.Loader;
 import view.LoadingOverlay;
 import js.html.Document;
-import ajax.BingSearch.BingSearchResult;
+import ajax.BingSearch;
 import js.html.EventTarget;
 import jQuery.JQuery;
 import js.html.MouseEvent;
@@ -58,7 +58,7 @@ class SearchView extends ViewModel {
             Log.i('start searching \"$q\"');
             setLoading(true);
             mLoading = true;
-            ajax.BingSearch.search(q).done(function(data:Array<BingSearchResult>) {
+            BingSearch.search(q).done(function(data:Array<BingSearchResult>) {
                 setLoading(false);
                 render(data.map(function(e:BingSearchResult) { return e.Thumbnail.MediaUrl; }));
                 mImages = data;

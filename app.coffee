@@ -1,21 +1,18 @@
+newrelic = require "newrelic"
 express = require 'express'
 path = require "path"
 http = require "http"
 bodyParser = require 'body-parser'
 request = require "request"
-
-app = express()
-app.use express.static('public')
-app.use bodyParser.urlencoded(extended: true)
-app.use bodyParser.json()
-app.get '/proxy', (req, res) ->
-  # url?=http://example.com/hoge.png# url?=http://example.com/hoge.png
-  url = req.query.url
-  x = request(url)
-  onerror = (e) ->
-    console.log "error for url: #{url}"
-    res.writeHead(500)
-    res.end()
-  req.pipe(x).on("error", onerror)
-  x.pipe(res)
-app.listen process.env.PORT || 8000
+{ MongoClient } = require "mongodb"
+mongo_url = process.env.MONGOLAB_URI || "mongodb://localhost:27017/bullbones"
+MongoClient.connect mongo_url, (err,db) ->
+  console.log err if err
+  app = express()
+  app.use express.static('public')
+  app.use bodyParser.urlencoded(extended: true)
+  app.use bodyParser.json()
+  app.use require("./middleware/acl")
+  app.get '/proxy', require("./routes/proxy")()
+  app.get '/search', require("./routes/search")(db)
+  app.listen process.env.PORT || 8000

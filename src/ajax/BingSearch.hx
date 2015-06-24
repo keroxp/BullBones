@@ -4,23 +4,17 @@ import js.html.DOMWindow;
 import jQuery.JQuery;
 import deferred.Deferred;
 class BingSearch {
-    private static var URL = "https://api.datamarket.azure.com/Bing/Search/Image?$format=json&Query=";
-    private static var KEY = "piWl0WnCx9b4HytksVqG3h0crLcki4MrY4XrwwS0Jo0";
-
     public static function search(q:String): Promise<Array<BingSearchResult>, Dynamic, Int> {
         var def = new Deferred<Array<BingSearchResult>, Dynamic, Int>();
-        var auth = KEY + ":" + KEY;
-        var window: DOMWindow = js.Browser.window;
-        var encodedKey = window.btoa(auth);
+        var _q = js.Lib.eval('encodeURIComponent("$q")');
         JQuery._static.ajax({
-            url: URL + "'" + q + "'",
-            type: "PUT",
-            headers: {
-                Authorization: "Basic " + encodedKey
+            url: '/search',
+            data: {
+                q: q
             },
             dataType: "json"
-        }).done(function(data:Dynamic) {
-            def.resolve(data.d.results);
+        }).done(function(data:Dynamic,status: Dynamic,opts:Dynamic) {
+            def.resolve(data);
         }).fail(function(xhr:jQuery.JqXHR) {
             def.reject(xhr);
         });
