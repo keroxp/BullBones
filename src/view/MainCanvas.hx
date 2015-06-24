@@ -130,6 +130,9 @@ implements ImageEditorListener {
         if (value == null && mPopupMenu.isShown) {
             mPopupMenu.dismiss(200);
         }
+        if (value != null) {
+            Log.d(value.display.getTransformedBounds());
+        }
         invalidate();
         return this.activeFigure = value;
     }
@@ -224,10 +227,7 @@ implements ImageEditorListener {
         mBrushCircle.x = p.x;
         mBrushCircle.y = p.y;
     }
-    function insertFigure (fig: Draggable, x: Float, y: Float) {
-        var p = mMainLayer.globalToLocal(x,y);
-        fig.display.x = p.x;
-        fig.display.y = p.y;
+    function insertFigure (fig: Draggable) {
         mFigures.push(fig);
         if (fig.isImageFigure()) {
             mImageLayer.addChild(fig.display);
@@ -253,7 +253,10 @@ implements ImageEditorListener {
     }
 
     function copyFigure(f: Draggable) {
-        Log.d("copy");
+        var fig = f.clone();
+        fig.display.x = f.display.x+20;
+        fig.display.y = f.display.y+20;
+        insertFigure(fig);
     }
 
     function thumbnalzieImage(f: ImageFigure) {
@@ -284,17 +287,17 @@ implements ImageEditorListener {
     }
 
     public function onSearchResultLoad(img: Image, result: BingSearchResult):Void {
-        var bm = ImageFigure.fromImage(img);
-        var x = (jq.width()-img.width)/2;
-        var y = (jq.height()-img.height)/2;
-        insertFigure(bm,x,y);
+        var im = ImageFigure.fromImage(img);
+        im.display.x = -mMainLayer.x;
+        im.display.y = -mMainLayer.y;
+        insertFigure(im);
     }
 
     function onFileLoad (dataUrl: String) {
         var im = ImageFigure.fromUrl(dataUrl);
-        var x = mCanvas.width/2;
-        var y = mCanvas.height/2;
-        insertFigure(im,x,y);
+        im.display.x = -mMainLayer.x;
+        im.display.y = -mMainLayer.y;
+        insertFigure(im);
     }
 
     function resizeCanvas () {
@@ -336,12 +339,17 @@ implements ImageEditorListener {
     function getPopupItmes (fig: Draggable): Array<PopupItem> {
         var ret: Array<PopupItem> = [];
         if (fig.type == DraggableType.Image) {
-            var hide = new PopupItem("隠す",function(p: PopupItem) {
+            var hide = new PopupItem("隠す",function(p) {
                 thumbnalzieImage(cast fig);
                 activeFigure = null;
             });
             ret.push(hide);
         }
+        var copy = new PopupItem("コピー", function (p) {
+            copyFigure(fig);
+            activeFigure = null;
+        });
+        ret.push(copy);
         var delete = new PopupItem("削除", function (p) {
             deleteFigure(fig);
             activeFigure = null;
@@ -527,8 +535,8 @@ implements ImageEditorListener {
         if (!isEditing) {
             if (mDrawingFigure != null) {
                 mDrawingFigure.calcVertexes();
-                mDrawingFigure.isDrawing = false;
-                mFigureLayer.addChild(mDrawingFigure.render().display);
+                mFigureLayer.addChild(mDrawingFigure.display);
+                mDrawingFigure.render();
                 mDrawingFigure = null;
                 toDraw = true;
             }
@@ -539,6 +547,10 @@ implements ImageEditorListener {
                     drawBoundingBox();
                     toDraw = true;
                 } else if (mScaleBegan) {
+                    if (activeFigure.type == DraggableType.Figure) {
+                        var fig: Figure = cast activeFigure;
+                        fig.applyScale().render();
+                    }
                     drawBoundingBox();
                     toDraw = true;
                 } else if (mGrabBegan) {

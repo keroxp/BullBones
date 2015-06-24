@@ -46,6 +46,10 @@ class ImageFigure implements Draggable {
         image = new ImageWrap(src);
     }
 
+    public function clone(): ImageFigure {
+        return fromImage(image.image);
+    }
+
     public function onDragStart(e:MouseEventCapture):Void {
     }
 
@@ -61,6 +65,11 @@ class ImageFigure implements Draggable {
     function get_display():createjs.easeljs.DisplayObject {
         return bitmap;
     }
+
+    public function render(?arg:Dynamic): ImageFigure {
+        return this;
+    }
+
 
     public var filter(default, null):Filter;
 
