@@ -6,3 +6,4 @@ public/css/*
 public/font/*
 !.gitkeep
 bower_components
+*.log
