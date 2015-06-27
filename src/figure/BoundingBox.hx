@@ -36,7 +36,7 @@ class BoundingBox {
         shape.addChild(mLTCorner);
         shape.addChild(mLBCorner);
     }
-    public function render (target: DisplayObject) {
+    public function render (target: DisplayObject): BoundingBox {
         var bounds = target.getTransformedBounds();
         mBox.graphics
         .setStrokeStyle(1)
@@ -48,6 +48,7 @@ class BoundingBox {
         drawCorner(mLBCorner,0,bounds.height);
         drawCorner(mRBCorner,bounds.width,bounds.height);
         shape.setBounds(0,0,bounds.width,bounds.height);
+        return this;
     }
     function drawCorner(s: Shape, x: Float, y: Float) {
         s.graphics

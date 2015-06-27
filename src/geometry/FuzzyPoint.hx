@@ -1,4 +1,5 @@
 package geometry;
+import protocol.Clonable;
 class FuzzyPoint extends Point {
     public var timestamp(default, null): Date;
     public var prev(default,null): FuzzyPoint;
@@ -9,6 +10,11 @@ class FuzzyPoint extends Point {
             return distance(prev)*100/d; // ms
         }
         return 0;
+    }
+    override function clone(): FuzzyPoint {
+        var ret = new FuzzyPoint(x,y,prev);
+        ret.timestamp = timestamp;
+        return ret;
     }
     public function new(x: Float, y: Float, ?prev: FuzzyPoint = null) {
         super(x,y);
