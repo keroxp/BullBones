@@ -1,4 +1,6 @@
 package view;
+import js.html.Event;
+import js.html.EventListener;
 import view.PopupMenu.PopupItem;
 import jQuery.JQuery;
 import view.PopupMenu.PopupItem;
@@ -578,6 +580,8 @@ implements ImageEditorListener {
         return mCurrentKeyEvent != null && mCurrentKeyEvent.shiftKey;
     }
     function onKeyDown (e: KeyboardEvent) {
+        var el: Element = cast e.target;
+        if (el.id == "searchInput") return true;
         if (mCurrentKeyEvent == null) {
             switch e.keyCode {
                 case 16: {
@@ -589,9 +593,9 @@ implements ImageEditorListener {
                     }
                 }
                 case 69: { // E
-                    e.preventDefault();
-                    e.stopPropagation();
-                    isEditing = true;
+                    if (!isEditing) {
+                        isEditing = true;
+                    }
                 }
             }
             mCurrentKeyEvent = e;
@@ -600,13 +604,18 @@ implements ImageEditorListener {
         return true;
     }
     function onKeyUp (e: KeyboardEvent) {
+        var el: Element = cast e.target;
+        if (el.id == "searchInput") return true;
         switch e.keyCode {
             case 8: onDelete(e);
             case 69: { // E
-                isEditing = false;
+                if (isEditing) {
+                    isEditing = false;
+                }
             }
         }
         mCurrentKeyEvent = null;
+        return false;
     }
     function onDelete (e: KeyboardEvent) {
         if (activeFigure != null) {
