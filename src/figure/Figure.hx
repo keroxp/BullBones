@@ -1,13 +1,11 @@
 package figure;
+import util.Log;
 import createjs.easeljs.Rectangle;
 import createjs.easeljs.DisplayObject;
-import hammer.HammerEvent;
 import figure.Draggable.DraggableType;
 import event.MouseEventCapture;
-import js.html.MouseEvent;
 import createjs.easeljs.Point;
 import geometry.Vector2D;
-import createjs.easeljs.Matrix2D;
 import geometry.FuzzyPoint;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;
@@ -15,45 +13,45 @@ class Figure implements Draggable {
     public function new(x: Float, y: Float) {
         addPoint(x,y);
     }
+
+    public function clone(): Figure {
+        var ret = new Figure(this.points[0].x,this.points[0].y);
+        ret.shape = shape.clone(true);
+        ret.points = this.points.map(function(p: FuzzyPoint) { return p.clone(); });
+        ret.vertexes = this.vertexes.map(function(vtx: Vertex) { return vtx.clone(); });
+        ret.color = color;
+        ret.width = width;
+        ret.supplementLength = supplementLength;
+        ret.isLine = isLine;
+        ret.mBounds = mBounds.clone();
+        return ret.render();
+    }
+
     // 図形を構成する点
     public var points(default, null): Array<FuzzyPoint> = new Array();
     // 頂点っぽい点
     public var vertexes(default, null): Array<Vertex> = new Array();
     // 描画につかうShape
     private var shape(default, null): Shape = new Shape();
-
+    // 補完係数
+    public var supplementLength = 5;
+    // 直線フラグ
+    private var isLine: Bool = false;
+    // 図形のbounds
+    private var mBounds: Rectangle;
+    // 色
+    public var color: String = "#000000";
+    // 描画の点の半径
+    public var width: Float = 2;
     @:isVar public var type(get, null):DraggableType;
     function get_type():DraggableType {
         return Figure;
     }
 
-
     @:isVar public var display(get, null): DisplayObject;
     function get_display(): DisplayObject {
         return this.shape;
     }
-    // 色
-    public var color(default, set): String = "#000000";
-    function set_color (c) {
-        color = c;
-        shape.graphics.clear();
-        return color;
-    }
-    // 描画の点の半径
-    public var width(default, set): Float = 2;
-    function set_width (r: Float) {
-        width = r;
-        shape.graphics.clear();
-        render();
-        return width;
-    }
-    // 描画中か？
-    public var isDrawing: Bool = true;
-    // 直線フラグ
-    private var isLine: Bool = false;
-    //　デバッグ中？
-    public var isDebug: Bool = false;
-    // 閉じているか
     private static var CLOSE_THRESH: Float = 20*20;
     public function getClosedPoint (): Point {
         var last = points.length-1;
@@ -81,7 +79,6 @@ class Figure implements Draggable {
                 var b = Vector2D.v(points[i-1],points[i]);//
                 var cos = a.dot(b)/(a.power()*b.power());
                 var rad = Math.acos(cos);
-//                trace(rad);
                 if (PI_4_5 < rad && rad < PI_1_5) {
                     var vtx = new Vertex(cur,rad);
                     var THRESH = 10*10;
@@ -104,8 +101,6 @@ class Figure implements Draggable {
     private static var PI_3_5 = Math.PI/3.5;
     private static var PI_4 = Math.PI/4;
     private static var PI_4_5 = Math.PI/4.5;
-    public var mDirtyPoints: Array<Int> = new Array();
-    private var mBounds: Rectangle;
     public function addPoint (x: Float, y: Float) {
         calcBounds(x,y);
         if (points.length == 0) {
@@ -115,7 +110,6 @@ class Figure implements Draggable {
             // 同じ位置は追加しない
             if (fp.rawDistance(points[points.length-1]) > 0) {
                 points.push(fp);
-                mDirtyPoints.push(points.length-1);
             }
         }
     }
@@ -159,98 +153,87 @@ class Figure implements Draggable {
     }
     private static var LINE_LENGTH_THRESH: Float = 150*150;
     private static var LINE_RECOGNIZE_THRESH = 20;
-    public function render (): Figure {
-        if (points.length < 2) return this;
-        var i = 0;
-        var bounds = shape.getBounds();
-        shape.x = mBounds.x;
-        shape.y = mBounds.y;
-        renderPolygon();
+
+    public function applyScale(): Figure {
+        var px = mBounds.x;
+        var py = mBounds.y;
+        var sx = shape.scaleX;
+        var sy = shape.scaleY;
+        for (p in this.points) {
+            p.x = (p.x-px)*sx+px;
+            p.y = (p.y-py)*sy+py;
+        }
+        mBounds.width *= sx;
+        mBounds.height *= sy;
+        shape.setBounds(0,0,mBounds.width,mBounds.height);
+        shape.scaleX = shape.scaleY = 1.0;
         return this;
     }
-    private inline function xx(x: Float): Float return x-shape.x;
-    private inline function yy(y: Float): Float return y-shape.y;
 
-    private function renderPolygon () {
+    private inline function xx(x: Float): Float return x-mBounds.x;
+    private inline function yy(y: Float): Float return y-mBounds.y;
+    private var isFirstRendering = true;
+    public function render (?arg: Dynamic): Figure {
+        if (points.length < 2) return this;
         var s = points[0];
         var e = points[points.length-1];
-        var sx = shape.x;
-        var sy = shape.y;
-        if (isDrawing && mDirtyPoints.length > 0) {
-            var ds = points[mDirtyPoints[0]-1];
-            shape.graphics.setStrokeStyle(width,"round",1).beginStroke(color);
-            shape.graphics.moveTo(xx(ds.x),yy(ds.y));
-            for (i in mDirtyPoints) {
-                var dp = points[i];
-                shape.graphics.lineTo(xx(dp.x),yy(dp.y));
+        shape.graphics.clear();
+        shape.graphics.setStrokeStyle(width,"round",1).beginStroke(color);
+        shape.graphics.moveTo(xx(s.x),yy(s.y));
+        if (Main.App.v.brush.supplemnt) {
+            // 平均係数
+            var m = supplementLength;
+            for (i in m-1...points.length) {
+                var avp = new Point();
+                var seg: Array<FuzzyPoint> = points.slice(i-m+1,i+1);
+                for (p in seg){
+                    avp.x += p.x;
+                    avp.y += p.y;
+                }
+                shape.graphics.lineTo(xx(avp.x/m),yy(avp.y/m));
             }
-            mDirtyPoints = new Array();
+            var e = points[points.length-1];
+            shape.graphics.lineTo(xx(e.x),yy(e.y));
         } else {
-            shape.graphics.clear();
-            shape.graphics.setStrokeStyle(width,"round",1).beginStroke(color);
-            shape.graphics.moveTo(xx(s.x),yy(s.y));
-            if (Main.App.v.brush.supplemnt) {
-                drawMovingAverage();
-            } else {
-                drawLines();
+            for (i in 1...points.length-1) {
+                var p = points[i];
+                var n = points[i+1];
+                shape.graphics.lineTo(xx(p.x),yy(p.y));
             }
         }
         shape.graphics.endStroke();
-        if (!isDrawing) {
-            if (isDebug) {
-                shape.graphics
-                .beginFill("blue")
-                .drawCircle(s.x,s.y,3)
-                .drawCircle(e.x,e.y,3)
-                .endFill();
-                for (vec in vertexes) {
-                    shape.graphics.setStrokeStyle(3).beginStroke("red");
-                    shape.graphics.drawCircle(xx(vec.point.x),yy(vec.point.y),5);
-                    shape.graphics.endStroke();
-                }
-                var cp = getClosedPoint();
-                if (cp != null) {
-                    shape.graphics.setStrokeStyle(3).beginStroke("pink");
-                    shape.graphics.drawCircle(xx(cp.x),yy(cp.y),5);
-                    shape.graphics.endStroke();
-                }
+        if (Main.App.v.isDebug) {
+            shape.graphics
+            .beginFill("blue")
+            .drawCircle(xx(s.x),yy(s.y),3)
+            .drawCircle(xx(e.x),yy(e.y),3)
+            .endFill();
+            for (vec in vertexes) {
+                shape.graphics.setStrokeStyle(3).beginStroke("red");
+                shape.graphics.drawCircle(xx(vec.point.x),yy(vec.point.y),5);
+                shape.graphics.endStroke();
+            }
+            var cp = getClosedPoint();
+            if (cp != null) {
+                shape.graphics.setStrokeStyle(3).beginStroke("pink");
+                shape.graphics.drawCircle(xx(cp.x),yy(cp.y),5);
+                shape.graphics.endStroke();
             }
         }
-    }
-    private function drawLines () {
-        for (i in 1...points.length-1) {
-            var p = points[i];
-            var n = points[i+1];
-            shape.graphics.lineTo(xx(p.x),yy(p.y));
+        // 最初のレンダリングの際のみ、shapeのtlanslationを合わせる
+        if (isFirstRendering) {
+            shape.x = mBounds.x;
+            shape.y = mBounds.y;
+            isFirstRendering = false;
         }
+        return this;
     }
-    public var supplementLength = 5;
-    private function drawMovingAverage () {
-        // 平均係数
-        var m = supplementLength;
-        for (i in m-1...points.length) {
-            var avp = new Point();
-            var seg: Array<FuzzyPoint> = points.slice(i-m+1,i+1);
-            for (p in seg){
-                avp.x += p.x;
-                avp.y += p.y;
-            }
-            shape.graphics.lineTo(xx(avp.x/m),yy(avp.y/m));
-        }
-        var e = points[points.length-1];
-        shape.graphics.lineTo(xx(e.x),yy(e.y));
-    }
-
     public function onDragStart(e:MouseEventCapture):Void {
     }
-
     public function onDragMove(e:MouseEventCapture):Void {
         shape.x += e.deltaX;
         shape.y += e.deltaY;
-        mBounds.x += e.deltaX;
-        mBounds.y += e.deltaY;
     }
-
     public function onDragEnd(e:MouseEventCapture):Void {
     }
 }
