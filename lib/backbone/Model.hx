@@ -8,15 +8,15 @@ extern class Model implements Events {
 
     public function initialize (?attributes: Dynamic, ?options: Dynamic): Void;
 
-    public var attributes(get, null): Dynamic;
+    public var attributes(default, null): Dynamic;
 
     // A hash of attributes whose current and previous value differ.
-    public var changed(get, null): Dynamic;
+    public var changed(default, null): Dynamic;
 
     // The value returned during the last failed validation.
-    public var validationError(get, null): Dynamic;
+    public var validationError(default, null): Dynamic;
 
-    public var idAttribute(get,set): String;
+    public var idAttribute: String;
 
     // The prefix is used to create the client id which is used to identify models locally.
     // You may want to override this if you're experiencing name clashes with model ids.
@@ -45,6 +45,7 @@ extern class Model implements Events {
     // Set a hash of model attributes on the object, firing `"change"`. This is
     // the core primitive operation of a model, updating the data and notifying
     // anyone who needs to know about the change in state. The heart of the beast.
+    @:overload(function(attributes:Dynamic, ?options: Dynamic):Model{})
     public function set(key: String, val: Dynamic, ?options: Dynamic): Model;
 
 

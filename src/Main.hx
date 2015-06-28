@@ -1,5 +1,6 @@
 package ;
 
+import model.ZoomEditor;
 import model.BrushEditor;
 class Main {
     public static var App: App;
@@ -7,7 +8,8 @@ class Main {
         App = new App({
             brush: new BrushEditor(),
             isDebug: false,
-            isEditing: false
+            isEditing: false,
+            zoom: new ZoomEditor()
         });
         App.start();
     }

@@ -36,8 +36,7 @@ class BoundingBox {
         shape.addChild(mLTCorner);
         shape.addChild(mLBCorner);
     }
-    public function render (target: DisplayObject): BoundingBox {
-        var bounds = target.getTransformedBounds();
+    public function render (bounds: Rectangle): BoundingBox {
         mBox.graphics
         .setStrokeStyle(1)
         .beginStroke(color)

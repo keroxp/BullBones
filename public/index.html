@@ -6,6 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="stylesheet" type="text/css" href="css/bower.css" />
   <link rel="stylesheet" type="text/css" href="css/main.css" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.gif">
 
@@ -104,7 +105,7 @@
       </a>
        <div id="imageEditorView" class="bb-panel panel z-depth-1" style="display:none">
         <div id="imageEditorPreview">
-          <canvas id="imageEditorPreviewCanvas" width="220" height="100" />
+          <canvas id="imageEditorPreviewCanvas" width="220" height="100" ></canvas>
         </div>
         <div id="imageEditorForm">
           <form action="#">
@@ -130,6 +131,15 @@
             </p>
           </form>
         </div>
+      </div>
+      <div id="zoomInputGroup" class="z-depth-1">
+        <a id="zoomOutButton">
+          <i class="small material-icons">zoom_out</i>
+        </a>
+        <span id="zoomValue">100%</span>
+        <a id="zoomInButton">
+          <i class="small material-icons">zoom_in</i>
+        </a>
       </div>
       <a id="debugButton" class="btn-floating waves-effect waves-light btn-large white" style="display:none">
         <i class="large mdi-action-bug-report" style="color: black"></i>
