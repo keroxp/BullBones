@@ -7,32 +7,38 @@ import js.html.UIEvent;
 typedef MouseEventCaptureCallback = MouseEventCapture -> Void;
 
 class MouseEventCapture {
-    public var startX(default, null): Int = 0;
-    public var startY(default, null): Int = 0;
-    public var x(default, null): Int = 0;
-    public var y(default, null): Int = 0;
-    public var prevX(get, null): Int = 0;
-    function get_prevX():Int {
+    public var startX(default, null): Float = 0;
+    public var startY(default, null): Float = 0;
+    public var x(default, null): Float = 0;
+    public var y(default, null): Float = 0;
+    public var prevX(get, null): Float = 0;
+    function get_prevX():Float {
         return x-deltaX;
     }
-    public var prevY(get, null): Int = 0;
-    function get_prevY(): Int {
+    public var prevY(get, null): Float = 0;
+    function get_prevY(): Float {
         return y-deltaY;
     }
-    public var deltaX(default, null): Int = 0;
-    public var deltaY(default, null): Int = 0;
-    public var totalDeltaX(get, null): Int;
-    function get_totalDeltaX(): Int {
-        return x - startX;
+    public var deltaX(get, null): Float = 0;
+    public function get_deltaX () {
+        return deltaX;
     }
-    public var totalDeltaY(get, null): Int;
-    function get_totalDeltaY(): Int {
-        return y - startY;
+    public var deltaY(get, null): Float = 0;
+    public function get_deltaY () {
+        return deltaY;
+    }
+    public var totalDeltaX(get, null): Float;
+    function get_totalDeltaX(): Float {
+        return (x - startX);
+    }
+    public var totalDeltaY(get, null): Float;
+    function get_totalDeltaY(): Float {
+        return (y - startY);
     }
     public var srcEvent: UIEvent;
     public function new() {
     }
-    private function getClientX(e: UIEvent): Int {
+    private function getClientX(e: UIEvent): Float {
         if (BrowserUtil.isBrowser()) {
             return Reflect.getProperty(e,"clientX") ;
         } else {
@@ -40,7 +46,7 @@ class MouseEventCapture {
             return te.touches.item(0).clientX;
         }
     }
-    private function getClientY(e: UIEvent): Int {
+    private function getClientY(e: UIEvent): Float {
         if (BrowserUtil.isBrowser()) {
             return Reflect.getProperty(e,"clientY");
         } else {
@@ -89,5 +95,6 @@ class MouseEventCapture {
             callback(up(e));
         }, false);
     }
+
 }
 

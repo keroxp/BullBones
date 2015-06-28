@@ -1,5 +1,6 @@
 package util;
 import createjs.easeljs.Rectangle;
+import createjs.easeljs.Rectangle;
 import geometry.Point;
 using util.RectangleUtil;
 class RectangleUtil {
@@ -22,5 +23,11 @@ class RectangleUtil {
     }
     public static function containsPoint (r: Rectangle, x: Float, y: Float): Bool {
         return r.x <= x && x <= r.right() && r.y <= y && y <= r.bottom();
+    }
+    public static function scale (r: Rectangle, scaleX: Float, scaleY: Float): Rectangle {
+        var ret = r.clone();
+        ret.width *= scaleX;
+        ret.height *= scaleY;
+        return ret;
     }
 }

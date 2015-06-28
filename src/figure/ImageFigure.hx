@@ -50,17 +50,6 @@ class ImageFigure implements Draggable {
         return fromImage(image.image);
     }
 
-    public function onDragStart(e:MouseEventCapture):Void {
-    }
-
-    public function onDragMove(e:MouseEventCapture):Void {
-        bitmap.x += e.deltaX;
-        bitmap.y += e.deltaY;
-    }
-
-    public function onDragEnd(e:MouseEventCapture):Void {
-    }
-
     @:isVar public var display(get, null): DisplayObject;
     function get_display():createjs.easeljs.DisplayObject {
         return bitmap;

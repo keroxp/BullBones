@@ -1,5 +1,6 @@
 package ;
 
+import view.ZoomInputView;
 import view.FloatingThumbnailView;
 import rollbar.Rollbar;
 import util.Log;
@@ -43,6 +44,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     public var brushEditorView: BrushEditorView;
     public var imageEditorView: ImageEditorView;
     public var floatingThumbnailView: FloatingThumbnailView;
+    public var zoomInputView: ZoomInputView;
     var window: DOMWindow = Browser.window;
     var document = Browser.document;
     public var onFileLoad: OnFileLoadListenr;
@@ -55,6 +57,7 @@ class App extends BackboneEvents implements BrushEditorListener {
         if (window.location.href.indexOf("http://localhost:8000") == 0) {
             this.v.isDebug = true;
         }
+        trace(this.v.attributes);
     }
     public function start () {
         once("app:start", function (a: Dynamic) {
@@ -99,6 +102,8 @@ class App extends BackboneEvents implements BrushEditorListener {
             imageEditorView.listener = mainCanvas;
             // ThumbView
             floatingThumbnailView = new FloatingThumbnailView(new JQuery("#floatingThumbnailView"));
+            // Zoom
+            zoomInputView = new ZoomInputView(new JQuery("#zoomInputGroup"));
             // 検索ボタン
             jSearchButton = new JQuery("#searchButton");
             jSearchButton.on("click", function (e: MouseEvent) {
@@ -132,6 +137,8 @@ class App extends BackboneEvents implements BrushEditorListener {
             searchView.init();
             imageEditorView.init();
             brushEditorView.init();
+            floatingThumbnailView.init();
+            zoomInputView.init();
 
             // hide loading
             haxe.Timer.delay(function() {

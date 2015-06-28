@@ -5,6 +5,11 @@ body
   margin 0
   padding 0
   background-color #ccc
+  user-select none
+  -webkit-user-select none
+  -moz-user-select none
+  -ms-user-select none
+  -o-user-select none
 .clearfix:after
   content: "."
   display: block
@@ -128,6 +133,29 @@ body
     position fixed
     right 25px
     bottom 25px
+  #zoomInputGroup
+    position fixed
+    bottom 25px
+    right 25px
+    display table
+    border-radius 5px
+    overflow hidden
+    background white
+    > span,a
+     display table-cell
+     vertical-align middle
+     margin-right 5px
+     border-right 1px solid #ccc
+     padding 5px 10px
+     &:last-child
+       border-right none
+       margin-right 0px
+    a
+      cursor pointer
+      color black
+      &:active
+        background #ccc
+        color white
   #searchView
     width 400px
     position fixed

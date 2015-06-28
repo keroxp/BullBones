@@ -1,4 +1,7 @@
 package view;
+import model.ZoomEditor;
+import createjs.easeljs.Point;
+import js.html.WheelEvent;
 import js.html.Event;
 import js.html.EventListener;
 import view.PopupMenu.PopupItem;
@@ -52,6 +55,7 @@ implements ImageEditorListener {
     var mGrid: Shape = new Shape();
     var mBrushCircle: Shape = new Shape();
     var mBufferShape: Shape = new Shape();
+    var mMainDebugShape: Shape = new Shape();
     var mDrawingFigure: Figure;
     var mFigures: Array<Draggable> = new Array();
     var mCanvas: CanvasElement;
@@ -83,6 +87,7 @@ implements ImageEditorListener {
         cap.onMove(el,onMouseMove);
         cap.onUp(el,onMouseUp);
         mCapture = cap;
+        jq.on("mousewheel", onMouseWheel);
         window.addEventListener("keyup", onKeyUp);
         window.addEventListener("keydown", onKeyDown);
 
@@ -99,12 +104,13 @@ implements ImageEditorListener {
         mFgLayer.addChild(mBoundingBox.shape);
         // brush
         mFgLayer.addChild(mBrushCircle);
-        // buffer shape
-        mFgLayer.addChild(mBufferShape);
         // ファジィグラフ
         mFgLayer.addChild(mFuzzySketchGraph);
-        mMainLayer.addChild(mImageLayer);
-        mMainLayer.addChild(mFigureLayer);
+        mMainLayer.addChild(mMainDebugShape);
+        // buffer shape
+        mMainLayer.addChild(mBufferShape);
+        mMainLayer.addChildAt(mImageLayer,0);
+        mMainLayer.addChildAt(mFigureLayer,0);
         mStage.addChild(mBgLayer);
         mStage.addChild(mMainLayer);
         mStage.addChild(mFgLayer);
@@ -120,6 +126,7 @@ implements ImageEditorListener {
         // event observing
         listenTo(Main.App.v, "change:brush", drawBrushCircle);
         listenTo(Main.App, App.APP_WINDOW_RESIZE_EVENT, resizeCanvas);
+        listenTo(Main.App.v, "change:zoom", onChageZoomEditor);
         Main.App.onFileLoad = onFileLoad;
     }
 
@@ -162,11 +169,17 @@ implements ImageEditorListener {
         return value;
     }
 
+    var scale(get,never): Float;
+    function get_scale():Float {
+        return Main.App.v.zoom.scale;
+    }
+
     function invalidate () {
         drawBackground();
         drawGrid();
         drawBrushCircle();
         drawBoundingBox();
+        showPopupMenu();
         draw();
     }
     function draw () {
@@ -186,22 +199,33 @@ implements ImageEditorListener {
         .drawRoundRect(0,0,mCanvas.width,mCanvas.height,0)
         .endFill();
     }
-    function drawGrid () {
+    private var mGridDeltaX: Float = 0;
+    private var mGridDeltaY: Float = 0;
+    function drawGrid (?deltaX: Float = 0, ?deltaY: Float = 0) {
         mGrid.graphics
         .clear()
         .setStrokeStyle(1,0)
         .beginStroke("#fff");
-        var i = vGridUnit;
+        var i: Float = cast vGridUnit;
+        var w = vGridUnit*vGridDivision*scale;
+        mGridDeltaX += deltaX;
+        if (mGridDeltaX <= -w || w <= mGridDeltaX) {
+            mGridDeltaX = mGridDeltaX%w;
+        }
+        mGridDeltaY += deltaY;
+        if (mGridDeltaY <= -w || w <= mGridDeltaY) {
+            mGridDeltaY = mGridDeltaY%w;
+        }
         var max = Math.max(mCanvas.width,mCanvas.height);
         while (i < max) {
             if (i < mCanvas.width) {
                 // vertical
-                mGrid.graphics.moveTo(i+0.5,0).lineTo(i+0.5,mCanvas.height);
+                mGrid.graphics.moveTo(i+0.5+mGridDeltaX,0).lineTo(i+0.5+mGridDeltaX,mCanvas.height);
             }
             if (i < mCanvas.height) {
-                mGrid.graphics.moveTo(0,i+0.5).lineTo(mCanvas.width,i+0.5);
+                mGrid.graphics.moveTo(0,i+0.5+mGridDeltaY).lineTo(mCanvas.width,i+0.5+mGridDeltaY);
             }
-            i += vGridUnit*vGridDivision;
+            i += vGridUnit*vGridDivision*scale;
         }
         mGrid.graphics.endStroke();
         mGrid.cache(0,0,mCanvas.width,mCanvas.height);
@@ -210,9 +234,15 @@ implements ImageEditorListener {
     function drawBoundingBox () {
         mBoundingBox.clear();
         if (activeFigure != null) {
-            mBoundingBox.shape.x = activeFigure.display.x;
-            mBoundingBox.shape.y = activeFigure.display.y;
-            mBoundingBox.render(activeFigure.display);
+            var p = mMainLayer.localToLocal(
+                activeFigure.display.x,
+                activeFigure.display.y,
+                mFgLayer
+            );
+            mBoundingBox.shape.x = p.x;
+            mBoundingBox.shape.y = p.y;
+            var bounds = activeFigure.display.getTransformedBounds();
+            mBoundingBox.render(bounds.scale(scale,scale));
         }
     }
     function drawBrushCircle () {
@@ -232,9 +262,9 @@ implements ImageEditorListener {
     function insertFigure (fig: Draggable) {
         mFigures.push(fig);
         if (fig.isImageFigure()) {
-            mImageLayer.addChild(fig.display);
+            mImageLayer.addChildAt(fig.display,0);
         } else {
-            mFigureLayer.addChild(fig.display);
+            mFigureLayer.addChildAt(fig.display,0);
         }
         draw();
     }
@@ -313,29 +343,60 @@ implements ImageEditorListener {
         Log.d("onWindowChange"+w+","+h);
     }
 
-    function showPopupMenu () {
-        var p = mMainLayer.localToGlobal(
-            activeFigure.display.x,
-            activeFigure.display.y
-        );
-        var margin = 20;
-        var b = activeFigure.display.getTransformedBounds();
-        var w = mPopupMenu.jq.outerWidth();
-        var h = mPopupMenu.jq.outerHeight();
-        var x = p.x+(b.width-w)*0.5;
-        var y = p.y-h-margin;
-        var dir = "bottom";
-        var o = mMainLayer.globalToLocal(0,0);
-        if (p.y < h && mCanvas.height-h < p.y+b.height) {
-            dir = "top";
-            y = p.y+b.height*0.5;
+    function onChageZoomEditor (v: V, val: ZoomEditor, options: Dynamic) {
+        if (options.changer == this) {
+            applyScaleToLayer(mMainLayer, val.scale, val.pivotX, val.pivotY);
         } else {
-            if (y < o.y) {
-                dir = "top";
-                y = p.y+b.height+margin;
+            var pivX = mCanvas.width/2;
+            var pivY = mCanvas.height/2;
+            if (activeFigure != null) {
+                var c = activeFigure.display.getTransformedBounds().center();
+                var p = mMainLayer.localToGlobal(c.x,c.y);
+                pivX = p.x;
+                pivY = p.y;
             }
+            applyScaleToLayer(mMainLayer, val.scale, pivX, pivY);
         }
-        mPopupMenu.render(getPopupItmes(activeFigure)).showAt(x,y,dir,300);
+        invalidate();
+    }
+
+    private function applyScaleToLayer(layer: Container, scale: Float, g_pivX: Float, g_pivY: Float) {
+        var piv = layer.globalToLocal(g_pivX,g_pivY);
+        layer.scaleX = scale;
+        layer.scaleY = scale;
+        layer.regX = piv.x;
+        layer.regY = piv.y;
+        layer.x = g_pivX;
+        layer.y = g_pivY;
+    }
+
+    function showPopupMenu () {
+        if (activeFigure != null) {
+            var p = mMainLayer.localToGlobal(
+                activeFigure.display.x,
+                activeFigure.display.y
+            );
+            var margin = 20;
+            var b = activeFigure.display.getTransformedBounds().scale(scale,scale);
+            var w = mPopupMenu.jq.outerWidth();
+            var h = mPopupMenu.jq.outerHeight();
+            var x = p.x+(b.width-w)*0.5;
+            var y = p.y-h-margin;
+            var dir = "bottom";
+            var o = mMainLayer.globalToLocal(0,0);
+            if (p.y < h && mCanvas.height-h < p.y+b.height) {
+                dir = "top";
+                y = p.y+b.height*0.5;
+            } else {
+                if (y < o.y) {
+                    dir = "top";
+                    y = p.y+b.height+margin;
+                }
+            }
+            mPopupMenu.render(getPopupItmes(activeFigure)).showAt(x,y,dir,300);
+        } else {
+            mPopupMenu.dismiss(200);
+        }
     }
 
     function getPopupItmes (fig: Draggable): Array<PopupItem> {
@@ -362,13 +423,22 @@ implements ImageEditorListener {
 
     function onMouseDown (e: MouseEventCapture) {
         mPressed = true;
-        var p = mMainLayer.globalToLocal(e.x,e.y);
+        var p_main_local = mMainLayer.globalToLocal(e.x,e.y);
+        var p_fg_local = mFgLayer.globalToLocal(e.x,e.y);
+        if (Main.App.v.isDebug) {
+            var sp = mStage.globalToLocal(e.x,e.y);
+            Log.d('Stage:{${sp.x},${sp.y}, Main:{${p_main_local.x},${p_main_local.y}');
+            mMainDebugShape.graphics
+            .clear()
+            .beginFill("red")
+            .drawCircle(p_main_local.x,p_main_local.y,3);
+        }
         if (!isEditing) {
             if (activeFigure != null) {
                 activeFigure = null;
                 drawBoundingBox();
             } else {
-                var f =  new Figure(p.x,p.y);
+                var f =  new Figure(p_main_local.x,p_main_local.y);
                 f.width = Main.App.v.brush.width;
                 f.color = Main.App.v.brush.color;
                 mFigures.push(f);
@@ -379,10 +449,9 @@ implements ImageEditorListener {
             }
         } else {
             var hitted: Draggable = mFigures.findLast(function(d: Draggable) {
-                return d.display.visible && d.display.getTransformedBounds().containsPoint(p.x,p.y);
+                return d.display.visible && d.display.getTransformedBounds().containsPoint(p_main_local.x,p_main_local.y);
             });
             if (hitted != null) {
-                hitted.onDragStart(e);
                 mDragBegan = true;
                 jq.css("cursor", mCurrentPointerCSS = "move");
             } else {
@@ -390,7 +459,7 @@ implements ImageEditorListener {
                 jq.css("cursor",mCurrentPointerCSS = BrowserUtil.grabbingCursor());
             }
             if (activeFigure != null) {
-                mScaleCorner = mBoundingBox.hitsCorner(p.x,p.y);
+                mScaleCorner = mBoundingBox.hitsCorner(p_fg_local.x,p_fg_local.y);
                 mScaleBegan = mScaleCorner != null;
                 if (mScaleBegan) {
                     mDragBegan = false;
@@ -417,8 +486,9 @@ implements ImageEditorListener {
         if (!BrowserUtil.isBrowser()) {
             e.srcEvent.preventDefault();
         }
-        var localP = mMainLayer.globalToLocal(e.x,e.y);
-        var localPrevP = mMainLayer.globalToLocal(e.prevX,e.prevY);
+        var p_local_main = mMainLayer.globalToLocal(e.x,e.y);
+        var p_local_main_prev = mMainLayer.globalToLocal(e.prevX,e.prevY);
+        var p_local_fg = mFgLayer.globalToLocal(e.x,e.y);
         if (!isEditing) {
             var fp = mFgLayer.globalToLocal(e.x,e.y);
             mBrushCircle.x = fp.x;
@@ -427,12 +497,12 @@ implements ImageEditorListener {
         } else {
             if (this.activeFigure != null) {
                 if (mScaleBegan) {}
-                var c = mBoundingBox.hitsCorner(localP.x,localP.y);
+                var c = mBoundingBox.hitsCorner(p_local_fg.x,p_local_fg.y);
                 if (c != null) {
                     if (mCurrentPointerCSS != BoundingBox.getPointerCSS(c)) {
                         jq.css("cursor", mCurrentPointerCSS = BoundingBox.getPointerCSS(c));
                     }
-                } else if (activeFigure.display.getTransformedBounds().containsPoint(localP.x,localP.y)){
+                } else if (activeFigure.display.getTransformedBounds().containsPoint(p_local_main.x,p_local_main.y)){
                     if (mCurrentPointerCSS != "move") {
                         jq.css("cursor", mCurrentPointerCSS = "move");
                     }
@@ -445,20 +515,21 @@ implements ImageEditorListener {
             if (mMoved) {
                 if (!isEditing) {
                     if (mDrawingFigure != null) {
-                        mDrawingFigure.addPoint(localP.x,localP.y);
+                        mDrawingFigure.addPoint(p_local_main.x,p_local_main.y);
                         var b = Main.App.v.brush;
                         mBufferShape.graphics
                         .setStrokeStyle(b.width,"round",1)
                         .beginStroke(b.color)
-                        .moveTo(localPrevP.x,localPrevP.y)
-                        .lineTo(localP.x,localP.y);
+                        .moveTo(p_local_main_prev.x,p_local_main_prev.y)
+                        .lineTo(p_local_main.x,p_local_main.y);
                         var i = mDrawingFigure.points.length-1;
                         var fp = mDrawingFigure.points[i];
                         toDraw = true;
                     }
                 } else {
                     if (mDragBegan) {
-                        activeFigure.onDragMove(e);
+                        activeFigure.display.x += e.deltaX/scale;
+                        activeFigure.display.y += e.deltaY/scale;
                         mBoundingBox.shape.x += e.deltaX;
                         mBoundingBox.shape.y += e.deltaY;
                         toDraw = true;
@@ -467,6 +538,7 @@ implements ImageEditorListener {
                         mMainLayer.y += e.deltaY;
                         mFgLayer.x += e.deltaX;
                         mFgLayer.y += e.deltaY;
+                        drawGrid(e.deltaX,e.deltaY);
                         toDraw = true;
                     } else if (mScaleBegan) {
                         var tBounds = activeFigure.display.getTransformedBounds().clone();
@@ -483,27 +555,27 @@ implements ImageEditorListener {
                             }
                         }
                         inline function constrainScaleX () {
-                            if (localP.x < tBounds.right()) {
-                                if (tBounds.right() < localPrevP.x) {
+                            if (p_local_main.x < tBounds.right()) {
+                                if (tBounds.right() < p_local_main_prev.x) {
                                     doScaleX(tBounds.right()-e.x);
                                 } else {
-                                    doScaleX(tBounds.width-e.deltaX);
+                                    doScaleX(tBounds.width-e.deltaX/scale);
                                 }
-                                activeFigure.display.x = localP.x;
+                                activeFigure.display.x = p_local_main.x;
                             }
                         }
                         inline function constrainScaleY () {
-                            if (localP.y < tBounds.bottom()) {
-                                if (tBounds.bottom() < localPrevP.y) {
-                                    doScaleY(tBounds.bottom()-localP.y);
+                            if (p_local_main.y < tBounds.bottom()) {
+                                if (tBounds.bottom() < p_local_main_prev.y) {
+                                    doScaleY(tBounds.bottom()-p_local_main.y);
                                 } else {
-                                    doScaleY(tBounds.height-e.deltaY);
+                                    doScaleY(tBounds.height-e.deltaY/scale);
                                 }
-                                activeFigure.display.y = localP.y;
+                                activeFigure.display.y = p_local_main.y;
                             }
                         }
-                        mScaleCorner.isLeft? constrainScaleX() : doScaleX(tBounds.width+e.deltaX);
-                        mScaleCorner.isTop? constrainScaleY() : doScaleY(tBounds.height+e.deltaY);
+                        mScaleCorner.isLeft? constrainScaleX() : doScaleX(tBounds.width+e.deltaX/scale);
+                        mScaleCorner.isTop? constrainScaleY() : doScaleY(tBounds.height+e.deltaY/scale);
                         if (modifiedByShift()) {
                             var d = activeFigure.display;
                             var s = (d.scaleX+d.scaleY)*0.5;
@@ -545,7 +617,6 @@ implements ImageEditorListener {
         } else {
             if (mMoved) {
                 if (mDragBegan) {
-                    activeFigure.onDragEnd(e);
                     drawBoundingBox();
                     toDraw = true;
                 } else if (mScaleBegan) {
@@ -574,6 +645,16 @@ implements ImageEditorListener {
         mBrushCircle.visible = BrowserUtil.isBrowser() && !isEditing;
         trigger(ON_CANVAS_MOUSEUP_EVENT);
         if (toDraw) draw();
+    }
+    private function onMouseWheel (e: WheelEvent) {
+        var zoom = Main.App.v.zoom;
+        var z: ZoomEditor = e.deltaY < 0 ? zoom.zoomIn() : zoom.zoomOut();
+        z.pivotX = e.clientX;
+        z.pivotY = e.clientY;
+        Main.App.v.set("zoom", z, {
+            changer: this
+        });
+        invalidate();
     }
     private var mCurrentKeyEvent: KeyboardEvent;
     function modifiedByShift () : Bool {

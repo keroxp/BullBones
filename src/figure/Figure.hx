@@ -54,7 +54,7 @@ class Figure implements Draggable {
     }
     private static var CLOSE_THRESH: Float = 20*20;
     public function getClosedPoint (): Point {
-        var last = points.length-1;
+        var last = points.length;
         for (i in 0...2) {
             for (j in last-2...last) {
                  if (points[i].rawDistance(points[j]) < CLOSE_THRESH) {
@@ -227,13 +227,5 @@ class Figure implements Draggable {
             isFirstRendering = false;
         }
         return this;
-    }
-    public function onDragStart(e:MouseEventCapture):Void {
-    }
-    public function onDragMove(e:MouseEventCapture):Void {
-        shape.x += e.deltaX;
-        shape.y += e.deltaY;
-    }
-    public function onDragEnd(e:MouseEventCapture):Void {
     }
 }
