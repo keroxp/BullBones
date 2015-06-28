@@ -107,14 +107,13 @@ implements ImageEditorListener {
         // ファジィグラフ
         mFgLayer.addChild(mFuzzySketchGraph);
         mMainLayer.addChild(mMainDebugShape);
+        mMainLayer.addChild(mImageLayer);
+        mMainLayer.addChild(mFigureLayer);
         // buffer shape
         mMainLayer.addChild(mBufferShape);
-        mMainLayer.addChildAt(mImageLayer,0);
-        mMainLayer.addChildAt(mFigureLayer,0);
         mStage.addChild(mBgLayer);
         mStage.addChild(mMainLayer);
         mStage.addChild(mFgLayer);
-
         // UI
         mPopupMenu = new PopupMenu(Main.App.jq);
         // reset drawing
@@ -262,9 +261,9 @@ implements ImageEditorListener {
     function insertFigure (fig: Draggable) {
         mFigures.push(fig);
         if (fig.isImageFigure()) {
-            mImageLayer.addChildAt(fig.display,0);
+            mImageLayer.addChild(fig.display);
         } else {
-            mFigureLayer.addChildAt(fig.display,0);
+            mFigureLayer.addChild(fig.display);
         }
         draw();
     }
@@ -320,15 +319,17 @@ implements ImageEditorListener {
 
     public function onSearchResultLoad(img: Image, result: BingSearchResult):Void {
         var im = ImageFigure.fromImage(img);
-        im.display.x = -mMainLayer.x;
-        im.display.y = -mMainLayer.y;
+        var p =  mMainLayer.globalToLocal(0,0);
+        im.display.x = p.x;
+        im.display.y = p.y;
         insertFigure(im);
     }
 
     function onFileLoad (dataUrl: String) {
         var im = ImageFigure.fromUrl(dataUrl);
-        im.display.x = -mMainLayer.x;
-        im.display.y = -mMainLayer.y;
+        var p =  mMainLayer.globalToLocal(0,0);
+        im.display.x = p.x;
+        im.display.y = p.y;
         insertFigure(im);
     }
 
