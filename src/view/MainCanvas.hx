@@ -515,17 +515,19 @@ implements ImageEditorListener {
         }
         trigger(ON_CANVAS_MOUSEDOWN_EVENT);
         mBrushCircle.visible = !isEditing;
+        m_p_local_main_prev = mMainLayer.globalToLocal(e.x,e.y);
         draw();
     }
     private var mCurrentPointerCSS: String;
     private static var MOVED_THRESH = 2*2;
+    private var m_p_local_main_prev: Point;
     function onMouseMove (e: MouseEventCapture) {
         var toDraw = false;
         if (!BrowserUtil.isBrowser()) {
             e.srcEvent.preventDefault();
         }
         var p_local_main = mMainLayer.globalToLocal(e.x,e.y);
-        var p_local_main_prev = mMainLayer.globalToLocal(e.prevX,e.prevY);
+        var p_local_main_prev = m_p_local_main_prev;
         var p_local_fg = mFgLayer.globalToLocal(e.x,e.y);
         if (!isEditing) {
             var fp = mFgLayer.globalToLocal(e.x,e.y);
@@ -639,6 +641,7 @@ implements ImageEditorListener {
                         toDraw = true;
                     }
                 }
+                m_p_local_main_prev = p_local_main;
             } else if (Math.pow(e.totalDeltaX,2)+Math.pow(e.totalDeltaY,2) > MOVED_THRESH) {
                 if (mPopupMenu.isShown) {
                     mPopupMenu.dismiss(200);
