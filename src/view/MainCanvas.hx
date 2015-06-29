@@ -1,4 +1,6 @@
 package view;
+import haxe.ds.Either;
+import createjs.easeljs.DisplayObject;
 import model.ZoomEditor;
 import createjs.easeljs.Point;
 import js.html.WheelEvent;
@@ -55,11 +57,11 @@ implements ImageEditorListener {
     var mGrid: Shape = new Shape();
     var mBrushCircle: Shape = new Shape();
     var mBufferShape: Shape = new Shape();
+    var mStageDebugShape: Shape = new Shape();
     var mMainDebugShape: Shape = new Shape();
     var mDrawingFigure: Figure;
     var mFigures: Array<Draggable> = new Array();
     var mCanvas: CanvasElement;
-    var mContext: CanvasRenderingContext2D;
     var vGridUnit = 10;
     var vGridDivision = 10;
     var mPressed = false;
@@ -69,6 +71,7 @@ implements ImageEditorListener {
     var mScaleBegan = false;
     var mGrabBegan = false;
     var mScaleCorner: Corner;
+    var mDirtyRect: Rectangle = new Rectangle();
     var mCapture: MouseEventCapture;
     var window: DOMWindow = Browser.window;
     var mPopupMenu: PopupMenu;
@@ -90,9 +93,7 @@ implements ImageEditorListener {
         jq.on("mousewheel", onMouseWheel);
         window.addEventListener("keyup", onKeyUp);
         window.addEventListener("keydown", onKeyDown);
-
         mCanvas = cast jq.get()[0];
-        mContext = mCanvas.getContext("2d");
         mStage = new Stage(jq.attr("id"));
         // 背景
         mBackground.visible = false;
@@ -114,6 +115,7 @@ implements ImageEditorListener {
         mStage.addChild(mBgLayer);
         mStage.addChild(mMainLayer);
         mStage.addChild(mFgLayer);
+        mStage.addChild(mStageDebugShape);
         // UI
         mPopupMenu = new PopupMenu(Main.App.jq);
         // reset drawing
@@ -161,10 +163,8 @@ implements ImageEditorListener {
         mGrid.visible = value;
         mBrushCircle.visible = !value;
         jq.css("cursor","");
-        drawBoundingBox();
-        drawBrushCircle();
-        draw();
         set("isEditing", value);
+        invalidate();
         return value;
     }
 
@@ -179,10 +179,26 @@ implements ImageEditorListener {
         drawBrushCircle();
         drawBoundingBox();
         showPopupMenu();
-        draw();
+        draw(true);
     }
-    function draw () {
+    private var mPrevDirtyRect: Rectangle = new Rectangle();
+    function draw (clearAll: Bool = false) {
+        if (!clearAll && mDirtyRect == null) return;
+        var pad = Main.App.v.brush.width + 10;
+        if (clearAll) {
+            mDirtyRect = new Rectangle(0,0,mCanvas.width,mCanvas.height);
+        }
+        mDirtyRect.pad(pad,pad,pad,pad);
+        if (Main.App.v.isDebug) {
+            mStageDebugShape.graphics
+            .clear()
+            .beginStroke("red").setStrokeStyle(1)
+            .drawRect(mDirtyRect.x+2,mDirtyRect.y+2,mDirtyRect.width-2,mDirtyRect.height-2);
+        }
+        Reflect.setField(mStage,"drawRect",mDirtyRect.union(mPrevDirtyRect).pad(5,5,5,5));
         mStage.update();
+        mPrevDirtyRect = mDirtyRect;
+        mDirtyRect = null;
     }
     function drawFuzzyPointGraph (p: FuzzyPoint, i: Int) {
         if (i == 0) {
@@ -194,9 +210,10 @@ implements ImageEditorListener {
     function drawBackground () {
         mBackground.graphics
         .clear()
-        .beginFill(vBackgroundColor)
+        .beginFill(isEditing ? vBackgroundColor : "#fff")
         .drawRoundRect(0,0,mCanvas.width,mCanvas.height,0)
         .endFill();
+        extendDirtyRect(0,0,mCanvas.width,mCanvas.height);
     }
     private var mGridDeltaX: Float = 0;
     private var mGridDeltaY: Float = 0;
@@ -229,6 +246,7 @@ implements ImageEditorListener {
         mGrid.graphics.endStroke();
         mGrid.cache(0,0,mCanvas.width,mCanvas.height);
         mGrid.updateCache();
+        extendDirtyRect(0,0,mCanvas.width,mCanvas.height);
     }
     function drawBoundingBox () {
         mBoundingBox.clear();
@@ -240,31 +258,55 @@ implements ImageEditorListener {
             );
             mBoundingBox.shape.x = p.x;
             mBoundingBox.shape.y = p.y;
-            var bounds = activeFigure.display.getTransformedBounds();
-            mBoundingBox.render(bounds.scale(scale,scale));
+            var bounds = activeFigure.display.getTransformedBounds().scale(scale,scale);
+            mBoundingBox.render(bounds);
+            var g = mMainLayer.localToGlobal(bounds.x,bounds.y);
+            extendDirtyRect(g.x,g.y,bounds.width,bounds.height);
         }
     }
     function drawBrushCircle () {
-        var w = Main.App.v.brush.width;
+        var w = Main.App.v.brush.width*scale;
         mBrushCircle.graphics
         .clear()
         .setStrokeStyle(1)
         .beginStroke("#000")
-        .drawCircle(0,0,w)
+        .drawCircle(w/2,w/2,w)
         .endStroke();
         mBrushCircle.cache(-2*w,-2*w,w*4,w*4);
         mBrushCircle.updateCache();
-        var p = mFgLayer.globalToLocal(mCapture.x,mCapture.y);
-        mBrushCircle.x = p.x;
-        mBrushCircle.y = p.y;
+        mBrushCircle.setBounds(0,0,w*2,w*2);
+//        var p = mFgLayer.globalToLocal(mCapture.x,mCapture.y);
+//        mBrushCircle.x = p.x;
+//        mBrushCircle.y = p.y;
     }
-    function insertFigure (fig: Draggable) {
-        mFigures.push(fig);
-        if (fig.isImageFigure()) {
-            mImageLayer.addChild(fig.display);
+    function extendDirtyRect(x: Float, y: Float, ?width: Float = 0, ?height: Float = 0) {
+        if (mDirtyRect == null) {
+            mDirtyRect = new Rectangle(x,y,width,height);
         } else {
-            mFigureLayer.addChild(fig.display);
+            mDirtyRect.extend(x,y,width,height);
         }
+    }
+    function extendDirtyRectWithRect(r: Rectangle) {
+       extendDirtyRect(r.x,r.y,r.width,r.height);
+    }
+    function extendDirtyRectWithDisplayObject(o: DisplayObject, ?prevBounds: Rectangle) {
+        var b = o.getTransformedBounds();
+        var g = o.parent.localToGlobal(b.x,b.y);
+        var d = new Rectangle(g.x,g.y,b.width,b.height);
+        if (prevBounds != null) {
+            var pg = o.parent.localToGlobal(prevBounds.x,prevBounds.y);
+            d = d.union(new Rectangle(pg.x,pg.y,prevBounds.width,prevBounds.height));
+        }
+        extendDirtyRectWithRect(d.scale(scale,scale));
+    }
+    function insertFigure (f: Draggable) {
+        mFigures.push(f);
+        if (f.isImageFigure()) {
+            mImageLayer.addChild(f.display);
+        } else {
+            mFigureLayer.addChild(f.display);
+        }
+        extendDirtyRectWithDisplayObject(f.display);
         draw();
     }
     function deleteFigure(f: Draggable) {
@@ -280,6 +322,7 @@ implements ImageEditorListener {
             var imf: ImageFigure = cast f;
             Main.App.floatingThumbnailView.remove(imf.image);
         }
+        extendDirtyRectWithDisplayObject(f.display);
         draw();
     }
 
@@ -302,6 +345,7 @@ implements ImageEditorListener {
         } else {
             tv.show(f.image);
         }
+        extendDirtyRectWithDisplayObject(f.display);
         draw();
     }
 
@@ -310,6 +354,7 @@ implements ImageEditorListener {
             var image: ImageFigure = cast activeFigure;
             image.setFilterAsync(editor.createFilter())
             .done(function(img: ImageElement) {
+                extendDirtyRectWithDisplayObject(image.bitmap);
                 draw();
             }).fail(function(e) {
                 Log.e(e);
@@ -426,18 +471,10 @@ implements ImageEditorListener {
         mPressed = true;
         var p_main_local = mMainLayer.globalToLocal(e.x,e.y);
         var p_fg_local = mFgLayer.globalToLocal(e.x,e.y);
-        if (Main.App.v.isDebug) {
-            var sp = mStage.globalToLocal(e.x,e.y);
-            Log.d('Stage:{${sp.x},${sp.y}, Main:{${p_main_local.x},${p_main_local.y}');
-            mMainDebugShape.graphics
-            .clear()
-            .beginFill("red")
-            .drawCircle(p_main_local.x,p_main_local.y,3);
-        }
         if (!isEditing) {
             if (activeFigure != null) {
                 activeFigure = null;
-                drawBoundingBox();
+                mBoundingBox.clear();
             } else {
                 var f =  new Figure(p_main_local.x,p_main_local.y);
                 f.width = Main.App.v.brush.width;
@@ -492,8 +529,11 @@ implements ImageEditorListener {
         var p_local_fg = mFgLayer.globalToLocal(e.x,e.y);
         if (!isEditing) {
             var fp = mFgLayer.globalToLocal(e.x,e.y);
-            mBrushCircle.x = fp.x;
-            mBrushCircle.y = fp.y;
+            var pb = mBrushCircle.getTransformedBounds().clone();
+            var bw = Main.App.v.brush.width*scale/2;
+            mBrushCircle.x = ~~(fp.x+0.5-bw);
+            mBrushCircle.y = ~~(fp.y+0.5-bw);
+            extendDirtyRectWithDisplayObject(mBrushCircle,pb);
             toDraw = true;
         } else {
             if (this.activeFigure != null) {
@@ -519,20 +559,23 @@ implements ImageEditorListener {
                         mDrawingFigure.addPoint(p_local_main.x,p_local_main.y);
                         var b = Main.App.v.brush;
                         mBufferShape.graphics
-                        .setStrokeStyle(b.width,"round",1)
+                        .setStrokeStyle(b.width,"round", "round")
                         .beginStroke(b.color)
                         .moveTo(p_local_main_prev.x,p_local_main_prev.y)
-                        .lineTo(p_local_main.x,p_local_main.y);
-                        var i = mDrawingFigure.points.length-1;
-                        var fp = mDrawingFigure.points[i];
+//                        .lineTo(p_local_main.x,p_local_main.y);
+                        .curveTo(p_local_main_prev.x,p_local_main_prev.y,p_local_main.x,p_local_main.y);
+                        extendDirtyRect(e.x,e.y);
+                        extendDirtyRect(e.prevX,e.prevY);
                         toDraw = true;
                     }
                 } else {
                     if (mDragBegan) {
+                        var pb = activeFigure.display.getTransformedBounds().clone();
                         activeFigure.display.x += e.deltaX/scale;
                         activeFigure.display.y += e.deltaY/scale;
                         mBoundingBox.shape.x += e.deltaX;
                         mBoundingBox.shape.y += e.deltaY;
+                        extendDirtyRectWithDisplayObject(activeFigure.display,pb);
                         toDraw = true;
                     }else if(mGrabBegan) {
                         mMainLayer.x += e.deltaX;
@@ -591,6 +634,7 @@ implements ImageEditorListener {
                                 d.y = tBounds.bottom()-h;
                             }
                         }
+                        extendDirtyRectWithDisplayObject(activeFigure.display,tBounds);
                         drawBoundingBox();
                         toDraw = true;
                     }
@@ -612,6 +656,7 @@ implements ImageEditorListener {
                 mDrawingFigure.calcVertexes();
                 mFigureLayer.addChild(mDrawingFigure.display);
                 mDrawingFigure.render();
+                extendDirtyRectWithDisplayObject(mDrawingFigure.display,mBufferShape.getTransformedBounds());
                 mDrawingFigure = null;
                 toDraw = true;
             }
