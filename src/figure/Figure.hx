@@ -190,14 +190,15 @@ class Figure implements Draggable {
                     avp.x += p.x;
                     avp.y += p.y;
                 }
-                shape.graphics.lineTo(xx(avp.x/m),yy(avp.y/m));
+                var x = avp.x/m;
+                var y = avp.y/m;
+                shape.graphics.lineTo(xx(x),yy(y));
             }
             var e = points[points.length-1];
             shape.graphics.lineTo(xx(e.x),yy(e.y));
         } else {
-            for (i in 1...points.length-1) {
+            for (i in 1...points.length) {
                 var p = points[i];
-                var n = points[i+1];
                 shape.graphics.lineTo(xx(p.x),yy(p.y));
             }
         }
@@ -226,6 +227,10 @@ class Figure implements Draggable {
             shape.y = mBounds.y;
             isFirstRendering = false;
         }
+        var pad = 10;
+        var cache = mBounds.clone().pad(pad,pad,pad,pad);
+        shape.cache(-pad,-pad,cache.width,cache.height);
+        shape.updateCache();
         return this;
     }
 }
