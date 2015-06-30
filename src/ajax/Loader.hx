@@ -1,4 +1,6 @@
 package ajax;
+import js.Error;
+import cv.ImageWrap;
 import util.BrowserUtil;
 import js.Browser;
 import js.html.DOMError;
@@ -10,16 +12,18 @@ import deferred.Promise;
 import deferred.Deferred;
 import js.html.Image;
 class Loader {
-    public static function loadImage(src: String): Promise<Image, Dynamic, Int> {
-        var def = new Deferred<Image, Dynamic, Int>();
+    public static function loadImage(src: String): Promise<ImageWrap, Dynamic, Int> {
+        var def = new Deferred<ImageWrap, Dynamic, Int>();
         var img = new Image();
-        img.onload = function (e) {
-            try {
-                def.resolve(img);
-            } catch (e: js.Error) {
-                def.reject(e);
+        img.onload = (function(_img){
+            return function (e) {
+                try {
+                    def.resolve(new ImageWrap(_img));
+                } catch (e: Error) {
+                    def.reject(e);
+                }
             }
-        };
+        })(img);
         img.onerror = function (e) {
             def.reject(e);
         }
@@ -32,13 +36,24 @@ class Loader {
         }
         return def;
     }
-    public static function loadFile(file: File): Promise<String, DOMError, ProgressEvent> {
+    public static function loadFile(file: File): Promise<ImageWrap, DOMError, ProgressEvent> {
         var reader = new FileReader();
         if (file.type.indexOf("image/") > -1) {
-            var def = new Deferred<String, DOMError, ProgressEvent>();
-            reader.onload = function (ev) {
-                def.resolve(reader.result);
-            };
+            var def = new Deferred<ImageWrap, DOMError, ProgressEvent>();
+            reader.onload = (function (f) {
+                return function (ev) {
+                    var img = new Image();
+                    img.onload = (function(_img){
+                        return function(e) {
+                            def.resolve(new ImageWrap(_img));
+                        }
+                    })(img);
+                    img.onerror = function(e) {
+                        def.reject(e);
+                    }
+                    img.src = ev.target.result;
+                }
+            })(file);
             reader.onprogress = function(p) {
                 def.notify(p);
             }
