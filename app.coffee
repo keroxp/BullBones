@@ -17,6 +17,7 @@ MongoClient.connect mongo_url, (err,db) ->
   app.use bodyParser.json()
   # app.use require("./middleware/acl")
   app.get '/', (req,res) -> res.render "index", app_env: app_env
+  app.get '/about', (req,res) -> res.render "about"
   app.get '/proxy', require("./routes/proxy")()
   app.get '/search', require("./routes/search")(db)
   app.listen process.env.PORT || 8000

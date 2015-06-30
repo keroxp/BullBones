@@ -1,0 +1,70 @@
+html(lang='ja')
+  head
+    meta(charset='utf-8')
+    title BullBones
+    meta(name='viewport', content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no')
+    meta(name='apple-mobile-web-app-capable', content='yes')
+    link(rel='stylesheet', type='text/css', href='css/bower.css')
+    link(rel='stylesheet', type='text/css', href='css/main.css')
+    link(href='https://fonts.googleapis.com/icon?family=Material+Icons', rel='stylesheet')
+    link(rel='shortcut icon', href='/favicon.ico')
+    link(rel='apple-touch-icon', href='apple-touch-icon.gif')
+  body
+    header.blue-grey.darken-3
+      div.logo(style="text-align:center")
+        a(href="/about")
+          img(src="./img/logo.png",style="width:100px;height:auto")
+    main
+      .container
+        .row
+          .col.s12
+            h4 BullBonesについて
+            img(src="https://gyazo.com/2db53019cd67cc51c750fb8303e36ded.png",style="width:70%")
+            .divider
+            .section
+              h5 これは何ですか？
+              p BullBonesは、アイデアを出したり気軽にお絵描きがしたいと思った時に便利なアプリです。
+              p あなたのアイデアや想像力と同じように、BullBonesのキャンバスには限りがありません。
+              p 子供の頃に大きな紙の上に寝そべりながら落書きをした気持ちを思い出しながら、思う存分お絵描きを楽しんでください。
+            .divider
+            .section
+              h5 どんな時に便利ですか？
+              p
+               ul.list
+                li 図を書いて説明したい時
+                li アイデアを出したりまとめたりするとき
+                li 新しいデザインを考える時
+                li お絵描きの練習がしたいとき
+                li 落書きがしたいとき
+                li コラージュ画像を超簡単に作りたい時
+            .divider
+            .section
+              h5 なぜ作ったのですか？
+              p ほとんどの人は普段絵を描いたりしません。これは単純に絵を描くことが難しすぎるからです。
+              p 人間の脳はとても優秀なため、風景やモノの形をとても曖昧な形で認識しています。そのため、それを知っていてもいざ絵に描こうと思っても描けないことがほとんどです。
+              p 絵を正確に描くためには、お手本を見ながら描くことが一番簡単で楽な方法です。
+              p BullBonesでは、Webやから描きたいモチーフの画像を検索し、それをなぞったり、お手本にして描いたりすることが可能です。
+            .divider
+            .section
+              h5 BullBonesの由来は何ですか？
+              p 開発者の師匠がある日「簡単に牛の骨を描けるソフトが欲しい」といったことがキッカケです。
+              p BullBonesのロゴマークは開発者が実際にこのアプリを使って描いたものです。
+            .divider
+            .section
+              h5 開発情報
+              p
+               b 開発者
+              a(href="https://twitter.com/keroxp") @keroxp
+              p バグ、要望、質問などはこちらへお願いします。
+              p
+                b 開発記録
+              a(href="http://keroxp.me") http://keroxp.me
+              p リリースノートや技術情報などはこちらで発信しています。
+    footer
+      .container
+        .row
+          .col-s12
+          | © 2015 Yusuke Sakurai / Keio University Toshiyuki Masui Labratory All Rights Reserved.
+    if app_env == "development"
+      script(src='http://localhost:35729/livereload.js')
+    script(src='js/bower.js')

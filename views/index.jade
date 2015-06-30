@@ -64,7 +64,7 @@ html(lang='ja')
               a#brushButton.bb-btn.btn-floating.wave-effect.btn-large.blue(title='ブラシ')
                 i.large.mdi-image-palette
             li
-              a#editButton.bb-btn.btn-floating.wave-effect.btn-large.green(title='画像を編集')
+              a#editButton.bb-btn.btn-floating.wave-effect.btn-large.green(title='編集モード')
                 i.large.mdi-editor-mode-edit
             li
               a#imageEditorButton.bb-btn.btn-floating.wave-effect.btn-large.orange(style='display:none', title='画像を編集')
@@ -111,14 +111,15 @@ html(lang='ja')
                 label(for='imageAlpha') 透明度
                 input#imageAlpha(type='range', min='0', max='100', value='100')
         #zoomInputGroup.z-depth-1
-          a#zoomOutButton
+          a#zoomOutButton(title="ズームアウト")
             i.small.material-icons zoom_out
           span#zoomValue 100%
-          a#zoomInButton
+          a#zoomInButton(title="ズームイン")
             i.small.material-icons zoom_in
         #canvasWrapper
           canvas#mainCanvas(data-editing='false')
-    script(src='http://localhost:35729/livereload.js')
+    if app_env == "development"
+      script(src='http://localhost:35729/livereload.js')
     script(src='js/bower.js')
     script(src='js/main.js')
     script.
