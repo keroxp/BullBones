@@ -36,9 +36,13 @@ class ZoomEditor {
         return 1;
     }
     public function zoomIn(): ZoomEditor {
-        return new ZoomEditor(scale+zoomUnit(),pivotX,pivotY);
+        var ret = clone();
+        ret.scale += zoomUnit();
+        return ret;
     }
     public function zoomOut(): ZoomEditor {
-        return new ZoomEditor(scale-zoomUnit(),pivotX,pivotY);
+        var ret = clone();
+        ret.scale -= zoomUnit();
+        return ret;
     }
 }
