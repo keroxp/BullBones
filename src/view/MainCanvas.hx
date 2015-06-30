@@ -128,6 +128,12 @@ implements ImageEditorListener {
         listenTo(Main.App.v, "change:brush", drawBrushCircle);
         listenTo(Main.App, App.APP_WINDOW_RESIZE_EVENT, resizeCanvas);
         listenTo(Main.App.v, "change:zoom", onChageZoomEditor);
+        listenTo(Main.App.v, "change:isDebug", function () {
+            for (f in mFigures) {
+                f.render();
+            }
+            invalidate();
+        });
         Main.App.onFileLoad = onFileLoad;
     }
 
@@ -189,9 +195,9 @@ implements ImageEditorListener {
             mDirtyRect = new Rectangle(0,0,mCanvas.width,mCanvas.height);
         }
         mDirtyRect.pad(pad,pad,pad,pad);
+        mStageDebugShape.graphics.clear();
         if (Main.App.v.isDebug) {
             mStageDebugShape.graphics
-            .clear()
             .beginStroke("red").setStrokeStyle(1)
             .drawRect(mDirtyRect.x+2,mDirtyRect.y+2,mDirtyRect.width-2,mDirtyRect.height-2);
         }
@@ -268,13 +274,13 @@ implements ImageEditorListener {
         var w = Main.App.v.brush.width*scale;
         mBrushCircle.graphics
         .clear()
-        .setStrokeStyle(1)
-        .beginStroke("#000")
-        .drawCircle(w/2,w/2,w)
+        .setStrokeStyle(1,"round", "round")
+        .beginStroke(mPressed ? "#2196F3" : "#000")
+        .drawCircle(w/2+1,w/2+1,w/2)
         .endStroke();
-        mBrushCircle.cache(-2*w,-2*w,w*4,w*4);
+        mBrushCircle.cache(0,0,w+2,w+2);
         mBrushCircle.updateCache();
-        mBrushCircle.setBounds(0,0,w*2,w*2);
+        mBrushCircle.setBounds(0,0,w+2,w+2);
 //        var p = mFgLayer.globalToLocal(mCapture.x,mCapture.y);
 //        mBrushCircle.x = p.x;
 //        mBrushCircle.y = p.y;
@@ -484,6 +490,7 @@ implements ImageEditorListener {
                     drawFuzzyPointGraph(f.points[0],0);
                 }
                 mDrawingFigure = f;
+                drawBrushCircle();
             }
         } else {
             var hitted: Draggable = mFigures.findLast(function(d: Draggable) {
@@ -692,6 +699,7 @@ implements ImageEditorListener {
         mScaleBegan = false;
         mGrabBegan = false;
         mBrushCircle.visible = BrowserUtil.isBrowser() && !isEditing;
+        drawBrushCircle();
         trigger(ON_CANVAS_MOUSEUP_EVENT);
         if (toDraw) draw();
     }

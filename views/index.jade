@@ -1,0 +1,125 @@
+html(lang='ja')
+  head
+    meta(charset='utf-8')
+    title BullBones
+    meta(name='viewport', content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no')
+    meta(name='apple-mobile-web-app-capable', content='yes')
+    link(rel='stylesheet', type='text/css', href='css/bower.css')
+    link(rel='stylesheet', type='text/css', href='css/main.css')
+    link(href='https://fonts.googleapis.com/icon?family=Material+Icons', rel='stylesheet')
+    link(rel='shortcut icon', href='/favicon.ico')
+    link(rel='apple-touch-icon', href='apple-touch-icon.gif')
+    // Rollbar
+    script.
+      var env = location.href.match(/localhost/) ? "development" : "production";
+      var _rollbarConfig = {
+        accessToken: "e31c574cb0e84e7bbc6f367ed2aaca93",
+        captureUncaught: true,
+          payload: {
+            environment: env,
+            client: {
+            javascript: {
+              source_map_enabled: true,
+              code_version: "some version string, such as a version number or git sha",
+              guess_uncaught_frames: true
+            }
+          }
+        }
+      };
+      if (env === 'production') {
+      !function(a,b){function c(b){this.shimId=++h,this.notifier=null,this.parentShim=b,this.logger=function(){},a.console&&void 0===a.console.shimId&&(this.logger=a.console.log)}function d(b,c,d){a._rollbarWrappedError&&(d[4]||(d[4]=a._rollbarWrappedError),d[5]||(d[5]=a._rollbarWrappedError._rollbarContext),a._rollbarWrappedError=null),b.uncaughtError.apply(b,d),c&&c.apply(a,d)}function e(b){var d=c;return g(function(){if(this.notifier)return this.notifier[b].apply(this.notifier,arguments);var c=this,e="scope"===b;e&&(c=new d(this));var f=Array.prototype.slice.call(arguments,0),g={shim:c,method:b,args:f,ts:new Date};return a._rollbarShimQueue.push(g),e?c:void 0})}function f(a,b){if(b.hasOwnProperty&&b.hasOwnProperty("addEventListener")){var c=b.addEventListener;b.addEventListener=function(b,d,e){c.call(this,b,a.wrap(d),e)};var d=b.removeEventListener;b.removeEventListener=function(a,b,c){d.call(this,a,b&&b._wrapped?b._wrapped:b,c)}}}function g(a,b){return b=b||this.logger,function(){try{return a.apply(this,arguments)}catch(c){b("Rollbar internal error:",c)}}}var h=0;c.init=function(a,b){var e=b.globalAlias||"Rollbar";if("object"==typeof a[e])return a[e];a._rollbarShimQueue=[],a._rollbarWrappedError=null,b=b||{};var h=new c;return g(function(){if(h.configure(b),b.captureUncaught){var c=a.onerror;a.onerror=function(){var a=Array.prototype.slice.call(arguments,0);d(h,c,a)};var g,i,j="EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload".split(",");for(g=0;g<j.length;++g)i=j[g],a[i]&&a[i].prototype&&f(h,a[i].prototype)}return a[e]=h,h},h.logger)()},c.prototype.loadFull=function(a,b,c,d,e){var f=g(function(){var a=b.createElement("script"),e=b.getElementsByTagName("script")[0];a.src=d.rollbarJsUrl,a.async=!c,a.onload=h,e.parentNode.insertBefore(a,e)},this.logger),h=g(function(){var b;if(void 0===a._rollbarPayloadQueue){var c,d,f,g;for(b=new Error("rollbar.js did not load");c=a._rollbarShimQueue.shift();)for(f=c.args,g=0;g<f.length;++g)if(d=f[g],"function"==typeof d){d(b);break}}"function"==typeof e&&e(b)},this.logger);g(function(){c?f():a.addEventListener?a.addEventListener("load",f,!1):a.attachEvent("onload",f)},this.logger)()},c.prototype.wrap=function(b,c){try{var d;if(d="function"==typeof c?c:function(){return c||{}},"function"!=typeof b)return b;if(b._isWrap)return b;if(!b._wrapped){b._wrapped=function(){try{return b.apply(this,arguments)}catch(c){throw c._rollbarContext=d()||{},c._rollbarContext._wrappedSource=b.toString(),a._rollbarWrappedError=c,c}},b._wrapped._isWrap=!0;for(var e in b)b.hasOwnProperty(e)&&(b._wrapped[e]=b[e])}return b._wrapped}catch(f){return b}};for(var i="log,debug,info,warn,warning,error,critical,global,configure,scope,uncaughtError".split(","),j=0;j<i.length;++j)c.prototype[i[j]]=e(i[j]);var k="//d37gvrvc0wt4s1.cloudfront.net/js/v1.2/rollbar.min.js";_rollbarConfig.rollbarJsUrl=_rollbarConfig.rollbarJsUrl||k;var l=c.init(a,_rollbarConfig);l.loadFull(a,b,!1,_rollbarConfig)}(window,document);
+          window.onerror = function (msg,file,line, col, err) {
+          Rollbar.error(err);
+        }
+      }
+  body
+    if app_env != "development"
+      #modalLoadingView.loadingPanel.blue-grey.darken-3
+        .loadingPanelInner
+          div
+            img(src='img/loading.svg', width='100', height='100')
+            br
+            img(src='img/logo.png', width='240', height='126')
+    #wrapper
+      // Modal Structure
+      #modalView.modal.modal-fixed-footer.scrollable
+      // App View
+      #appView
+        #floatingThumbnailView
+        #searchView.bb-panel.z-depth-1(style='display:none')
+          .input-field.col.s12
+            i.mdi-action-search.prefix
+            input#searchInput.validate(type='text', autocomplete='off')
+            label(for='searchInput') 描きたいモチーフを検索
+          #searchResultsWrapper.scrollable
+            #searchingIndicator.hidden
+              img(src='img/loading-dot.svg', width='50', height='50')
+            #searchResults.clearfix.hidden
+        #buttonsview
+          ul
+            li
+              a#searchButton.btn-floating.wave-effect.bb-btn.btn-large.red(title='検索')
+                i.large.mdi-action-search
+            li
+              a#brushButton.bb-btn.btn-floating.wave-effect.btn-large.blue(title='ブラシ')
+                i.large.mdi-image-palette
+            li
+              a#editButton.bb-btn.btn-floating.wave-effect.btn-large.green(title='画像を編集')
+                i.large.mdi-editor-mode-edit
+            li
+              a#imageEditorButton.bb-btn.btn-floating.wave-effect.btn-large.orange(style='display:none', title='画像を編集')
+                i.large.mdi-image-image
+            li
+            if app_env == "development"
+              a#debugButton.bb-btn.btn-floating.wave-effect.btn-large.white
+                i.large.mdi-action-bug-report(style='color: black')
+          #brushWrapper.bb-panel.panel.z-depth-1(style='display:none;')
+            #brushView
+              canvas#brushPreviewCanvas(width='220', height='100')
+              #brushForm
+                form(action='#')
+                  p
+                    input#supplementInput.filled-in(type='checkbox', checked='')
+                    label(for='supplementInput') 手ぶれ補正
+                  p.range-field
+                    label(for='brushWidthInput') 太さ
+                    input#brushWidthInput(type='range', min='1', max='20', value='3')
+                  p.range-field
+                    label(for='brushAlphaInput') 透明度
+                    input#brushAlphaInput(type='range', min='0', max='100', value='100')
+                  p.range-field
+                    label(for='brushThickInput') 濃度
+                    input#brushThickInput(type='range', min='0', max='255', value='255')
+        #imageEditorView.bb-panel.panel.z-depth-1(style='display:none')
+          #imageEditorPreview
+            canvas#imageEditorPreviewCanvas(width='220', height='100')
+          #imageEditorForm
+            form(action='#')
+              p
+                input#grayInput.filled-in(type='checkbox')
+                label(for='grayInput') モノクロ
+              p
+                input#lineExtractInput.filled-in(type='checkbox')
+                label(for='lineExtractInput') 線画の抽出
+              #lineExtractInputWrapper.switch(style='display:none;')
+                label
+                  | くっきり Off
+                  input#lineExtractSwitchInput(type='checkbox')
+                  span.lever
+                  | On
+              p.range-field
+                label(for='imageAlpha') 透明度
+                input#imageAlpha(type='range', min='0', max='100', value='100')
+        #zoomInputGroup.z-depth-1
+          a#zoomOutButton
+            i.small.material-icons zoom_out
+          span#zoomValue 100%
+          a#zoomInButton
+            i.small.material-icons zoom_in
+        #canvasWrapper
+          canvas#mainCanvas(data-editing='false')
+    script(src='http://localhost:35729/livereload.js')
+    script(src='js/bower.js')
+    script(src='js/main.js')
+    script.
+      $('.modal-trigger').leanModal();
