@@ -59,16 +59,19 @@ html(lang='ja')
           ul
             li
               a#searchButton.btn-floating.wave-effect.bb-btn.btn-large.red(title='検索')
-                i.large.mdi-action-search
+                i.large.material-icons search
             li
               a#brushButton.bb-btn.btn-floating.wave-effect.btn-large.blue(title='ブラシ')
-                i.large.mdi-image-palette
+                i.large.material-icons palette
             li
               a#editButton.bb-btn.btn-floating.wave-effect.btn-large.green(title='編集モード')
-                i.large.mdi-editor-mode-edit
+                i.large.material-icons edit
             li
               a#imageEditorButton.bb-btn.btn-floating.wave-effect.btn-large.orange(style='display:none', title='画像を編集')
-                i.large.mdi-image-image
+                i.large.material-icons image
+            li
+              a#aboutButotn.bb-btn.btn-floating.wave-effect.btn-large.gray(href="/about",target="_blank",title="BullBonesについて")
+                i.large.material-icons() info_outline
             li
             if app_env == "development"
               a#debugButton.bb-btn.btn-floating.wave-effect.btn-large.white
