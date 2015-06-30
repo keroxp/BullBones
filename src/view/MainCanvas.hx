@@ -316,6 +316,8 @@ implements ImageEditorListener {
         draw();
     }
     function deleteFigure(f: Draggable) {
+        if (f == null) return;
+        extendDirtyRectWithDisplayObject(f.display);
         mFigures.remove(activeFigure);
         if (activeFigure.type == DraggableType.Image) {
             mImageLayer.removeChild(activeFigure.display);
@@ -328,7 +330,6 @@ implements ImageEditorListener {
             var imf: ImageFigure = cast f;
             Main.App.floatingThumbnailView.remove(imf.image);
         }
-        extendDirtyRectWithDisplayObject(f.display);
         draw();
     }
 
@@ -722,14 +723,6 @@ implements ImageEditorListener {
         if (el.id == "searchInput") return true;
         if (mCurrentKeyEvent == null) {
             switch e.keyCode {
-                case 16: {
-                    if (activeFigure != null && mScaleBegan && activeFigure.display.scaleX != activeFigure.display.scaleY) {
-                        var d = activeFigure.display;
-                        d.scaleX = d.scaleY = (d.scaleX+d.scaleY)*0.5;
-                        drawBoundingBox();
-                        draw();
-                    }
-                }
                 case 69: { // E
                     if (!isEditing) {
                         isEditing = true;
@@ -745,7 +738,7 @@ implements ImageEditorListener {
         var el: Element = cast e.target;
         if (el.id == "searchInput") return true;
         switch e.keyCode {
-            case 8: onDelete(e);
+            case 8: deleteFigure(activeFigure);
             case 69: { // E
                 if (isEditing) {
                     isEditing = false;
@@ -754,10 +747,5 @@ implements ImageEditorListener {
         }
         mCurrentKeyEvent = null;
         return false;
-    }
-    function onDelete (e: KeyboardEvent) {
-        if (activeFigure != null) {
-            deleteFigure(activeFigure);
-        }
     }
 }
