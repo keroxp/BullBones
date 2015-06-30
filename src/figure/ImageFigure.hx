@@ -1,4 +1,5 @@
 package figure;
+import util.Log;
 import createjs.easeljs.DisplayObject;
 import cv.ImageWrap;
 import deferred.Deferred;
@@ -23,31 +24,13 @@ class ImageFigure implements Draggable {
         return DraggableType.Image;
     }
 
-    public static function fromUrl (dataurl: String): ImageFigure {
-        var ret = new ImageFigure(dataurl);
-        if (dataurl.substr(0,4) != "data") {
-            throw new js.Error("dataUrl should be 'data' format, but got $dataurl");
-        }
-        ret.bitmap = new Bitmap(dataurl);
-        ret.bitmap.cache(0,0,ret.bitmap.image.width,ret.bitmap.image.height);
-        ret.bitmap.updateCache();
-        return ret;
-    }
-
-    public static function fromImage (img: ImageElement): ImageFigure {
-        var ret = new ImageFigure(img.src);
-        ret.bitmap = new Bitmap(img);
-        ret.bitmap.cache(0,0,img.width,img.height);
-        ret.bitmap.updateCache();
-        return ret;
-    }
-
-    private function new (src: String) {
-        image = new ImageWrap(src);
+    public function new (img: ImageWrap) {
+        image = img;
+        bitmap = new Bitmap(cast img.image.cloneNode(true));
     }
 
     public function clone(): ImageFigure {
-        return fromImage(image.image);
+        return new ImageFigure(image.clone());
     }
 
     @:isVar public var display(get, null): DisplayObject;

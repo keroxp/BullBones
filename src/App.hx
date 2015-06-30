@@ -1,5 +1,7 @@
 package ;
 
+import cv.ImageWrap;
+import js.html.Image;
 import view.ZoomInputView;
 import view.FloatingThumbnailView;
 import rollbar.Rollbar;
@@ -27,7 +29,7 @@ import view.SearchView;
 import js.Browser;
 using figure.Draggable.DraggableUtil;
 
-typedef OnFileLoadListenr = String -> Void
+typedef OnFileLoadListenr = ImageWrap -> Void
 
 class App extends BackboneEvents implements BrushEditorListener {
     public var v(default, null): V;
@@ -201,8 +203,8 @@ class App extends BackboneEvents implements BrushEditorListener {
         if (files.length > 0) {
             var f = files.item(0);
             Loader.loadFile(f)
-            .done(function (url: String) {
-                if (onFileLoad != null) onFileLoad(url);
+            .done(function (img: ImageWrap) {
+                if (onFileLoad != null) onFileLoad(img);
             }).fail(function (e: DOMError) {
                 Log.e(e);
                 Browser.alert("読み込めない形式です");

@@ -1,4 +1,5 @@
 package cv;
+import protocol.Clonable;
 import util.StringUtil;
 import deferred.Deferred;
 import createjs.easeljs.Rectangle;
@@ -16,32 +17,33 @@ enum AspectPolicy {
     AspectToFill;
     AspectToFit;
 }
-class ImageWrap {
+class ImageWrap implements Clonable<ImageWrap> {
     public var canvas: CanvasElement;
-    public var src(default, null): String;
+    public var src(get, never): String;
+    function get_src():String {
+        return image.src;
+    }
+    public var width(get, never): Int;
+    function get_width(): Int {
+        return image.width;
+    }
+    public var height(get, never): Int;
+    function get_height():Int {
+        return image.height;
+    }
     public var image: Image;
     public var id: String;
-    public var onload: ImageWrap -> Void;
-    public var onerror: Error -> Void;
-    public function new(src: String) {
+    public function new(img: Image) {
         canvas = cast BrowserUtil.document.createElement("canvas");
-        this.src = src;
+        image = img;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        var ctx = canvas.getContext2d();
+        ctx.drawImage(img,0,0);
         this.id = StringUtil.UUID();
-        var self = this;
-        Loader.loadImage(src).done(function(img: Image) {
-            image = img;
-            canvas.width = img.width;
-            canvas.height = img.height;
-            var ctx = canvas.getContext2d();
-            ctx.drawImage(img,0,0);
-            if (onload != null) {
-                onload(self);
-            }
-        }).fail(function(e) {
-            if (onerror != null) {
-                onerror(e);
-            }
-        });
+    }
+    public function clone():ImageWrap {
+        return new ImageWrap(cast image.cloneNode(true));
     }
 
     public function toDataUrl(?type: String = ""): String {

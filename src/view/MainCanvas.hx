@@ -1,4 +1,5 @@
 package view;
+import cv.ImageWrap;
 import haxe.ds.Either;
 import createjs.easeljs.DisplayObject;
 import model.ZoomEditor;
@@ -369,16 +370,16 @@ implements ImageEditorListener {
         }
     }
 
-    public function onSearchResultLoad(img: Image, result: BingSearchResult):Void {
-        var im = ImageFigure.fromImage(img);
+    public function onSearchResultLoad(img: ImageWrap, result: BingSearchResult):Void {
+        var im = new ImageFigure(img);
         var p =  mMainLayer.globalToLocal(0,0);
         im.display.x = p.x;
         im.display.y = p.y;
         insertFigure(im);
     }
 
-    function onFileLoad (dataUrl: String) {
-        var im = ImageFigure.fromUrl(dataUrl);
+    function onFileLoad (img: ImageWrap) {
+        var im = new ImageFigure(img);
         var p =  mMainLayer.globalToLocal(0,0);
         im.display.x = p.x;
         im.display.y = p.y;

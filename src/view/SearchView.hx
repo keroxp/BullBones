@@ -1,4 +1,5 @@
 package view;
+import cv.ImageWrap;
 import util.Log;
 import js.Browser;
 import rollbar.Rollbar;
@@ -14,7 +15,7 @@ import createjs.easeljs.Event;
 import js.html.Image;
 
 interface SearchResultListener {
-    public function onSearchResultLoad(img: Image, result: BingSearchResult): Void;
+    public function onSearchResultLoad(img: ImageWrap, result: BingSearchResult): Void;
 }
 
 class SearchView extends ViewModel {
@@ -86,7 +87,7 @@ class SearchView extends ViewModel {
         var index:Int = cell.data("index");
         var result = mImages[index];
         mLoadingOverlay.jq.css("height", jq.outerHeight()).show();
-        var done = function(img: Image) {
+        var done = function(img: ImageWrap) {
             mLoadingOverlay.jq.hide();
             if (listener != null) {
                 listener.onSearchResultLoad(img, result);
