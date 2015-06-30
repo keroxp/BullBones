@@ -348,6 +348,7 @@ implements ImageEditorListener {
             tv.add(f.image, function () {
                 f.display.visible = true;
                 tv.hide(f.image);
+                extendDirtyRectWithDisplayObject(f.display);
                 draw();
             });
         } else {
