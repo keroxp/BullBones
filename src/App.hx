@@ -1,5 +1,6 @@
 package ;
 
+import createjs.easeljs.DisplayObject;
 import cv.ImageWrap;
 import js.html.Image;
 import view.ZoomInputView;
@@ -12,7 +13,6 @@ import js.html.PopStateEvent;
 import js.html.UIEvent;
 import util.BrowserUtil;
 import view.ModalView;
-import figure.Draggable;
 import model.BBModel;
 import js.html.ProgressEvent;
 import ajax.Loader;
@@ -27,8 +27,7 @@ import jQuery.JQuery;
 import js.html.MouseEvent;
 import view.SearchView;
 import js.Browser;
-using figure.Draggable.DraggableUtil;
-
+using util.FigureUtil;
 typedef OnFileLoadListenr = ImageWrap -> Void
 
 class App extends BackboneEvents implements BrushEditorListener {
@@ -86,8 +85,8 @@ class App extends BackboneEvents implements BrushEditorListener {
             listenTo(mainCanvas, "change:isEditing", function (mode: BBModel, value: Bool) {
                 hidePanels();
             });
-            listenTo(mainCanvas, "change:activeFigure", function (c: MainCanvas, value: Draggable) {
-                if (value.isImageFigure()) {
+            listenTo(mainCanvas, "change:activeFigure", function (c: MainCanvas, value: DisplayObject) {
+                if (value != null && value.isImageFigure()) {
                     jImageButton.show();
                 } else {
                     jImageButton.hide();
@@ -134,7 +133,13 @@ class App extends BackboneEvents implements BrushEditorListener {
             new JQuery("#debugButton").on("click", function (e: MouseEvent){
                 this.v.isDebug = !this.v.isDebug;
             });
-
+            // Undo/Redo
+            new JQuery("#undoButton").on("click", function(e: MouseEvent) {
+                mainCanvas.undo();
+            });
+            new JQuery("#redoButton").on("click", function(e: MouseEvent) {
+                mainCanvas.redo();
+            });
             mainCanvas.init();
             searchView.init();
             imageEditorView.init();

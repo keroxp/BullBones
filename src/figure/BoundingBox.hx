@@ -2,7 +2,6 @@ package figure;
 import createjs.easeljs.Rectangle;
 import geometry.Point;
 import event.MouseEventCapture;
-import figure.Draggable.DraggableType;
 import createjs.easeljs.DisplayObject;
 import createjs.easeljs.MouseEvent;
 import createjs.easeljs.Container;

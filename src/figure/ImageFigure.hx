@@ -1,4 +1,5 @@
 package figure;
+import util.StringUtil;
 import util.Log;
 import createjs.easeljs.DisplayObject;
 import cv.ImageWrap;
@@ -12,54 +13,42 @@ import cv.Filter;
 import cv.FilterFactory;
 import js.html.CanvasElement;
 import js.html.ImageData;
-import figure.Draggable.DraggableType;
 import js.html.MouseEvent;
 import createjs.easeljs.Bitmap;
-class ImageFigure implements Draggable {
-    public var bitmap: Bitmap;
-    public var image(default,null): ImageWrap;
-
-    @:isVar public var type(get, null):DraggableType;
-    function get_type():DraggableType {
-        return DraggableType.Image;
-    }
-
+class ImageFigure extends Bitmap {
+    public var imageWrap(default,null): ImageWrap;
     public function new (img: ImageWrap) {
-        image = img;
-        bitmap = new Bitmap(cast img.image.cloneNode(true));
+        super(cast img.image.cloneNode(true));
+        imageWrap = img;
     }
 
-    public function clone(): ImageFigure {
-        return new ImageFigure(image.clone());
+    override public function clone(): ImageFigure {
+        var ret = new ImageFigure(imageWrap.clone());
+        var _clone = Reflect.field(this, "_cloneProps");
+        return Reflect.callMethod(this,_clone,[ret]);
     }
 
-    @:isVar public var display(get, null): DisplayObject;
-    function get_display():createjs.easeljs.DisplayObject {
-        return bitmap;
+    override function toString(): String {
+        return '[ImageFigure name="$name"]';
     }
-
-    public function render(?arg:Dynamic): ImageFigure {
-        return this;
-    }
-
 
     public var filter(default, null):Filter;
 
     public function setFilterAsync(filter: Filter): Promise<ImageElement,Dynamic,Float> {
         this.filter = filter;
         var pr = new Deferred<ImageElement,Dynamic,Float>();
-        this.bitmap.image.onload = function (e) {
-            var w = this.bitmap.image.width;
-            var h = this.bitmap.image.height;
-            this.bitmap.cache(0,0,w,h);
-            this.bitmap.updateCache();
-            pr.resolve(this.bitmap.image);
+        this.image.onload = function (e) {
+            var w = this.image.width;
+            var h = this.image.height;
+            this.cache(0,0,w,h);
+            this.updateCache();
+            pr.resolve(this.image);
         };
-        this.bitmap.image.onerror = function (e) {
+        this.image.onerror = function (e) {
             pr.reject(e);
         };
-        var filterd = filter.applyToImageData(image.getImageData());
-        this.bitmap.image.src = ImageUtil.toDataUrl(filterd);
+        var filterd = filter.applyToImageData(imageWrap.getImageData());
+        this.image.src = ImageUtil.toDataUrl(filterd);
         return pr;
     }
 
