@@ -121,29 +121,33 @@ body
     padding 10px
     #lineExtractInputWrapper
       padding-left 15px
-  #zoomInputGroup
+  #belowbar
     position fixed
-    bottom 25px
-    right 25px
+    bottom 15px
+    right 15px
     display table
-    border-radius 5px
-    overflow hidden
-    background white
-    > span,a
-     display table-cell
-     vertical-align middle
-     margin-right 5px
-     border-right 1px solid #ccc
-     padding 5px 10px
-     &:last-child
-       border-right none
-       margin-right 0px
-    a
-      cursor pointer
-      color black
-      &:active
-        background #ccc
-        color white
+    .inputGroup
+      display table-cell
+      padding-left 15px
+      .inner
+        border-radius 5px
+        overflow hidden
+        background white
+        > span,a
+          display table-cell
+          vertical-align middle
+          margin-right 5px
+          border-right 1px solid #ccc
+          padding 5px 10px
+          &:last-child
+           border-right none
+           margin-right 0px
+        a
+          cursor pointer
+          color black
+          &:active
+            background #ccc
+            color white
   #searchView
     width 400px
     position fixed

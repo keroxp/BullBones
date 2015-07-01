@@ -113,12 +113,20 @@ html(lang='ja')
               p.range-field
                 label(for='imageAlpha') 透明度
                 input#imageAlpha(type='range', min='0', max='100', value='100')
-        #zoomInputGroup.z-depth-1
-          a#zoomOutButton(title="ズームアウト")
-            i.small.material-icons zoom_out
-          span#zoomValue 100%
-          a#zoomInButton(title="ズームイン")
-            i.small.material-icons zoom_in
+        #belowbar
+          #zoomInputGroup.inputGroup
+            .inner.z-depth-1
+              a#zoomOutButton(title="ズームアウト")
+                i.small.material-icons zoom_out
+              span#zoomValue 100%
+              a#zoomInButton(title="ズームイン")
+                i.small.material-icons zoom_in
+          #undoInputGroup.inputGroup
+            .inner.z-depth-1
+              a#undoButton(title="元に戻す")
+                i.small.material-icons undo
+              a#redoButton(title="やり直す")
+                i.small.material-icons redo
         #canvasWrapper
           canvas#mainCanvas(data-editing='false')
     if app_env == "development"
