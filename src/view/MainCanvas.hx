@@ -67,7 +67,6 @@ implements ImageEditorListener {
     var vGridDivision = 10;
     var mPressed = false;
     var vBackgroundColor = "#ddd";
-    var mMoved = false;
     var mDragBegan = false;
     var mScaleBegan = false;
     var mGrabBegan = false;
@@ -135,6 +134,7 @@ implements ImageEditorListener {
             }
             invalidate();
         });
+        on("change:isEditing", onChangeEditing);
         Main.App.onFileLoad = onFileLoad;
     }
 
@@ -143,15 +143,12 @@ implements ImageEditorListener {
         return get("activeFigure");
     }
     function set_activeFigure(value:Draggable) {
-        set("activeFigure", value);
         if (value == null && mPopupMenu.isShown) {
             mPopupMenu.dismiss(200);
         }
-        if (value != null) {
-            Log.d(value.display.getTransformedBounds());
-        }
+        set("activeFigure", value);
         invalidate();
-        return this.activeFigure = value;
+        return value;
     }
 
     @:isVar public var isEditing(get,set): Bool = false;
@@ -159,13 +156,7 @@ implements ImageEditorListener {
         return get("isEditing");
     }
     function set_isEditing(value:Bool) {
-        this.isEditing = value;
         jq.attr("data-editing", value+"");
-        if (value) {
-            activeFigure = mFigures.findLast(function(e: Draggable) { return e.display.visible; });
-        } else {
-            activeFigure = null;
-        }
         mBackground.visible = value;
         mGrid.visible = value;
         mBrushCircle.visible = !value;
@@ -173,6 +164,13 @@ implements ImageEditorListener {
         set("isEditing", value);
         invalidate();
         return value;
+    }
+    function onChangeEditing (m, value: Bool) {
+        if (value) {
+            activeFigure = mFigures.findLast(function(e: Draggable) { return e.display.visible; });
+        } else {
+            activeFigure = null;
+        }
     }
 
     var scale(get,never): Float;
@@ -488,7 +486,6 @@ implements ImageEditorListener {
                 var f =  new Figure(p_main_local.x,p_main_local.y);
                 f.width = Main.App.v.brush.width;
                 f.color = Main.App.v.brush.color;
-                mFigures.push(f);
                 if (Main.App.v.isDebug) {
                     drawFuzzyPointGraph(f.points[0],0);
                 }
@@ -525,19 +522,17 @@ implements ImageEditorListener {
         }
         trigger(ON_CANVAS_MOUSEDOWN_EVENT);
         mBrushCircle.visible = !isEditing;
-        m_p_local_main_prev = mMainLayer.globalToLocal(e.x,e.y);
         draw();
     }
     private var mCurrentPointerCSS: String;
     private static var MOVED_THRESH = 2*2;
-    private var m_p_local_main_prev: Point;
     function onMouseMove (e: MouseEventCapture) {
         var toDraw = false;
         if (!BrowserUtil.isBrowser()) {
             e.srcEvent.preventDefault();
         }
         var p_local_main = mMainLayer.globalToLocal(e.x,e.y);
-        var p_local_main_prev = m_p_local_main_prev;
+        var p_local_main_prev = mMainLayer.globalToLocal(e.prevX,e.prevY);
         var p_local_fg = mFgLayer.globalToLocal(e.x,e.y);
         if (!isEditing) {
             var fp = mFgLayer.globalToLocal(e.x,e.y);
@@ -565,98 +560,92 @@ implements ImageEditorListener {
             }
         }
         if (mPressed) {
-            if (mMoved) {
-                if (!isEditing) {
-                    if (mDrawingFigure != null) {
-                        mDrawingFigure.addPoint(p_local_main.x,p_local_main.y);
-                        var b = Main.App.v.brush;
-                        mBufferShape.graphics
-                        .setStrokeStyle(b.width,"round", "round")
-                        .beginStroke(b.color)
-                        .moveTo(p_local_main_prev.x,p_local_main_prev.y)
+            if (!isEditing) {
+                if (mDrawingFigure != null) {
+                    mDrawingFigure.addPoint(p_local_main.x,p_local_main.y);
+                    var b = Main.App.v.brush;
+                    mBufferShape.graphics
+                    .setStrokeStyle(b.width,"round", "round")
+                    .beginStroke(b.color)
+                    .moveTo(p_local_main_prev.x,p_local_main_prev.y)
 //                        .lineTo(p_local_main.x,p_local_main.y);
-                        .curveTo(p_local_main_prev.x,p_local_main_prev.y,p_local_main.x,p_local_main.y);
-                        extendDirtyRect(e.x,e.y);
-                        extendDirtyRect(e.prevX,e.prevY);
-                        toDraw = true;
-                    }
-                } else {
-                    if (mDragBegan) {
-                        var pb = activeFigure.display.getTransformedBounds().clone();
-                        activeFigure.display.x += e.deltaX/scale;
-                        activeFigure.display.y += e.deltaY/scale;
-                        mBoundingBox.shape.x += e.deltaX;
-                        mBoundingBox.shape.y += e.deltaY;
-                        extendDirtyRectWithDisplayObject(activeFigure.display,pb);
-                        toDraw = true;
-                    }else if(mGrabBegan) {
-                        mMainLayer.x += e.deltaX;
-                        mMainLayer.y += e.deltaY;
-                        mFgLayer.x += e.deltaX;
-                        mFgLayer.y += e.deltaY;
-                        drawGrid(e.deltaX,e.deltaY);
-                        toDraw = true;
-                    } else if (mScaleBegan) {
-                        var tBounds = activeFigure.display.getTransformedBounds().clone();
-                        inline function doScaleX (width: Float) {
-                            var sx = width/tBounds.width;
-                            if (0 < sx) {
-                                activeFigure.display.scaleX *= sx;
-                            }
-                        }
-                        inline function doScaleY (height: Float) {
-                            var sy = height/tBounds.height;
-                            if (0 < sy) {
-                                activeFigure.display.scaleY *= sy;
-                            }
-                        }
-                        inline function constrainScaleX () {
-                            if (p_local_main.x < tBounds.right()) {
-                                if (tBounds.right() < p_local_main_prev.x) {
-                                    doScaleX(tBounds.right()-e.x);
-                                } else {
-                                    doScaleX(tBounds.width-e.deltaX/scale);
-                                }
-                                activeFigure.display.x = p_local_main.x;
-                            }
-                        }
-                        inline function constrainScaleY () {
-                            if (p_local_main.y < tBounds.bottom()) {
-                                if (tBounds.bottom() < p_local_main_prev.y) {
-                                    doScaleY(tBounds.bottom()-p_local_main.y);
-                                } else {
-                                    doScaleY(tBounds.height-e.deltaY/scale);
-                                }
-                                activeFigure.display.y = p_local_main.y;
-                            }
-                        }
-                        mScaleCorner.isLeft? constrainScaleX() : doScaleX(tBounds.width+e.deltaX/scale);
-                        mScaleCorner.isTop? constrainScaleY() : doScaleY(tBounds.height+e.deltaY/scale);
-                        if (modifiedByShift()) {
-                            var d = activeFigure.display;
-                            var s = (d.scaleX+d.scaleY)*0.5;
-                            var oBounds = d.getBounds();
-                            d.scaleX = d.scaleY = s;
-                            var w = oBounds.width*s;
-                            var h = oBounds.height*s;
-                            if (mScaleCorner.isLeft) {
-                                d.x = tBounds.right()-w;
-                            }
-                            if (mScaleCorner.isTop) {
-                                d.y = tBounds.bottom()-h;
-                            }
-                        }
-                        extendDirtyRectWithDisplayObject(activeFigure.display,tBounds);
-                        drawBoundingBox();
-                        toDraw = true;
-                    }
+                    .curveTo(p_local_main_prev.x,p_local_main_prev.y,p_local_main.x,p_local_main.y);
+                    extendDirtyRect(e.x,e.y);
+                    extendDirtyRect(e.prevX,e.prevY);
+                    toDraw = true;
                 }
-                m_p_local_main_prev = p_local_main;
-            } else if (Math.pow(e.totalDeltaX,2)+Math.pow(e.totalDeltaY,2) > MOVED_THRESH) {
-                if (mPopupMenu.isShown) {
+            } else {
+                if (mDragBegan) {
+                    var pb = activeFigure.display.getTransformedBounds().clone();
+                    activeFigure.display.x += e.deltaX/scale;
+                    activeFigure.display.y += e.deltaY/scale;
+                    mBoundingBox.shape.x += e.deltaX;
+                    mBoundingBox.shape.y += e.deltaY;
+                    extendDirtyRectWithDisplayObject(activeFigure.display,pb);
                     mPopupMenu.dismiss(200);
+                    toDraw = true;
+                }else if(mGrabBegan) {
+                    mMainLayer.x += e.deltaX;
+                    mMainLayer.y += e.deltaY;
+                    mFgLayer.x += e.deltaX;
+                    mFgLayer.y += e.deltaY;
+                    drawGrid(e.deltaX,e.deltaY);
+                    mPopupMenu.dismiss(200);
+                    toDraw = true;
+                } else if (mScaleBegan) {
+                    var tBounds = activeFigure.display.getTransformedBounds().clone();
+                    inline function doScaleX (width: Float) {
+                        var sx = width/tBounds.width;
+                        if (0 < sx) {
+                            activeFigure.display.scaleX *= sx;
+                        }
+                    }
+                    inline function doScaleY (height: Float) {
+                        var sy = height/tBounds.height;
+                        if (0 < sy) {
+                            activeFigure.display.scaleY *= sy;
+                        }
+                    }
+                    inline function constrainScaleX () {
+                        if (p_local_main.x < tBounds.right()) {
+                            if (tBounds.right() < p_local_main_prev.x) {
+                                doScaleX(tBounds.right()-e.x);
+                            } else {
+                                doScaleX(tBounds.width-e.deltaX/scale);
+                            }
+                            activeFigure.display.x = p_local_main.x;
+                        }
+                    }
+                    inline function constrainScaleY () {
+                        if (p_local_main.y < tBounds.bottom()) {
+                            if (tBounds.bottom() < p_local_main_prev.y) {
+                                doScaleY(tBounds.bottom()-p_local_main.y);
+                            } else {
+                                doScaleY(tBounds.height-e.deltaY/scale);
+                            }
+                            activeFigure.display.y = p_local_main.y;
+                        }
+                    }
+                    mScaleCorner.isLeft? constrainScaleX() : doScaleX(tBounds.width+e.deltaX/scale);
+                    mScaleCorner.isTop? constrainScaleY() : doScaleY(tBounds.height+e.deltaY/scale);
+                    if (modifiedByShift()) {
+                        var d = activeFigure.display;
+                        var s = (d.scaleX+d.scaleY)*0.5;
+                        var oBounds = d.getBounds();
+                        d.scaleX = d.scaleY = s;
+                        var w = oBounds.width*s;
+                        var h = oBounds.height*s;
+                        if (mScaleCorner.isLeft) {
+                            d.x = tBounds.right()-w;
+                        }
+                        if (mScaleCorner.isTop) {
+                            d.y = tBounds.bottom()-h;
+                        }
+                    }
+                    extendDirtyRectWithDisplayObject(activeFigure.display,tBounds);
+                    drawBoundingBox();
+                    toDraw = true;
                 }
-                mMoved = true;
             }
         }
         if (toDraw) draw();
@@ -665,29 +654,28 @@ implements ImageEditorListener {
     function onMouseUp (e: MouseEventCapture) {
         var toDraw = false;
         if (!isEditing) {
-            if (mDrawingFigure != null) {
+            if (mDrawingFigure != null && mDrawingFigure.points.length > 1) {
                 mDrawingFigure.calcVertexes();
                 mFigureLayer.addChild(mDrawingFigure.display);
                 mDrawingFigure.render();
+                mFigures.push(mDrawingFigure);
                 extendDirtyRectWithDisplayObject(mDrawingFigure.display,mBufferShape.getTransformedBounds());
-                mDrawingFigure = null;
-                toDraw = true;
             }
+            toDraw = true;
+            mDrawingFigure = null;
         } else {
-            if (mMoved) {
-                if (mDragBegan) {
-                    drawBoundingBox();
-                    toDraw = true;
-                } else if (mScaleBegan) {
-                    if (activeFigure.type == DraggableType.Figure) {
-                        var fig: Figure = cast activeFigure;
-                        fig.applyScale().render();
-                    }
-                    drawBoundingBox();
-                    toDraw = true;
-                } else if (mGrabBegan) {
-                    jq.css("cursor", BrowserUtil.grabCursor());
+            if (mDragBegan) {
+                drawBoundingBox();
+                toDraw = true;
+            } else if (mScaleBegan) {
+                if (activeFigure.type == DraggableType.Figure) {
+                    var fig: Figure = cast activeFigure;
+                    fig.applyScale().render();
                 }
+                drawBoundingBox();
+                toDraw = true;
+            } else if (mGrabBegan) {
+                jq.css("cursor", BrowserUtil.grabCursor());
             }
             if (activeFigure != null) {
                 showPopupMenu();
@@ -696,7 +684,6 @@ implements ImageEditorListener {
         mDrawingFigure = null;
         mBufferShape.graphics.clear();
         mPressed = false;
-        mMoved = false;
         mDragBegan = false;
         mScaleCorner = null;
         mScaleBegan = false;
