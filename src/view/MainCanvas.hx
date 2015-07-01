@@ -361,6 +361,7 @@ implements ImageEditorListener {
             var image: ImageFigure = cast activeFigure;
             image.setFilterAsync(editor.createFilter())
             .done(function(img: ImageElement) {
+                image.display.alpha = editor.alpha;
                 extendDirtyRectWithDisplayObject(image.bitmap);
                 draw();
             }).fail(function(e) {

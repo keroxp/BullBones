@@ -58,7 +58,8 @@ class ImageFigure implements Draggable {
         this.bitmap.image.onerror = function (e) {
             pr.reject(e);
         };
-        this.bitmap.image.src = ImageUtil.toDataUrl(filter.applyToImageData(image.getImageData()));
+        var filterd = filter.applyToImageData(image.getImageData());
+        this.bitmap.image.src = ImageUtil.toDataUrl(filterd);
         return pr;
     }
 
