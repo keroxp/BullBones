@@ -1,9 +1,9 @@
 package view;
+import createjs.easeljs.DisplayObject;
 import cv.ImageWrap.AspectPolicy;
 import js.html.CanvasElement;
 import rollbar.Rollbar;
 import js.html.Image;
-import figure.Draggable;
 import model.ImageEditor;
 import cv.ImageUtil;
 import figure.ImageFigure;
@@ -11,8 +11,7 @@ import ajax.Loader;
 import js.html.ImageData;
 import js.html.Event;
 import jQuery.JQuery;
-using figure.Draggable.DraggableUtil;
-
+using util.FigureUtil;
 interface ImageEditorListener {
     public function onImageEditorChange (editor: ImageEditor): Void;
 }
@@ -55,10 +54,10 @@ class ImageEditorView extends ViewModel {
 
     private var mThumbData: ImageData;
     private var mImage: ImageFigure;
-    public function onactiveFigureChange (canvas: MainCanvas, value: Draggable) {
-        if (value.isImageFigure() && value != mImage) {
+    public function onactiveFigureChange (canvas: MainCanvas, value: DisplayObject) {
+        if (value != null && value.isImageFigure() && value != mImage) {
             var fig: ImageFigure = cast value;
-            mThumbData = fig.image.getResizedImageData(220,100,AspectPolicy.AspectToFit);
+            mThumbData = fig.imageWrap.getResizedImageData(220,100,AspectPolicy.AspectToFit);
             mImage = fig;
         }
         if (mThumbData != null) {
