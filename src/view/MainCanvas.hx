@@ -174,7 +174,7 @@ implements ImageEditorListener {
 
     @:isVar public var isExporting(get, set): Bool = false;
     function get_isExporting(): Bool {
-        return get("isExporting");
+        return get("isExporting") || false;
     }
     function set_isExporting(value:Bool) {
         set("isExporting",value);
@@ -544,7 +544,7 @@ implements ImageEditorListener {
     }
 
     function showPopupMenu () {
-        if (activeFigure != null) {
+        if (!isExporting && activeFigure != null) {
             var p = mMainLayer.localToGlobal(
                 activeFigure.x,
                 activeFigure.y

@@ -25,7 +25,10 @@ class ImageFigure extends Bitmap {
     override public function clone(): ImageFigure {
         var ret = new ImageFigure(imageWrap.clone());
         var _clone = Reflect.field(this, "_cloneProps");
-        return Reflect.callMethod(this,_clone,[ret]);
+        ret = Reflect.callMethod(this,_clone,[ret]);
+        ret.image = cast image.cloneNode(true);
+        ret.filter = filter.clone();
+        return ret;
     }
 
     override function toString(): String {
