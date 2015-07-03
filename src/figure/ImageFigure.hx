@@ -27,7 +27,9 @@ class ImageFigure extends Bitmap {
         var _clone = Reflect.field(this, "_cloneProps");
         ret = Reflect.callMethod(this,_clone,[ret]);
         ret.image = cast image.cloneNode(true);
-        ret.filter = filter.clone();
+        if (filter != null) {
+            ret.filter = filter.clone();
+        }
         return ret;
     }
 
