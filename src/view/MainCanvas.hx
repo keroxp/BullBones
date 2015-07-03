@@ -834,9 +834,10 @@ implements ImageEditorListener {
         } else {
             // during exporting
             var z = Main.App.v.zoom;
-            var lp = mMainLayer.globalToLocal(e.startX,e.startY);
-            var x = lp.x;
-            var y = lp.y;
+            var lp = mMainLayer.globalToLocal(
+                e.totalDeltaX < 0 ? e.startX+e.totalDeltaX : e.startX,
+                e.totalDeltaY < 0 ? e.startY+e.totalDeltaY : e.startY
+            );
             var w = Math.abs(e.totalDeltaX/z.scale);
             var h = Math.abs(e.totalDeltaY/z.scale);
             exportImage(lp.x,lp.y,w,h);
