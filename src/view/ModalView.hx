@@ -1,4 +1,7 @@
 package view;
+import js.html.Event;
+import js.html.EventListener;
+import js.html.MouseEvent;
 import js.Browser;
 import jQuery.JQuery;
 class ModalView extends ViewModel {
@@ -12,7 +15,6 @@ class ModalView extends ViewModel {
                 <div id="modal-optional-html"></div>
             </div>
             <div class="modal-footer">
-                <a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">OK</a>
             </div>
             ';
         jq.append(new JQuery(html));
@@ -23,6 +25,19 @@ class ModalView extends ViewModel {
             "もしiPadやiPhoneをお使いの場合は、BullBonesのショートカットをホーム画面に追加するとアプリとしてお使いいただけます。",
             "<p><img src=\"img/tutorial/add-to-homescreen-1.png\"></p>
             <p><img src=\"img/tutorial/add-to-homescreen-2.png\"></p>"
+        );
+    }
+    public function confirmExporting (src: String, callback: Bool -> Void): ModalView {
+        return render(
+            "この画像を保存しますか？",
+            "保存された画像はあなただけが見ることができます。また、Webで公開することもできます。",
+            '<div class="scrollable" style="text-align:center;"><img style="border:2px solid #000; max-width: 100%" src="$src"></div>',
+            [new ModalButton("やめる", function(e) {
+                callback(false);
+            }),
+            new ModalButton("保存する", function(e) {
+                callback(true);
+            })]
         );
     }
     public function open() {
@@ -45,10 +60,32 @@ class ModalView extends ViewModel {
         var closeModal = Reflect.field(jq,"closeModal");
         Reflect.callMethod(this.jq, closeModal, []);
     }
-    public function render(title: String, msg: String, ?optionalHtml: String = ""): ModalView {
+    public function render(title: String, msg: String, ?optionalHtml: String = "", ?buttons: Array<ModalButton>): ModalView {
         jq.find("#modal-title").html(title);
         jq.find("#modal-message").html(msg);
         jq.find("#modal-optional-html").html(optionalHtml);
+        jq.find(".modal-footer").html("");
+        if (buttons == null) {
+            jq.find(".modal-footer").append(ModalButton.OKButton().jq);
+        } else {
+            var jFooter: JQuery = jq.find(".modal-footer");
+            for (b in buttons) {
+                jFooter.prepend(b.jq);
+            }
+        }
         return this;
+    }
+}
+
+class ModalButton extends ViewModel {
+    var title: String;
+    public static function OKButton(?callback: Event -> Void): ModalButton {
+        return new ModalButton("OK",callback);
+    }
+    public function new (title: String, callback: Event -> Void) {
+        super(new JQuery(
+            '<a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">$title</a>'
+        ));
+        jq.on("click", callback);
     }
 }

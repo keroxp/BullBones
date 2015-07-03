@@ -140,6 +140,9 @@ class App extends BackboneEvents implements BrushEditorListener {
             new JQuery("#redoButton").on("click", function(e: MouseEvent) {
                 mainCanvas.redo();
             });
+            new JQuery("#exportButton").on("click", function(e: MouseEvent) {
+               mainCanvas.isExporting = !mainCanvas.isExporting;
+            });
             mainCanvas.init();
             searchView.init();
             imageEditorView.init();

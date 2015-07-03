@@ -15,9 +15,9 @@ class ZoomEditor {
         }
         return this.scale = value;
     }
-    public var pivotX: Float;
-    public var pivotY: Float;
-    public function new(?scale: Float = 1, ?pivotX: Float, ?pivotY: Float) {
+    public var pivotX: Float = 0;
+    public var pivotY: Float = 0;
+    public function new(?scale: Float = 1, ?pivotX: Float = 0, ?pivotY: Float = 0) {
         this.scale = scale;
         this.pivotX = pivotX;
         this.pivotY = pivotY;

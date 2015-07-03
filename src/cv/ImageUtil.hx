@@ -1,4 +1,5 @@
 package cv;
+import createjs.easeljs.Rectangle;
 import js.html.ImageElement;
 import js.html.Document;
 import js.html.ImageData;
