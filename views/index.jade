@@ -4,8 +4,8 @@ html(lang='ja')
     title BullBones
     meta(name='viewport', content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no')
     meta(name='apple-mobile-web-app-capable', content='yes')
-    link(rel='stylesheet', type='text/css', href='css/bower.css')
-    link(rel='stylesheet', type='text/css', href='css/main.css')
+    link(rel='stylesheet', type='text/css', href='/css/bower.css')
+    link(rel='stylesheet', type='text/css', href='/css/main.css')
     link(href='https://fonts.googleapis.com/icon?family=Material+Icons', rel='stylesheet')
     link(rel='shortcut icon', href='/favicon.ico')
     link(rel='apple-touch-icon', href='apple-touch-icon.gif')
@@ -134,7 +134,7 @@ html(lang='ja')
           canvas#mainCanvas(data-editing='false')
     if app_env == "development"
       script(src='http://localhost:35729/livereload.js')
-    script(src='js/bower.js')
-    script(src='js/main.js')
+    script(src='/js/bower.js')
+    script(src='/js/main.js')
     script.
       $('.modal-trigger').leanModal();

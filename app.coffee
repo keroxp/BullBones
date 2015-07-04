@@ -39,5 +39,8 @@ MongoClient.connect mongo_url, (err,db) ->
   app.get '/about', (req,res) -> res.render "about"
   app.get '/proxy', acl require("./routes/proxy")()
   app.get '/search', acl require("./routes/search")(db)
+  app.post '/export', acl require("./routes/export")(db)
+  app.get '/export/signed_url', acl require("./routes/signed_url")()
   app.get '/test', (req,res) -> res.send("sessionId: #{req.sessionID}, session: #{req.session.toString()}")
+  app.get '/images/:id:ext(.jpg|.png)?', require("./routes/images")(db)
   app.listen process.env.PORT || 8000

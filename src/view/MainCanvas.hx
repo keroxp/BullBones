@@ -1,4 +1,6 @@
 package view;
+import rollbar.Rollbar;
+import ajax.Uploader;
 import jQuery.JQuery;
 import js.Error;
 import command.CopyCommand;
@@ -505,13 +507,24 @@ implements ImageEditorListener {
         ml.y = -y;
         es.addChild(ml);
         es.update();
-        var url = es.toDataURL("rgba(0,0,0,0)","image/png");
-        Main.App.modalView.confirmExporting(url, function(result: Bool) {
-            if (result) {
-                window.open(url);
-            }
-            url = null;
-        }).open();
+        try {
+            var url = es.toDataURL("rgba(0,0,0,0)","image/png");
+            Main.App.modalView.confirmExporting(url, function(result: Bool) {
+                if (result) {
+                    Uploader.uploadImage(url, "image/png").done(function(as: UploadedAsset){
+                        Log.d(as);
+                        window.open("/images/"+as.displayId);
+                    }).fail(function(e){
+                        Log.e(e);
+                        Browser.alert("ファイルのアップロードに失敗しました。ネットワークの設定などを確認して再度お試しください。");
+                    });
+                }
+                url = null;
+            }).open();
+        } catch (err: Error) {
+            Browser.alert("ファイルの書き出しに失敗しました。");
+            Rollbar.error(err);
+        }
         es = null;
         ec = null;
     }

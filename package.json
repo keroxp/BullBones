@@ -17,6 +17,7 @@
   "devDependencies": {},
   "dependencies": {
     "async": "^1.2.1",
+    "aws-sdk": "^2.1.36",
     "body-parser": "^1.12.4",
     "bower": "^1.4.1",
     "btoa": "^1.1.2",
@@ -40,6 +41,8 @@
     "jade": "^1.11.0",
     "moment": "^2.10.3",
     "mongodb": "^2.0.35",
+    "mongodb-autoincrement": "^1.0.0",
+    "multer": "^0.1.8",
     "newrelic": "^1.20.2",
     "request": "^2.56.0"
   }

@@ -5,15 +5,14 @@ import model.BBModel;
 
 class V extends BBModel {
 
-    @:isVar public var isEditing(get, set):Bool = false;
-
-    function get_isEditing():Bool {
-        return get("isEditing");
+    @:isVar public var env(get, set):String;
+    function set_env(value:String) {
+        set("env", value);
+        return value;
     }
 
-    function set_isEditing(value:Bool) {
-        set("isEditing", value);
-        return value;
+    function get_env():String {
+        return get("env");
     }
 
     @:isVar public var brush(get, set):BrushEditor;
