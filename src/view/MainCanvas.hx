@@ -47,6 +47,23 @@ import createjs.easeljs.Shape;
 using util.RectangleUtil;
 using util.ArrayUtil;
 using util.FigureUtil;
+/*
+レイヤー構造
+[Stage]
+  StageDebugShape       - ステージレイヤのデバッグ用
+  [Foreground Layer]    - 前面レイヤ
+    ExportShape             - 画像書き出しの際のマスク
+    BrushCircleShape        - ブラシヘッド
+    BoudingBox              - バウンディングボックス
+  [Main Layer]          - メインレイヤ
+    MainDebugShape          - メインレイヤのデバッグ用
+    BufferShape             - 描画途中の図形
+    [FigureLayer]           - 図形レイヤ
+    [ImageLayer]            - 画像レイヤ
+  [BackgroundLayer]     - 背景レイヤ
+    GridShape               - グリッド
+    BackgroundShape         - 背景
+ */
 class MainCanvas extends ViewModel
 implements SearchResultListener
 implements ImageEditorListener {
