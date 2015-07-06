@@ -9,10 +9,13 @@ class BrowserUtil {
     public static var window: DOMWindow =  Browser.window;
     public static var document: Document = Browser.document;
 
-    public static function isBrowser() {
-        return !isMobile() && !isTablet();
-    }
     public static function isMobile () {
+        return !isBrowser();
+    }
+    public static function isBrowser() {
+        return !isMobilePhone() && !isTablet();
+    }
+    public static function isMobilePhone () {
         var u = ua();
         return (u.indexOf("windows") != -1 && u.indexOf("phone") != -1)
         || u.indexOf("iphone") != -1

@@ -111,36 +111,37 @@ class App extends BackboneEvents implements BrushEditorListener {
                 mainCanvas.isEditing = false;
                 searchView.toggle();
             });
+            var click = BrowserUtil.isMobile() ? "touchstart" : "click";
             // ブラシボタン
             var brushButton = new JQuery("#brushButton");
-            brushButton.on("click", function(e: MouseEvent) {
+            brushButton.on(click, function(e: MouseEvent) {
                 hidePanels(brushEditorView);
                 brushEditorView.jq.toggle();
             });
             // 編集ボタン
             jEditButton = new JQuery("#editButton");
-            jEditButton.on("click", function (e: MouseEvent) {
+            jEditButton.on(click, function (e: MouseEvent) {
                 hidePanels();
                 mainCanvas.isEditing = !mainCanvas.isEditing;
             });
             // 画像ボタン
             jImageButton = new JQuery("#imageEditorButton");
-            jImageButton.on("click", function(e: MouseEvent) {
+            jImageButton.on(click, function(e: MouseEvent) {
                 hidePanels(imageEditorView);
                 imageEditorView.jq.toggle();
             });
             // デバッグボタン
-            new JQuery("#debugButton").on("click", function (e: MouseEvent){
+            new JQuery("#debugButton").on(click, function (e: MouseEvent){
                 this.v.isDebug = !this.v.isDebug;
             });
             // Undo/Redo
-            new JQuery("#undoButton").on("click", function(e: MouseEvent) {
+            new JQuery("#undoButton").on(click, function(e: MouseEvent) {
                 mainCanvas.undo();
             });
-            new JQuery("#redoButton").on("click", function(e: MouseEvent) {
+            new JQuery("#redoButton").on(click, function(e: MouseEvent) {
                 mainCanvas.redo();
             });
-            new JQuery("#exportButton").on("click", function(e: MouseEvent) {
+            new JQuery("#exportButton").on(click, function(e: MouseEvent) {
                mainCanvas.isExporting = !mainCanvas.isExporting;
             });
             mainCanvas.init();
