@@ -12,13 +12,13 @@ exports.config = {
   /**
    * Your New Relic license key.
    */
-  license_key: 'ce3fbb5125c2fbbeaca03b4a7eb772007e1acc5f',
+  license_key: 'fb795ffdb69859e171bc41a4f9978c4690f646b5',
   logging: {
     /**
      * Level at which to log. 'trace' is most useful to New Relic when diagnosing
      * issues with the agent, 'info' and higher will impose the least overhead on
      * production applications.
      */
-    level: 'info'
+    level: 'trace'
   }
 }
