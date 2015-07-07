@@ -517,6 +517,9 @@ implements ImageEditorListener {
     }
 
     function exportImage (x: Float, y: Float, w: Float, h: Float) {
+        if (w == 0 || h == 0) {
+            return;
+        }
         var ec: CanvasElement = cast BrowserUtil.document.createElement("canvas");
         ec.width = cast w;
         ec.height = cast h;
