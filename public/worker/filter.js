@@ -121,7 +121,7 @@
     }
     function getFilter(f) {
         switch (f.name) {
-            case "alpha": return apply.apply(this, f.args);
+            case "alpha": return alpha.apply(this, f.args);
             case "gray": return gray.apply(this);
             case "negaposi": return negaposi.apply(this);
             case "binalize": return binalize.apply(this, f.args);

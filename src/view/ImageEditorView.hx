@@ -67,11 +67,17 @@ class ImageEditorView extends ViewModel {
     }
     private function renderThumb() {
         var f = mEditor.createFilter();
+        f.funcs.push({
+            name: "alpha",
+            args: [mEditor.alpha*255]
+        });
         f.applyToImageData(mThumbData).done(function(id: ImageData) {
             var x = (220-id.width)*0.5;
             var y = (100-id.height)*0.5;
             var ctx = mCanvas.getContext2d();
             ctx.clearRect(0,0,220,100);
+            ctx.globalAlpha = mEditor.alpha;
+            ctx.globalCompositeOperation = "destination-in";
             ctx.putImageData(id,x,y);
         }).fail(function (e) {
             Log.e(e);
