@@ -40,6 +40,21 @@ class ModalView extends ViewModel {
             })]
         );
     }
+    public function beginExporting(callback: Bool -> Void): ModalView {
+        return render(
+            "画像の保存を開始します",
+            "画像の保存したい部分をマウスまたはタッチで切り取ってください。",
+            '<div class="scrollable" style="text-align:center;">
+                <img style="border:2px solid #000; max-width: 100%" src="/img/tutorial/export-1.jpg">
+            </div>',
+            [new ModalButton("やめる", function(e) {
+                callback(false);
+            }),
+            new ModalButton("始める", function(e) {
+                callback(true);
+            })]
+        );
+    }
     public function open() {
         var openModal = Reflect.field(jq,"openModal");
         Reflect.callMethod(this.jq, openModal, []);

@@ -142,7 +142,9 @@ class App extends BackboneEvents implements BrushEditorListener {
                 mainCanvas.redo();
             });
             new JQuery("#exportButton").on(click, function(e: MouseEvent) {
-               mainCanvas.isExporting = !mainCanvas.isExporting;
+                modalView.beginExporting(function(val) {
+                    mainCanvas.isExporting = val;
+                }).open();
             });
             mainCanvas.init();
             searchView.init();
@@ -207,7 +209,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     private function onDrop (e: DragEvent) {
         e.preventDefault();
         e.stopPropagation();
-        Log.d("file dopped");
+        Log.d(e);
         var files = e.dataTransfer.files;
         if (files.length > 0) {
             var f = files.item(0);
