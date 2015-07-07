@@ -478,7 +478,7 @@ implements ImageEditorListener {
                 extendDirtyRectWithDisplayObject(image);
                 draw();
             }).fail(function(e) {
-                Log.e(e);
+                Rollbar.error(e);
             });
         }
     }

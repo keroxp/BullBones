@@ -1,5 +1,13 @@
 package cv;
 
+import util.BrowserUtil;
+import js.html.MessageEvent;
+import util.Log;
+import js.html.ErrorEvent;
+import js.html.Worker;
+import deferred.Deferred;
+import deferred.Promise;
+import haxe.Json;
 import protocol.Clonable;
 import cv.FilterFactory.FilterFunc;
 import js.html.ImageData;
@@ -14,14 +22,23 @@ class Filter implements Clonable<Filter>{
     }
 
     public function clone():Filter {
-        return new Filter(funcs.copy());
+        return new Filter(Json.parse(Json.stringify(this)));
     }
 
-    public function applyToImageData (inImg: ImageData): ImageData {
-        var out: ImageData = inImg;
-        for (f in funcs) {
-            out = f(out);
+    public function applyToImageData (inImg: ImageData): Promise<ImageData,ErrorEvent,Dynamic> {
+        var def = new Deferred<ImageData,ErrorEvent,Dynamic>();
+        var worker = new Worker("/worker/filter.js");
+        var canvas = BrowserUtil.document.createElement("canvas");
+        worker.onmessage = function (e: MessageEvent) {
+            def.resolve(e.data.result);
         }
-        return out;
+        worker.onerror = function (e: ErrorEvent) {
+            def.reject(e);
+        }
+        worker.postMessage({
+            imageData: inImg,
+            filters: funcs
+        });
+        return def;
     }
 }

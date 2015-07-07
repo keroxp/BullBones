@@ -1,19 +1,11 @@
 package figure;
-import util.StringUtil;
-import util.Log;
-import createjs.easeljs.DisplayObject;
 import cv.ImageWrap;
 import deferred.Deferred;
 import deferred.Promise;
-import event.MouseEventCapture;
-import hammer.HammerEvent;
 import js.html.ImageElement;
 import cv.ImageUtil;
 import cv.Filter;
-import cv.FilterFactory;
-import js.html.CanvasElement;
 import js.html.ImageData;
-import js.html.MouseEvent;
 import createjs.easeljs.Bitmap;
 class ImageFigure extends Bitmap {
     public var imageWrap(default,null): ImageWrap;
@@ -42,22 +34,23 @@ class ImageFigure extends Bitmap {
     public function setFilterAsync(filter: Filter): Promise<ImageElement,Dynamic,Float> {
         this.filter = filter;
         var pr = new Deferred<ImageElement,Dynamic,Float>();
-        this.image.onload = function (e) {
-            var w = this.image.width;
-            var h = this.image.height;
-            this.cache(0,0,w,h);
-            this.updateCache();
-            pr.resolve(this.image);
-        };
-        this.image.onerror = function (e) {
-            pr.reject(e);
-        };
-        var filterd = filter.applyToImageData(imageWrap.getImageData());
-        this.image.src = ImageUtil.toDataUrl(filterd);
+        var self = this;
+        filter.applyToImageData(imageWrap.getImageData()).done(function(filtered: ImageData){
+            self.image.onload = function (e) {
+                var w = self.image.width;
+                var h = self.image.height;
+                self.cache(0,0,w,h);
+                self.updateCache();
+                pr.resolve(self.image);
+            };
+            self.image.onerror = function (e) {
+                pr.reject(e);
+            };
+            self.image.src = ImageUtil.toDataUrl(filtered);
+        }).fail(function(e) {
+           pr.reject(e);
+        });
         return pr;
     }
 
-    function get_filter():Filter {
-        return filter;
-    }
 }

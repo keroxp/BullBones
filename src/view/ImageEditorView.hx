@@ -1,4 +1,5 @@
 package view;
+import util.Log;
 import createjs.easeljs.DisplayObject;
 import cv.ImageWrap.AspectPolicy;
 import js.html.CanvasElement;
@@ -66,12 +67,17 @@ class ImageEditorView extends ViewModel {
     }
     private function renderThumb() {
         var f = mEditor.createFilter();
-        var id = f.applyToImageData(mThumbData);
-        var x = (220-id.width)*0.5;
-        var y = (100-id.height)*0.5;
-        var ctx = mCanvas.getContext2d();
-        ctx.clearRect(0,0,220,100);
-        ctx.putImageData(id,x,y);
+        f.applyToImageData(mThumbData).done(function(id: ImageData) {
+            var x = (220-id.width)*0.5;
+            var y = (100-id.height)*0.5;
+            var ctx = mCanvas.getContext2d();
+            ctx.clearRect(0,0,220,100);
+            ctx.putImageData(id,x,y);
+        }).fail(function (e) {
+            Log.e(e);
+            Rollbar.error(e);
+        });
+
     }
     private function postOnChange (editor: ImageEditor) {
         if (listener != null) {
