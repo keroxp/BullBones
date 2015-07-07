@@ -135,11 +135,25 @@ class App extends BackboneEvents implements BrushEditorListener {
                 this.v.isDebug = !this.v.isDebug;
             });
             // Undo/Redo
-            new JQuery("#undoButton").on(click, function(e: MouseEvent) {
+            var jUndoButton: JQuery = new JQuery("#undoButton").on(click, function(e: MouseEvent) {
                 mainCanvas.undo();
             });
-            new JQuery("#redoButton").on(click, function(e: MouseEvent) {
+            listenTo(v, "change:undoStackSize", function (m,val:Int) {
+                if (val == 0) {
+                    jUndoButton.attr("data-enabled","false");
+                } else if (jUndoButton.data("enabled") == false && val == 1) {
+                    jUndoButton.attr("data-enabled", "true");
+                }
+            });
+            var jRedoButton: JQuery = new JQuery("#redoButton").on(click, function(e: MouseEvent) {
                 mainCanvas.redo();
+            });
+            listenTo(v, "change:redoStackSize", function (m,val:Int) {
+                if (val == 0) {
+                    jRedoButton.attr("data-enabled", "false");
+                } else if (jRedoButton.data("enabled") == false && val == 1) {
+                    jRedoButton.attr("data-enabled", "true");
+                }
             });
             new JQuery("#exportButton").on(click, function(e: MouseEvent) {
                 modalView.beginExporting(function(val) {

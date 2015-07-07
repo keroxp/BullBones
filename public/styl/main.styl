@@ -142,12 +142,16 @@ body
           &:last-child
            border-right none
            margin-right 0px
-        a
+        a,i
+          width 30px
+        a[data-enabled="true"]
           cursor pointer
           color black
           &:active
             background #ccc
             color white
+        a[data-enabled="false"]
+          color #ccc
   #searchView
     width 400px
     position fixed

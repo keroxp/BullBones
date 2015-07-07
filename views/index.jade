@@ -119,16 +119,16 @@ html(lang='ja')
         #belowbar
           #zoomInputGroup.inputGroup
             .inner.z-depth-1
-              a#zoomOutButton(title="ズームアウト")
+              a#zoomOutButton(title="ズームアウト",data-enabled="true")
                 i.small.material-icons zoom_out
               span#zoomValue 100%
-              a#zoomInButton(title="ズームイン")
+              a#zoomInButton(title="ズームイン",data-enabled="true")
                 i.small.material-icons zoom_in
           #undoInputGroup.inputGroup
             .inner.z-depth-1
-              a#undoButton(title="元に戻す")
+              a#undoButton(title="元に戻す",data-enabled="false")
                 i.small.material-icons undo
-              a#redoButton(title="やり直す")
+              a#redoButton(title="やり直す",data-enabled="false")
                 i.small.material-icons redo
         #canvasWrapper
           canvas#mainCanvas(data-editing='false')

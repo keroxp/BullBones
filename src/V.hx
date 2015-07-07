@@ -48,6 +48,29 @@ class V extends BBModel {
         return get("zoom");
     }
 
+    @:isVar public var undoStackSize(get, set):Int;
+
+    function get_undoStackSize():Int {
+        return get("undoStackSize") | 0;
+    }
+
+    function set_undoStackSize(value:Int) {
+        set("undoStackSize", value);
+        return value;
+    }
+
+    @:isVar public var redoStackSize(get, set):Int;
+
+    function get_redoStackSize():Int {
+        return get("redoStackSize") | 0;
+    }
+
+    function set_redoStackSize(value:Int) {
+        set("redoStackSize", value);
+        return value;
+    }
+
+
     public function new(attr: Dynamic) {
         super(attr);
     }

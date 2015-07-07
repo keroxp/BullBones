@@ -418,6 +418,8 @@ implements ImageEditorListener {
     public function pushCommand(cmd: FigureCommand) {
         mUndoStack.push(cmd);
         mRedoStack.splice(0,mRedoStack.length);
+        Main.App.v.undoStackSize += 1;
+        Main.App.v.redoStackSize = 0;
     }
 
     public function undo() {
@@ -441,6 +443,8 @@ implements ImageEditorListener {
             } else {
                 invalidate();
             }
+            Main.App.v.undoStackSize -= 1;
+            Main.App.v.redoStackSize += 1;
         }
     }
 
@@ -466,6 +470,8 @@ implements ImageEditorListener {
             } else {
                 invalidate();
             }
+            Main.App.v.undoStackSize += 1;
+            Main.App.v.redoStackSize -= 1;
         }
     }
 
