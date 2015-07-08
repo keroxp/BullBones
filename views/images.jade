@@ -1,29 +1,22 @@
 html(lang='ja')
   head
-    meta(charset='utf-8')
     title BullBones - Images
-    meta(name='viewport', content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no')
-    meta(name='apple-mobile-web-app-capable', content='yes')
-    link(rel='stylesheet', type='text/css', href='/css/bower.css')
-    link(rel='stylesheet', type='text/css', href='/css/main.css')
-    link(href='https://fonts.googleapis.com/icon?family=Material+Icons', rel='stylesheet')
-    link(rel='shortcut icon', href='/favicon.ico')
-    link(rel='apple-touch-icon', href='apple-touch-icon.gif')
+    include ./include/head.jade
   body
     header.blue-grey.darken-3
       div.logo(style="text-align:center")
-        a(href="/about")
+        a(href="/")
           img(src="/img/logo.png",style="width:100px;height:auto")
     main
       .container
         .row
+          #share-buttons.col-s12(style="height:20px")
+            a(href="https://twitter.com/share", class="twitter-share-button",data-text="", data-hashtags="BullBones") Tweet
           .col.s12.image-wrapper
             img(src="http://#{image.host}/#{image.name}")
-    footer
-      .container
-        .row
-          .col-s12
-          | © 2015 Yusuke Sakurai / Keio University Toshiyuki Masui Labratory All Rights Reserved.
+    include ./include/footer.jade
     if app_env == "development"
       script(src='http://localhost:35729/livereload.js')
     script(src='/js/bower.js')
+    script
+      !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
