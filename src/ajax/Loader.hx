@@ -2,11 +2,9 @@ package ajax;
 import js.Error;
 import cv.ImageWrap;
 import util.BrowserUtil;
-import js.Browser;
 import js.html.DOMError;
 import js.html.ProgressEvent;
 import js.html.File;
-import js.html.FileList;
 import js.html.FileReader;
 import deferred.Promise;
 import deferred.Deferred;
@@ -37,8 +35,8 @@ class Loader {
         return def;
     }
     public static function loadFile(file: File): Promise<ImageWrap, DOMError, ProgressEvent> {
-        var reader = new FileReader();
         if (file.type.indexOf("image/") > -1) {
+            var reader = new FileReader();
             var def = new Deferred<ImageWrap, DOMError, ProgressEvent>();
             reader.onload = (function (f) {
                 return function (ev) {
@@ -61,8 +59,8 @@ class Loader {
                 def.reject(reader.error);
             }
             reader.readAsDataURL(file);
-            return cast def;
+            return def;
         }
-        return null;
+        throw new Error("invalid mime type: "+file.type);
     }
 }

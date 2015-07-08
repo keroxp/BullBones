@@ -4,11 +4,8 @@ import createjs.easeljs.DisplayObject;
 import cv.ImageWrap.AspectPolicy;
 import js.html.CanvasElement;
 import rollbar.Rollbar;
-import js.html.Image;
 import model.ImageEditor;
-import cv.ImageUtil;
 import figure.ImageFigure;
-import ajax.Loader;
 import js.html.ImageData;
 import js.html.Event;
 import jQuery.JQuery;
@@ -66,11 +63,7 @@ class ImageEditorView extends ViewModel {
         }
     }
     private function renderThumb() {
-        var f = mEditor.createFilter();
-        f.funcs.push({
-            name: "alpha",
-            args: [mEditor.alpha*255]
-        });
+        var f = mEditor.createFilter(true);
         f.applyToImageData(mThumbData).done(function(id: ImageData) {
             var x = (220-id.width)*0.5;
             var y = (100-id.height)*0.5;

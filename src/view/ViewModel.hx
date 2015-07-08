@@ -1,6 +1,5 @@
 package view;
 import js.html.Element;
-import js.html.HtmlElement;
 import backbone.Model;
 import jQuery.JQuery;
 class ViewModel extends Model {

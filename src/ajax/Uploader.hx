@@ -1,17 +1,13 @@
 package ajax;
 import js.html.XMLHttpRequest;
-import haxe.Json;
 import js.Error;
-import util.StringUtil;
 import js.html.FormData;
-import util.Log;
 import jQuery.JQuery;
 import js.html.Blob;
 import js.html.Uint8Array;
 import js.html.ArrayBuffer;
 import util.BrowserUtil;
 import deferred.Deferred;
-import jQuery.JqXHR;
 import deferred.Promise;
 
 
@@ -28,7 +24,7 @@ typedef UploadedAsset = {
     var path: String;       //"uploads/b705411a93ac5a16ffe1b2e0c2acdf13.png"
     var size:  Int;         //218929
     var displayId: String;  //b705411a93ac5a16ffe1b2e0c2acdf13
-    var host: String;        //assets.bullbones.pics
+    var host: String;       //assets.bullbones.pics
     var createdAt: String;  // Date
 }
 
@@ -53,7 +49,7 @@ class Uploader {
         JQuery._static.ajax({
             url: "/export/signed_url",
             dataType: "json"
-        }).done(function(signedUrl: Dynamic) {
+        }).done(function(signedUrl: SignedUrl) {
             var url: String = signedUrl.url;
             var filename = "image." + ext;
             var blob = encodeBlob(dataurl,filetype);

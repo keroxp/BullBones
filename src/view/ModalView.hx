@@ -1,7 +1,5 @@
 package view;
 import js.html.Event;
-import js.html.EventListener;
-import js.html.MouseEvent;
 import js.Browser;
 import jQuery.JQuery;
 class ModalView extends ViewModel {

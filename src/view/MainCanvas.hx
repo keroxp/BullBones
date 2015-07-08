@@ -1,4 +1,5 @@
 package view;
+import js.html.Window;
 import rollbar.Rollbar;
 import ajax.Uploader;
 import jQuery.JQuery;
@@ -6,7 +7,6 @@ import js.Error;
 import command.CopyCommand;
 import command.DeleteCommand;
 import command.InsertCommand;
-import command.Undoable;
 import cv.ImageWrap;
 import command.FigureCommand;
 import command.DisplayCommand;
@@ -15,31 +15,23 @@ import model.ZoomEditor;
 import createjs.easeljs.Point;
 import js.html.WheelEvent;
 import view.PopupMenu.PopupItem;
-import jQuery.JQuery;
 import util.Log;
 import createjs.easeljs.Rectangle;
-import createjs.easeljs.Matrix2D;
 import js.html.ImageElement;
 import util.BrowserUtil;
 import js.Browser;
 import figure.ImageFigure;
 import model.ImageEditor;
-import createjs.easeljs.Bitmap;
 import view.ImageEditorView.ImageEditorListener;
 import view.SearchView.SearchResultListener;
-import ajax.Loader;
 import view.ViewModel;
 import ajax.BingSearch.BingSearchResult;
 import event.MouseEventCapture;
 import js.html.Element;
-import js.html.DOMWindow;
-import js.html.MouseEvent;
 import createjs.easeljs.Container;
-import js.html.Image;
 import geometry.FuzzyPoint;
 import figure.BoundingBox;
 import js.html.CanvasElement;
-import js.html.CanvasRenderingContext2D;
 import js.html.KeyboardEvent;
 import figure.ShapeFigure;
 import createjs.easeljs.Stage;
@@ -96,7 +88,7 @@ implements ImageEditorListener {
     var mScaleCorner: Corner;
     var mDirtyRect: Rectangle = new Rectangle();
     var mCapture: MouseEventCapture;
-    var window: DOMWindow = Browser.window;
+    var window = BrowserUtil.window;
     var mPopupMenu: PopupMenu;
     public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null)
     = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
@@ -107,7 +99,6 @@ implements ImageEditorListener {
 
     public function new(jq: JQuery) {
         super(jq);
-        var window: DOMWindow = js.Browser.window;
         var cap = new MouseEventCapture();
         cap.onDown(el,onMouseDown);
         cap.onMove(el,onMouseMove);

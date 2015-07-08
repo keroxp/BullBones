@@ -1,5 +1,4 @@
 package cv;
-import createjs.easeljs.Rectangle;
 import js.html.ImageElement;
 import js.html.Document;
 import js.html.ImageData;
@@ -12,21 +11,6 @@ class ImageUtil {
             canvas = cast doc.createElement("canvas");
         }
         return canvas;
-    }
-    public static function createTmpImage(w:Int, h:Int):ImageData {
-        var c = clearCanvas();
-        var ctx = c.getContext2d();
-        var outImg = ctx.createImageData(w, h);
-        for (y in 0...h) {
-            for (x in 0...w) {
-                var i = (y * w + x) * 4;
-                outImg.data[i] = 255;
-                outImg.data[i + 1] = 255;
-                outImg.data[i + 2] = 255;
-                outImg.data[i + 3] = 255;
-            }
-        }
-        return outImg;
     }
     private static function clearCanvas (): CanvasElement {
         var c = getCanvas();

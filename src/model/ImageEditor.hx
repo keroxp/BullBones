@@ -9,7 +9,7 @@ class ImageEditor {
 
     public function new () {}
 
-    public function createFilter (): Filter {
+    public function createFilter (includeAlpha: Bool = false): Filter {
         var f = new Filter();
         if (lineExtraction) {
             var lap = useLaplacian8 ? FilterFactory.edge1() : FilterFactory.edge2();
@@ -24,7 +24,9 @@ class ImageEditor {
                 FilterFactory.gray()
             ];
         }
-//        f.funcs.push(FilterFactory.alpha(cast(alpha*255)));
+        if (includeAlpha) {
+            f.funcs.push(FilterFactory.alpha(cast(alpha*255)));
+        }
         return f;
     }
 }

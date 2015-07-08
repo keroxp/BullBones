@@ -1,6 +1,5 @@
 package ajax;
 import deferred.Promise;
-import js.html.DOMWindow;
 import jQuery.JQuery;
 import deferred.Deferred;
 class BingSearch {
