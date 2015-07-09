@@ -20,10 +20,30 @@ class FilterFactory {
             args: []
         }
     }
+    //　ガウシアン
+    public static function gaussian3x3(): FilterFunc {
+        return {
+            name: "gaussian3x3",
+            args:[]
+        }
+    }
+    // ガウシアン5x5
+    public static function gaussian5x5(): FilterFunc {
+        return {
+            name: "gaussian5x5",
+            args:[]
+        }
+    }
     // 二値化
     public static function binalize(?t:Int = 128): FilterFunc {
         return {
             name: "binalize",
+            args: [t]
+        }
+    }
+    public static function transparent(?t:Int = 255): FilterFunc {
+        return {
+            name: "transparent",
             args: [t]
         }
     }

@@ -45,14 +45,105 @@
             var w = inImg.width;
             var h = inImg.height;
             var outImg = createTmpImage(w, h);
-            for (var y = 0; y < h|0; y=(y+1)|0) {
-                for (var x = 0; x < w|0; x=(x+1)|0) {
-                    var i = (y + w + x) * 4;
-                    if (inImg.data[i] < t) {
-                        outImg.data[i] = 0;
-                    } else {
-                        outImg.data[i] = 255;
+            for (var i = 0, max = w*h*4|0; i < max|0; i=(i+4)|0) {
+                var v = inImg.data[i] < t ? 0 : 255;
+                outImg.data[i] = v;
+                outImg.data[i+1] = v;
+                outImg.data[i+2] = v;
+                outImg.data[i+3] = inImg.data[i+3];
+            }
+            return outImg;
+        };
+    }
+    // 白除去
+    function transparent (t) {
+        t = t || 255;
+        return function (inImg) {
+            var w = inImg.width;
+            var h = inImg.height;
+            var outImg = createTmpImage(w,h);
+            for (var i = 0, max = w*h*4|0; i < max|0; i=(i+4)|0) {
+                outImg.data[i] = inImg.data[i];
+                outImg.data[i+1] = inImg.data[i+1];
+                outImg.data[i+2] = inImg.data[i+2];
+                outImg.data[i+3] = t <= inImg.data[i] ? 0 : inImg.data[i+3];
+            }
+            return outImg;
+        };
+    }
+    // ガウシアン(3x3)
+    // NxNは二項定理が必要で重くなりそうだから作らない
+    function gaussian3x3() {
+        return function (inImg) {
+            var w = inImg.width;
+            var h = inImg.height;
+            var outImg = createTmpImage(w,h);
+            var v_2_256 = 2/256;
+            var v_16_256 = 16/256;
+            for (var y = 1; y < (h-1)|0; y=(y+1)|0) {
+                for (var x = 1; x < (w-1)|0; x=(x+1)|0) {
+                    for (var c = 0; c < 3; c=(c+1)|0) {
+                        var i = (y*w + x)*4 + c;
+                        outImg.data[i] =
+                            v_16_256*inImg.data[i - w*4 - 4] + v_2_256*inImg.data[i - w*4] + v_16_256*inImg.data[i - w*4 + 4] +
+                            v_2_256*inImg.data[i - 4] + 4/16*inImg.data[i] + v_2_256*inImg.data[i + 4] +
+                            v_16_256*inImg.data[i + w*4 - 4] + v_2_256*inImg.data[i + w*4] + v_16_256*inImg.data[i + w*4 + 4];
                     }
+                    outImg.data[(y*w + x)*4 + 3] = inImg.data[(y*w + x)*4 + 3]; // alpha
+                }
+            }
+            return outImg;
+        };
+    }
+
+    // ガウシアン(5x5)
+    function gaussian5x5() {
+        return function (inImg){
+            var w = inImg.width;
+            var h = inImg.height;
+            var outImg = createTmpImage(w,h);
+            var v_1_256 = 1/256;
+            var v_4_256 = 4/256;
+            var v_6_256 = 6/256;
+            var v_16_256 = 16/256;
+            var v_24_256 = 24/256;
+            var v_36_256 = 36/256;
+            for (var y = 2; y < (h-2)|0; y=(y+1)|0) {
+                for (var x = 2; x < (w-2)|0; x=(x+1)|0) {
+                    for (var c = 0; c < 3; c=(c+1)|0) {
+                        var i = (y*w + x)*4 + c;
+                        outImg.data[i] =
+                        v_1_256*inImg.data[i - w*8 - 8] +
+                        v_4_256*inImg.data[i - w*8 - 4] +
+                        v_6_256*inImg.data[i - w*8] +
+                        v_4_256*inImg.data[i - w*8 + 4] +
+                        v_1_256*inImg.data[i - w*8 + 8] +
+
+                        v_4_256*inImg.data[i - w*4 - 8] +
+                        v_16_256*inImg.data[i - w*4 - 4] +
+                        v_24_256*inImg.data[i - w*4] +
+                        v_16_256*inImg.data[i - w*4 + 4] +
+                        v_4_256*inImg.data[i - w*4 + 8] +
+
+                        v_6_256*inImg.data[i - 8] +
+                        v_24_256*inImg.data[i - 4] +
+                        v_36_256*inImg.data[i] +
+                        v_24_256*inImg.data[i + 4] +
+                        v_6_256*inImg.data[i + 8] +
+
+                        v_4_256*inImg.data[i + w*4 - 8] +
+                        v_16_256*inImg.data[i + w*4 - 4] +
+                        v_24_256*inImg.data[i + w*4] +
+                        v_16_256*inImg.data[i + w*4 + 4] +
+                        v_4_256*inImg.data[i + w*4 + 8] +
+
+                        v_1_256*inImg.data[i + w*8 - 8] +
+                        v_4_256*inImg.data[i + w*8 - 4] +
+                        v_6_256*inImg.data[i + w*8] +
+                        v_4_256*inImg.data[i + w*8 + 4] +
+                        v_1_256*inImg.data[i + w*8 + 8];
+                    }
+                    outImg.data[(y*w + x)*4 + 3] = inImg.data[(y*w + x)*4 + 3]; // alpha
                 }
             }
             return outImg;
@@ -124,7 +215,10 @@
             case "alpha": return alpha.apply(this, f.args);
             case "gray": return gray.apply(this);
             case "negaposi": return negaposi.apply(this);
+            case "gaussian3x3": return gaussian3x3.apply(this);
+            case "gaussian5x5": return gaussian5x5.apply(this);
             case "binalize": return binalize.apply(this, f.args);
+            case "transparent": return transparent.apply(this, f.args);
             case "edge1": return edge1.apply(this);
             case "edge2": return edge2.apply(this);
             case "sobel": return sobel.apply(this,f.args);
