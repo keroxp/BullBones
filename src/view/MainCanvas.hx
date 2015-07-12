@@ -847,7 +847,9 @@ implements ImageEditorListener {
                     toDraw = true;
                 } else if (mScaleBegan) {
                     activeFigure.asShapeFigure(function(shape: ShapeFigure) {
-                        shape.applyScale().render();
+                        var sx = shape.shapeScaleX*shape.scaleX;
+                        var sy = shape.shapeScaleY*shape.scaleY;
+                        shape.applyScale(sx,sy).render();
                     });
                     drawBoundingBox();
                     toDraw = true;

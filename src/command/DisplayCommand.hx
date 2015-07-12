@@ -32,11 +32,13 @@ implements Undoable<DisplayCommand,Dynamic,Void>{
             mAfterMatrix.decompose(draggable);
             draggable.alpha = mAfterAlpha;
         }
-        draggable.asShapeFigure(function(fig: ShapeFigure) {
-            fig.scaleX = (undo ? mBeforeScaleX : mAfterScaleX)/fig.shapeScaleX;
-            fig.scaleY = (undo ? mBeforeScaleY : mAfterScaleY)/fig.shapeScaleY;
-            fig.applyScale().render();
-        });
+        if (mAfterScaleX != mBeforeScaleX || mAfterScaleY != mBeforeScaleY) {
+            draggable.asShapeFigure(function(fig: ShapeFigure) {
+                var sx = undo ? mBeforeScaleX : mAfterScaleX;
+                var sy = undo ? mBeforeScaleY : mAfterScaleY;
+                fig.applyScale(sx,sy).render();
+            });
+        }
         return this;
     }
 

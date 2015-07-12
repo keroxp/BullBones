@@ -1,10 +1,5 @@
 package figure;
-import js.Lib;
-import util.StringUtil;
-import util.Log;
 import createjs.easeljs.Rectangle;
-import createjs.easeljs.DisplayObject;
-import event.MouseEventCapture;
 import createjs.easeljs.Point;
 import geometry.Vector2D;
 import geometry.FuzzyPoint;
@@ -30,8 +25,10 @@ class ShapeFigure extends Shape {
         return ret.render();
     }
 
-    // 図形を構成する点
+    // 図形を構成する点（スケールは反映されてない）
     public var points(default, null): Array<FuzzyPoint> = new Array();
+    // 図形を構成する点（スケール反映済み）
+    public var transformedPoints(default, null) : Array<FuzzyPoint> = new Array();
     // 頂点っぽい点
     public var vertexes(default, null): Array<Vertex> = new Array();
     // 補完係数
@@ -104,12 +101,15 @@ class ShapeFigure extends Shape {
     public function addPoint (x: Float, y: Float) {
         calcBounds(x,y);
         if (points.length == 0) {
-            points.push(new FuzzyPoint(x,y));
+            var fp = new FuzzyPoint(x,y);
+            points.push(fp);
+            transformedPoints.push(fp);
         } else {
             var fp = new FuzzyPoint(x,y,points[points.length-1]);
             // 同じ位置は追加しない
             if (fp.rawDistance(points[points.length-1]) > 0) {
                 points.push(fp);
+                transformedPoints.push(fp);
             }
         }
     }
@@ -154,17 +154,18 @@ class ShapeFigure extends Shape {
     private static var LINE_LENGTH_THRESH: Float = 150*150;
     private static var LINE_RECOGNIZE_THRESH = 20;
 
-    public function applyScale(): ShapeFigure {
+    public function applyScale(sx: Float, sy: Float): ShapeFigure {
+        // apply scale
         var px = mBounds.x;
         var py = mBounds.y;
-        var sx = scaleX;
-        var sy = scaleY;
-        for (p in this.points) {
-            p.x = (p.x-px)*sx+px;
-            p.y = (p.y-py)*sy+py;
-        }
-        mBounds.width *= sx;
-        mBounds.height *= sy;
+        transformedPoints = points.map(function(p: FuzzyPoint) {
+            var tp = p.clone();
+            tp.x = (p.x-px)*sx+px;
+            tp.y = (p.y-py)*sy+py;
+            return tp;
+        });
+        mBounds.width *= sx/shapeScaleX;
+        mBounds.height *= sy/shapeScaleY;
         shapeScaleX = sx;
         shapeScaleY = sy;
         setBounds(0,0,mBounds.width,mBounds.height);
@@ -177,17 +178,18 @@ class ShapeFigure extends Shape {
     private var isFirstRendering = true;
     public function render (): ShapeFigure {
         if (points.length < 2) return this;
-        var s = points[0];
-        var e = points[points.length-1];
+        // render
+        var s = transformedPoints[0];
+        var e = transformedPoints[transformedPoints.length-1];
         graphics.clear();
         graphics.setStrokeStyle(width,"round",1).beginStroke(color);
         graphics.moveTo(xx(s.x),yy(s.y));
         if (Main.App.v.brush.supplemnt) {
             // 平均係数
             var m = supplementLength;
-            for (i in m-1...points.length) {
+            for (i in m-1...transformedPoints.length) {
                 var avp = new Point();
-                var seg: Array<FuzzyPoint> = points.slice(i-m+1,i+1);
+                var seg: Array<FuzzyPoint> = transformedPoints.slice(i-m+1,i+1);
                 for (p in seg){
                     avp.x += p.x;
                     avp.y += p.y;
@@ -196,11 +198,11 @@ class ShapeFigure extends Shape {
                 var y = avp.y/m;
                 graphics.lineTo(xx(x),yy(y));
             }
-            var e = points[points.length-1];
+            var e = transformedPoints[transformedPoints.length-1];
             graphics.lineTo(xx(e.x),yy(e.y));
         } else {
-            for (i in 1...points.length) {
-                var p = points[i];
+            for (i in 1...transformedPoints.length) {
+                var p = transformedPoints[i];
                 graphics.lineTo(xx(p.x),yy(p.y));
             }
         }
