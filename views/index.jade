@@ -73,9 +73,6 @@ html(lang='ja')
               a#exportButton.bb-btn.btn-floating.wave-effect.btn-large.amber(title="画像を書き出し")
                 i.large.material-icons input
             li
-              a#aboutButotn.bb-btn.btn-floating.wave-effect.btn-large.gray(href="/about",target="_blank",title="BullBonesについて")
-                i.large.material-icons() info_outline
-            li
             if app_env == "development"
               a#debugButton.bb-btn.btn-floating.wave-effect.btn-large.white
                 i.large.mdi-action-bug-report(style='color: black')
@@ -117,6 +114,10 @@ html(lang='ja')
                 label(for='imageAlpha') 透明度
                 input#imageAlpha(type='range', min='0', max='100', value='100')
         #belowbar
+          #otherInputGroup.inputGroup
+            .inner.z-depth-1
+              a(href="/about",target="_blank",title="BullBonesについて")
+                i.small.material-icons info_outline
           #zoomInputGroup.inputGroup
             .inner.z-depth-1
               a#zoomOutButton(title="ズームアウト",data-enabled="true")
