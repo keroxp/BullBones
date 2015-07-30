@@ -75,8 +75,8 @@ implements ImageEditorListener {
     var mStageDebugShape: Shape = new Shape();
     var mMainDebugShape: Shape = new Shape();
     var mDrawingFigure: ShapeFigure;
-    var mUndoStack: Array<FigureCommand> = new Array();
-    var mRedoStack: Array<FigureCommand> = new Array();
+    var mUndoStack: Array<FigureCommand> = new Array<FigureCommand>();
+    var mRedoStack: Array<FigureCommand> = new Array<FigureCommand>();
     var mCanvas: CanvasElement;
     var vGridUnit = 10;
     var vGridDivision = 10;

@@ -12,7 +12,7 @@ import protocol.Clonable;
 import cv.FilterFactory.FilterFunc;
 import js.html.ImageData;
 
-class Filter implements Clonable<Filter>{
+class Filter implements Clonable<Filter> {
     public var funcs: Array<FilterFunc>;
     public function new(?filters: Array<FilterFunc>) {
         funcs = filters;

@@ -2,7 +2,7 @@ package model;
 class ZoomEditor {
     public var minScale: Float = 0.1;
     public var maxScale: Float = 5;
-    public var scale(default,set): Float = 1.0;
+    @:isVar public var scale(default,set): Float = 1.0;
     function set_scale(value:Float) {
         if (value < minScale) {
             value = minScale;

@@ -26,11 +26,11 @@ class ShapeFigure extends Shape {
     }
 
     // 図形を構成する点（スケールは反映されてない）
-    public var points(default, null): Array<FuzzyPoint> = new Array();
+    public var points(default, null): Array<FuzzyPoint> = new Array<FuzzyPoint>();
     // 図形を構成する点（スケール反映済み）
-    public var transformedPoints(default, null) : Array<FuzzyPoint> = new Array();
+    public var transformedPoints(default, null) : Array<FuzzyPoint> = new Array<FuzzyPoint>();
     // 頂点っぽい点
-    public var vertexes(default, null): Array<Vertex> = new Array();
+    public var vertexes(default, null): Array<Vertex> = new Array<Vertex>();
     // 補完係数
     public var supplementLength = 5;
     // 直線フラグ
@@ -45,19 +45,20 @@ class ShapeFigure extends Shape {
     // 描画の点の半径
     public var width: Float = 2;
 
-    override function toString(): String {
+    public override function toString(): String {
         return '[ShapeFigure name="$name"]';
     }
 
     private static var CLOSE_THRESH: Float = 20*20;
     public function getClosedPoint (): Point {
-        var last = points.length;
+        var last = transformedPoints.length;
+        var pts = transformedPoints;
         for (i in 0...2) {
             for (j in last-2...last) {
-                 if (points[i].rawDistance(points[j]) < CLOSE_THRESH) {
+                 if (pts[i].rawDistance(pts[j]) < CLOSE_THRESH) {
                      return new Point(
-                        (points[i].x+points[j].x)/2,
-                        (points[i].y+points[j].y)/2
+                        (pts[i].x+pts[j].x)/2,
+                        (pts[i].y+pts[j].y)/2
                      );
                  }
             }
@@ -66,14 +67,16 @@ class ShapeFigure extends Shape {
     }
     // 頂点っぽい点を見つける
     public function calcVertexes () {
-        if (points.length > 2) {
+        var pts = transformedPoints;
+        vertexes = [];
+        if (pts.length > 2) {
             var i = 1;
-            while (i < points.length-2) {
-                var cur = points[i];
-                var prev = points[i-1];
-                var next = points[i+1];
-                var a = Vector2D.v(points[i],points[i+1]);
-                var b = Vector2D.v(points[i-1],points[i]);//
+            while (i < pts.length-2) {
+                var cur = pts[i];
+                var prev = pts[i-1];
+                var next = pts[i+1];
+                var a = Vector2D.v(pts[i],pts[i+1]);
+                var b = Vector2D.v(pts[i-1],pts[i]);//
                 var cos = a.dot(b)/(a.power()*b.power());
                 var rad = Math.acos(cos);
                 if (PI_4_5 < rad && rad < PI_1_5) {
@@ -81,8 +84,8 @@ class ShapeFigure extends Shape {
                     var THRESH = 10*10;
                     var isFirst = vertexes.length == 0;
                     var isFarFromPrev = !isFirst && vertexes[vertexes.length-1].point.rawDistance(cur) > THRESH;
-                    var isFarFromStart= points[0].rawDistance(cur) > THRESH;
-                    var isFarFromEnd = points[points.length-1].rawDistance(cur) > THRESH;
+                    var isFarFromStart= pts[0].rawDistance(cur) > THRESH;
+                    var isFarFromEnd = pts[pts.length-1].rawDistance(cur) > THRESH;
                     if (isFarFromStart && isFarFromEnd && (isFirst || isFarFromPrev)) {
                         vertexes.push(vtx);
                     }
@@ -164,6 +167,7 @@ class ShapeFigure extends Shape {
             tp.y = (p.y-py)*sy+py;
             return tp;
         });
+        calcVertexes();
         mBounds.width *= sx/shapeScaleX;
         mBounds.height *= sy/shapeScaleY;
         shapeScaleX = sx;
