@@ -5,6 +5,7 @@ import geometry.Vector2D;
 import geometry.FuzzyPoint;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;
+
 class ShapeFigure extends Shape {
     public function new(x: Float, y: Float) {
         super();
@@ -14,6 +15,7 @@ class ShapeFigure extends Shape {
     override public function clone(): Shape {
         var ret = new ShapeFigure(points[0].x,points[0].y);
         ret.points = points.map(function(p: FuzzyPoint) { return p.clone(); });
+        ret.transformedPoints = transformedPoints.map(function(p: FuzzyPoint) { return p.clone(); });
         ret.vertexes = vertexes.map(function(vtx: Vertex) { return vtx.clone(); });
         ret.color = color;
         ret.width = width;
