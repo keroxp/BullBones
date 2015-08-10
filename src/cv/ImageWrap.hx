@@ -1,14 +1,8 @@
 package cv;
 import protocol.Clonable;
 import util.StringUtil;
-import deferred.Deferred;
 import createjs.easeljs.Rectangle;
 import js.html.ImageData;
-import haxe.ds.Either;
-import js.Error;
-import js.html.ImageElement;
-import ajax.Loader;
-import deferred.Promise;
 import js.html.Image;
 import util.BrowserUtil;
 import js.html.CanvasElement;
@@ -17,7 +11,7 @@ enum AspectPolicy {
     AspectToFill;
     AspectToFit;
 }
-class ImageWrap implements Clonable<ImageWrap> {
+class ImageWrap implements Clonable {
     public var canvas: CanvasElement;
     public var src(get, never): String;
     function get_src():String {

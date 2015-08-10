@@ -2,7 +2,6 @@ package cv;
 
 import util.BrowserUtil;
 import js.html.MessageEvent;
-import util.Log;
 import js.html.ErrorEvent;
 import js.html.Worker;
 import deferred.Deferred;
@@ -12,7 +11,7 @@ import protocol.Clonable;
 import cv.FilterFactory.FilterFunc;
 import js.html.ImageData;
 
-class Filter implements Clonable<Filter> {
+class Filter implements Clonable {
     public var funcs: Array<FilterFunc>;
     public function new(?filters: Array<FilterFunc>) {
         funcs = filters;
@@ -21,7 +20,7 @@ class Filter implements Clonable<Filter> {
         }
     }
 
-    public function clone():Filter {
+    public function clone():Dynamic {
         return new Filter(Json.parse(Json.stringify(this)));
     }
 

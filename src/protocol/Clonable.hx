@@ -1,4 +1,4 @@
 package protocol;
-interface Clonable <T> {
-    public function clone(): T;
+interface Clonable {
+    public function clone(): Dynamic;
 }

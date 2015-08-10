@@ -1,5 +1,4 @@
 package geometry;
-import protocol.Clonable;
 class FuzzyPoint extends Point {
     public var timestamp(default, null): Date;
     public var prev(default,null): FuzzyPoint;
