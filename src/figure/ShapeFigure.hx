@@ -17,6 +17,8 @@ class ShapeFigure extends Shape {
         ret.points = points.map(function(p: FuzzyPoint) { return p.clone(); });
         ret.transformedPoints = transformedPoints.map(function(p: FuzzyPoint) { return p.clone(); });
         ret.vertexes = vertexes.map(function(vtx: Vertex) { return vtx.clone(); });
+        ret.shapeScaleX = shapeScaleX;
+        ret.shapeScaleY = shapeScaleY;
         ret.color = color;
         ret.width = width;
         ret.supplementLength = supplementLength;
@@ -24,6 +26,8 @@ class ShapeFigure extends Shape {
         ret.mBounds = mBounds.clone();
         var _clone = Reflect.field(this, "_cloneProps");
         ret = Reflect.callMethod(this, _clone,[ret]);
+        // easeljs.DisplayObject#cloneはboundsをdeep copyしないので自前で上書きする
+        Reflect.setField(ret, "_bounds", getBounds().clone());
         return ret.render();
     }
 
