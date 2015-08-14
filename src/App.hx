@@ -137,6 +137,10 @@ class App extends BackboneEvents implements BrushEditorListener {
             var jUndoButton: JQuery = new JQuery("#undoButton").on(click, function(e: MouseEvent) {
                 mainCanvas.undo();
             });
+            // Layer
+            var jLayerButton: JQuery = new JQuery("#layerButton").on(click, function(e: MouseEvent) {
+               layerView.jq.toggle();
+            });
             listenTo(v, "change:undoStackSize", function (m,val:Int) {
                 if (val == 0) {
                     jUndoButton.attr("data-enabled","false");
@@ -165,6 +169,7 @@ class App extends BackboneEvents implements BrushEditorListener {
             brushEditorView.init();
             floatingThumbnailView.init();
             zoomInputView.init();
+            layerView.init();
 
             // hide loading
             haxe.Timer.delay(function() {

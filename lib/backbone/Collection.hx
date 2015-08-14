@@ -8,7 +8,9 @@ extern class Collection<T : Model> implements Events {
     public function new (?models: Array<Dynamic>): Void {}
     // The default model for a collection is just a **Backbone.Model**.
     // This should be overridden in most cases.
-    @:isVar public var model: T;
+    @:isVar public var model(default, null): T;
+
+    @:isVar public  var models(default, null): Array<T>;
 
     // Initialize is an empty function by default. Override it with your own
     // initialization logic.

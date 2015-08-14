@@ -45,15 +45,9 @@ html(lang='ja')
       #modalView.modal.modal-fixed-footer.scrollable
       // App View
       #appView
-        #layerView.z-depth-1
+        #layerView.z-depth-1(style="display:none")
           ul#layerListView
-            li.layerItem(draggable="true")
-              div.layerItemVisivility(title="非表示にする")
-                i.material-icons visibility
-              div.layerItemThumbnail
-                img(src="/img/masuiken.png")
-              div.layerItemContent
-                span.layerTitle title                
+            li#layerItemDummy.layerItem(style="")                          
         #floatingThumbnailView
         #searchView.bb-panel.z-depth-1(style='display:none')
           .input-field.col.s12
@@ -125,7 +119,7 @@ html(lang='ja')
         #belowbar
           #layerInputGroup.inputGroup
             .inner.z-depth-1
-              a(title="レイヤーを表示")
+              a#layerButton(title="レイヤーを表示", data-enabled="true")
                 i.small.material-icons layers
           #otherInputGroup.inputGroup
             .inner.z-depth-1

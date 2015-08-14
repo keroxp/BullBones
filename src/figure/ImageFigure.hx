@@ -1,4 +1,5 @@
 package figure;
+import createjs.easeljs.DisplayObject;
 import cv.ImageWrap;
 import deferred.Deferred;
 import deferred.Promise;
@@ -27,8 +28,12 @@ class ImageFigure extends Bitmap implements Layer {
         return imageWrap.src;
     }
 
-    override public function isVisible():Bool {
-        return visible;
+    public function getDisplay():DisplayObject {
+        return this;
+    }
+
+    public function render():Dynamic {
+        return this;
     }
 
     override public function clone(): ImageFigure {
@@ -42,8 +47,8 @@ class ImageFigure extends Bitmap implements Layer {
         return ret;
     }
 
-    override function toString(): String {
-        return '[ImageFigure name="$name"]';
+    override public function toString(): String {
+        return '画像'+getLayerId();
     }
 
     public var filter(default, null):Filter;

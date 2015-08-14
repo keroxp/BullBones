@@ -9,7 +9,7 @@ body
   -moz-user-select none
   -ms-user-select none
   -o-user-select none
-[draggable]
+[draggable=true]
   -moz-user-select: none;
   -khtml-user-select: none;
   -webkit-user-select: none;
@@ -223,17 +223,31 @@ body
       margin 0
       padding 0
     .layerItem
-      padding 5px 10px
+      padding 5px 0
       display table
-      border-bottom 1px solid #ccc
+      border-top 1px solid #ccc
       width 100%
+      &#layerItemDummy
+        width 100%
+        height 50px
+        display block
+      &.selected
+        background #bbdefb // blue lighten-2
+      &.dragging
+        cursor default
+      &.dragover
+        border-top 1px solid #ef5350
       .inner
       > div
         display table-cell
         vertical-align middle
-      .layerItemVisivility
+      .layerItemVisibility
         width 24px
-        padding-right 10px
+        padding 0 15px
+        i.visible
+          color black
+        i.invisible
+          color #ccc
       .layerItemThumbnail
         width 50px
         height 50px

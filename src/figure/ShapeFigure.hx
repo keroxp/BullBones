@@ -1,4 +1,5 @@
 package figure;
+import createjs.easeljs.DisplayObject;
 import createjs.easeljs.Rectangle;
 import createjs.easeljs.Point;
 import geometry.Vector2D;
@@ -17,16 +18,17 @@ class ShapeFigure extends Shape implements Layer {
     }
 
     public function getTile():String {
-        return "title";
+        return "図形"+getLayerId();
     }
 
     public function getImageURL():String {
         return getCacheDataURL();
     }
 
-    override public function isVisible():Bool {
-        return visible;
+    public function getDisplay():DisplayObject {
+        return this;
     }
+
 
     override public function clone(): Shape {
         var ret = new ShapeFigure(points[0].x,points[0].y);

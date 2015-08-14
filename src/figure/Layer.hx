@@ -6,6 +6,5 @@ interface Layer {
     public function getLayerId(): Int;
     public function getTile(): String;
     public function getImageURL(): String;
-    public function isVisible(): Bool;
     public function render(): Dynamic;
 }

@@ -67,7 +67,6 @@ implements ImageEditorListener {
     var mFgLayer: Container = new Container();
     var mBgLayer: Container = new Container();
     var mMainLayer: Container = new Container();
-    var mImageLayer: Container = new Container();
     var mFigureLayer: Container = new Container();
     var mBoundingBox: BoundingBox = new BoundingBox();
     var mFuzzySketchGraph: Shape = new Shape();
@@ -126,7 +125,6 @@ implements ImageEditorListener {
         mFgLayer.addChild(mExportShape);
 
         mMainLayer.addChild(mMainDebugShape);
-        mMainLayer.addChild(mImageLayer);
         mMainLayer.addChild(mFigureLayer);
         mMainLayer.addChild(mBufferShape);
 
@@ -203,15 +201,9 @@ implements ImageEditorListener {
         return value;
     }
 
-
-    var figures(get,never): Array<DisplayObject>;
-    function get_figures():Array<DisplayObject> {
-        return mImageLayer.children.concat(mFigureLayer.children);
-    }
-
     function onChangeEditing (m, value: Bool) {
         if (value) {
-            activeFigure = figures.findLast(function(e: DisplayObject) { return e.visible; });
+            activeFigure = mFigureLayer.children.findLast(function(e: DisplayObject) { return e.visible; });
         } else {
             activeFigure = null;
         }
@@ -231,7 +223,7 @@ implements ImageEditorListener {
         draw(true);
     }
     private var mPrevDirtyRect: Rectangle = new Rectangle();
-    function draw (clearAll: Bool = false) {
+    public function draw (clearAll: Bool = false) {
         if (!clearAll && mDirtyRect == null) return;
         var pad = Main.App.v.brush.width + 10;
         if (clearAll) {
@@ -328,17 +320,17 @@ implements ImageEditorListener {
 //        mBrushCircle.x = p.x;
 //        mBrushCircle.y = p.y;
     }
-    function extendDirtyRect(x: Float, y: Float, width: Float = 0, height: Float = 0) {
+    public function extendDirtyRect(x: Float, y: Float, width: Float = 0, height: Float = 0) {
         if (mDirtyRect == null) {
             mDirtyRect = new Rectangle(x,y,width,height);
         } else {
             mDirtyRect.extend(x,y,width,height);
         }
     }
-    function extendDirtyRectWithRect(r: Rectangle) {
+    public function extendDirtyRectWithRect(r: Rectangle) {
        extendDirtyRect(r.x,r.y,r.width,r.height);
     }
-    function extendDirtyRectWithDisplayObject(o: DisplayObject, ?prevBounds: Rectangle) {
+    public function extendDirtyRectWithDisplayObject(o: DisplayObject, ?prevBounds: Rectangle) {
         var b = o.getTransformedBounds();
         var g = o.parent.localToGlobal(b.x,b.y);
         var d = new Rectangle(g.x,g.y,b.width,b.height);
@@ -353,11 +345,7 @@ implements ImageEditorListener {
             throw new Error("attempt to insert null figure");
         }
         var cmd = new InsertCommand(f).exec(function(arg) {
-            if (f.isImageFigure()) {
-                mImageLayer.addChild(f);
-            } else {
-                mFigureLayer.addChild(f);
-            }
+            mFigureLayer.addChild(f);
             Main.App.layerView.add(cast f);
         });
         pushCommand(cmd);
@@ -368,11 +356,8 @@ implements ImageEditorListener {
         if (f == null) return;
         extendDirtyRectWithDisplayObject(f);
         var cmd = new DeleteCommand(f).exec(function(a) {
-            if (activeFigure.isImageFigure()) {
-                mImageLayer.removeChild(activeFigure);
-            } else if (activeFigure.isShapeFigure()) {
-                mFigureLayer.removeChild(activeFigure);
-            }
+            mFigureLayer.removeChild(activeFigure);
+            Main.App.layerView.remove(cast f);
         });
         pushCommand(cmd);
         mBoundingBox.clear();
@@ -392,6 +377,10 @@ implements ImageEditorListener {
             return fig;
         });
         pushCommand(cmd);
+    }
+
+    public function moveLayer(target: DisplayObject, at: Int) {
+        mFigureLayer.setChildIndex(target, at);
     }
 
     function thumbnalzieImage(f: ImageFigure) {
@@ -424,12 +413,11 @@ implements ImageEditorListener {
             mRedoStack.push(cmd);
             var af = null;
             if (cmd.isInsertCommand() || cmd.isCopyCommand()) {
-                var p: Container = cmd.target.isShapeFigure() ? mFigureLayer : mImageLayer;
-                var i = p.getChildIndex(cmd.target);
+                var i = mFigureLayer.getChildIndex(cmd.target);
                 if (cmd.isInsertCommand()) {
                     i -= 1;
                 }
-                af = i < p.children.length ? p.getChildAt(i) : null;
+                af = i < mFigureLayer.children.length ? mFigureLayer.getChildAt(i) : null;
             } else {
                 af = cmd.target;
             }
@@ -451,9 +439,8 @@ implements ImageEditorListener {
             mUndoStack.push(cmd);
             var af = null;
             if (cmd.isDeleteCommand()) {
-                var p: Container = cmd.target.isShapeFigure() ? mFigureLayer : mImageLayer;
-                var i = p.getChildIndex(cmd.target) - 1;
-                af = i < p.children.length ? p.getChildAt(i) : null;
+                var i = mFigureLayer.getChildIndex(cmd.target) - 1;
+                af = i < mFigureLayer.children.length ? mFigureLayer.getChildAt(i) : null;
             } else {
                 af = cmd.target;
                 if (cmd.isCopyCommand()) {
@@ -650,7 +637,7 @@ implements ImageEditorListener {
                     drawBrushCircle();
                 }
             } else {
-                var hitted: DisplayObject = figures.findLast(function(d: DisplayObject) {
+                var hitted: DisplayObject = mFigureLayer.children.findLast(function(d: DisplayObject) {
                     return d.visible && d.getTransformedBounds().containsPoint(p_main_local.x,p_main_local.y);
                 });
                 if (hitted != null) {
@@ -857,6 +844,7 @@ implements ImageEditorListener {
                         shape.applyScale(sx,sy).render();
                     });
                     drawBoundingBox();
+                    Main.App.layerView.invalidate(cast activeFigure);
                     toDraw = true;
                 } else if (mGrabBegan) {
                     jq.css("cursor", BrowserUtil.grabCursor());
