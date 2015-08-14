@@ -20,7 +20,7 @@ extern class Model implements Events {
 
     // The prefix is used to create the client id which is used to identify models locally.
     // You may want to override this if you're experiencing name clashes with model ids.
-    public var cidPrefix(get,set): String;
+    @:isVar public var cidPrefix: String;
 
     // Return a copy of the model's `attributes` object.
     public function toJSON(?options: Dynamic): Dynamic;

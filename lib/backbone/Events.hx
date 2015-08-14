@@ -1,7 +1,7 @@
 package backbone;
 
 @:native("Backbone.Events")
-extern interface Events {
+interface Events {
   // Bind an event to a `callback` function. Passing `"all"` will bind
   // the callback to all events fired.
   public function on(name: String, callback: Dynamic, ?context: Dynamic): Events;
