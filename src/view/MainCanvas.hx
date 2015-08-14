@@ -1,4 +1,8 @@
 package view;
+import backbone.haxe.BackboneCollection;
+import model.LayerDummy;
+import model.BBModel;
+import backbone.Collection;
 import js.html.Window;
 import rollbar.Rollbar;
 import ajax.Uploader;
@@ -262,7 +266,7 @@ implements ImageEditorListener {
     }
     private var mGridDeltaX: Float = 0;
     private var mGridDeltaY: Float = 0;
-    function drawGrid (?deltaX: Float = 0, ?deltaY: Float = 0) {
+    function drawGrid (deltaX: Float = 0, deltaY: Float = 0) {
         mGrid.graphics
         .clear()
         .setStrokeStyle(1,0)
@@ -324,7 +328,7 @@ implements ImageEditorListener {
 //        mBrushCircle.x = p.x;
 //        mBrushCircle.y = p.y;
     }
-    function extendDirtyRect(x: Float, y: Float, ?width: Float = 0, ?height: Float = 0) {
+    function extendDirtyRect(x: Float, y: Float, width: Float = 0, height: Float = 0) {
         if (mDirtyRect == null) {
             mDirtyRect = new Rectangle(x,y,width,height);
         } else {
@@ -354,6 +358,7 @@ implements ImageEditorListener {
             } else {
                 mFigureLayer.addChild(f);
             }
+            Main.App.layerView.add(cast f);
         });
         pushCommand(cmd);
         extendDirtyRectWithDisplayObject(f);
@@ -835,8 +840,8 @@ implements ImageEditorListener {
             if (!isEditing) {
                 if (mDrawingFigure != null && mDrawingFigure.points.length > 1) {
                     mDrawingFigure.calcVertexes();
-                    insertFigure(mDrawingFigure);
-                    mDrawingFigure.render();
+                    insertFigure(mDrawingFigure.render());
+//                    mDrawingFigure.render();
                     extendDirtyRectWithDisplayObject(mDrawingFigure,mBufferShape.getTransformedBounds());
                 }
                 toDraw = true;

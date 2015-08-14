@@ -45,6 +45,15 @@ html(lang='ja')
       #modalView.modal.modal-fixed-footer.scrollable
       // App View
       #appView
+        #layerView.z-depth-1
+          ul#layerListView
+            li.layerItem(draggable="true")
+              div.layerItemVisivility(title="非表示にする")
+                i.material-icons visibility
+              div.layerItemThumbnail
+                img(src="/img/masuiken.png")
+              div.layerItemContent
+                span.layerTitle title                
         #floatingThumbnailView
         #searchView.bb-panel.z-depth-1(style='display:none')
           .input-field.col.s12
@@ -114,6 +123,10 @@ html(lang='ja')
                 label(for='imageAlpha') 透明度
                 input#imageAlpha(type='range', min='0', max='100', value='100')
         #belowbar
+          #layerInputGroup.inputGroup
+            .inner.z-depth-1
+              a(title="レイヤーを表示")
+                i.small.material-icons layers
           #otherInputGroup.inputGroup
             .inner.z-depth-1
               a(href="/about",target="_blank",title="BullBonesについて")

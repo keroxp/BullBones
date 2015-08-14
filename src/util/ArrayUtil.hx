@@ -17,4 +17,18 @@ class ArrayUtil {
         }
         return null;
     }
+    public static function removeFirst<T>(arr: Array<T>, callback: T -> Bool): T {
+        var tgt: T = null;
+        for (v in arr) {
+            if (callback(v)) {
+                tgt = v;
+                break;
+            }
+        }
+        if (tgt != null) {
+            arr.remove(tgt);
+            return tgt;
+        }
+        return null;
+    }
 }

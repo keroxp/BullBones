@@ -6,10 +6,26 @@ import geometry.FuzzyPoint;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;
 
-class ShapeFigure extends Shape {
+class ShapeFigure extends Shape implements Layer {
     public function new(x: Float, y: Float) {
         super();
         addPoint(x,y);
+    }
+
+    public function getLayerId():Int {
+        return cast id;
+    }
+
+    public function getTile():String {
+        return "title";
+    }
+
+    public function getImageURL():String {
+        return getCacheDataURL();
+    }
+
+    override public function isVisible():Bool {
+        return visible;
     }
 
     override public function clone(): Shape {

@@ -31,12 +31,12 @@ class BBModel extends Model {
     "all" — this special event fires for any triggered event, passing the event name as the first argument.
 **/
 
-typedef OnAddCallback = BBModel -> Collection -> Dynamic -> Void;
-typedef OnRemoveCallback = BBModel -> Collection -> Dynamic -> Void;
-typedef OnUpdateCallback = Collection -> Dynamic -> Void;
-typedef OnRestCallback = Collection -> Dynamic -> Void;
-typedef OnSortCallback = Collection -> Dynamic -> Void;
+typedef OnAddCallback = BBModel -> Collection<BBModel> -> Dynamic -> Void;
+typedef OnRemoveCallback = BBModel -> Collection<BBModel> -> Dynamic -> Void;
+typedef OnUpdateCallback = Collection<BBModel> -> Dynamic -> Void;
+typedef OnRestCallback = Collection<BBModel> -> Dynamic -> Void;
+typedef OnSortCallback = Collection<BBModel> -> Dynamic -> Void;
 typedef OnChangeCallback = (BBModel -> Dynamic) -> Void;
 typedef OnChangeAttributeCallback<T> = BBModel -> T -> Dynamic -> Void;
-typedef OnDestoroyCallback = BBModel -> Collection -> Dynamic -> Void;
+typedef OnDestoroyCallback = BBModel -> Collection<BBModel> -> Dynamic -> Void;
 typedef OnAllCallback = String -> Void;

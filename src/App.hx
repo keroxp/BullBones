@@ -1,5 +1,6 @@
 package ;
 
+import view.LayerView;
 import createjs.easeljs.DisplayObject;
 import cv.ImageWrap;
 import view.ZoomInputView;
@@ -34,13 +35,14 @@ class App extends BackboneEvents implements BrushEditorListener {
     private var jImageButton: JQuery;
     private var jDebugButton: JQuery;
     public var jq: JQuery;
-    public var modalView: ModalView;
-    public var mainCanvas: MainCanvas;
-    public var searchView: SearchView;
-    public var brushEditorView: BrushEditorView;
-    public var imageEditorView: ImageEditorView;
-    public var floatingThumbnailView: FloatingThumbnailView;
-    public var zoomInputView: ZoomInputView;
+    public var modalView(default,null): ModalView;
+    public var mainCanvas(default,null): MainCanvas;
+    public var searchView(default,null): SearchView;
+    public var brushEditorView(default,null): BrushEditorView;
+    public var imageEditorView(default,null): ImageEditorView;
+    public var floatingThumbnailView(default,null): FloatingThumbnailView;
+    public var zoomInputView(default,null): ZoomInputView;
+    public var layerView(default,null): LayerView;
     var window = BrowserUtil.window;
     var document = BrowserUtil.document;
     public var onFileLoad: OnFileLoadListenr;
@@ -100,6 +102,8 @@ class App extends BackboneEvents implements BrushEditorListener {
             floatingThumbnailView = new FloatingThumbnailView(new JQuery("#floatingThumbnailView"));
             // Zoom
             zoomInputView = new ZoomInputView(new JQuery("#zoomInputGroup"));
+            // Layer
+            layerView = new LayerView(new JQuery("#layerView"));
             // 検索ボタン
             jSearchButton = new JQuery("#searchButton");
             jSearchButton.on("click", function (e: MouseEvent) {

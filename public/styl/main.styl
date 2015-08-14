@@ -9,6 +9,14 @@ body
   -moz-user-select none
   -ms-user-select none
   -o-user-select none
+[draggable]
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Required to make elements draggable in old WebKit */
+  -khtml-user-drag: element;
+  -webkit-user-drag: element;
 .clearfix:after
   content: "."
   display: block
@@ -202,6 +210,38 @@ body
       cursor url("data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="), pointer
       &[data-editing="true"]
         cursor pointer
+  #layerView
+    position fixed
+    left 0
+    top 0
+    width 300px
+    background-color white
+    min-height 100%
+    height 100%
+    border-right 1px solid #ccc
+    ul
+      margin 0
+      padding 0
+    .layerItem
+      padding 5px 10px
+      display table
+      border-bottom 1px solid #ccc
+      width 100%
+      .inner
+      > div
+        display table-cell
+        vertical-align middle
+      .layerItemVisivility
+        width 24px
+        padding-right 10px
+      .layerItemThumbnail
+        width 50px
+        height 50px
+        img
+          max-width 100%
+          max-height 100%
+      .layerItemContent
+        padding-left 10px
   #actionBar
     padding 15px 0
   .sidebar
