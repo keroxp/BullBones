@@ -7,7 +7,6 @@ import js.html.DragEvent;
 import backbone.haxe.BackboneCollection;
 import backbone.Collection;
 import figure.Layer;
-import model.LayerDummy;
 import jQuery.JQuery;
 using util.ArrayUtil;
 class LayerView extends ViewModel {

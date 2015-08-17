@@ -1,6 +1,5 @@
 package view;
 import backbone.haxe.BackboneCollection;
-import model.LayerDummy;
 import model.BaseModel;
 import backbone.Collection;
 import js.html.Window;
