@@ -1,6 +1,6 @@
 package model;
 import js.Error;
-class LayerDummy extends BBModel {
+class LayerDummy extends BaseModel {
     @:isVar public var layerId(get, set):Int;
     function set_layerId(value:Int) {
         if (value == null) {

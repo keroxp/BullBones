@@ -11,7 +11,7 @@ import js.html.DOMError;
 import js.html.PopStateEvent;
 import util.BrowserUtil;
 import view.ModalView;
-import model.BBModel;
+import model.BaseModel;
 import ajax.Loader;
 import model.BrushEditor;
 import view.MainCanvas;
@@ -79,7 +79,7 @@ class App extends BackboneEvents implements BrushEditorListener {
                 searchView.jq.hide();
                 imageEditorView.jq.hide();
             });
-            listenTo(mainCanvas, "change:isEditing", function (mode: BBModel, value: Bool) {
+            listenTo(mainCanvas, "change:isEditing", function (mode: BaseModel, value: Bool) {
                 hidePanels();
             });
             listenTo(mainCanvas, "change:activeFigure", function (c: MainCanvas, value: DisplayObject) {

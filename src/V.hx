@@ -1,9 +1,9 @@
 package ;
 import model.ZoomEditor;
 import model.BrushEditor;
-import model.BBModel;
+import model.BaseModel;
 
-class V extends BBModel {
+class V extends BaseModel {
 
     @:isVar public var env(get, set):String;
     function set_env(value:String) {

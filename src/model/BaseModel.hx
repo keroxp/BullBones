@@ -2,11 +2,11 @@ package model;
 import backbone.Model;
 import backbone.Collection;
 
-class BBModel extends Model {
+class BaseModel extends Model {
     public function new (?attr: Dynamic, ?options: Dynamic) {
         super(attr, options);
     }
-    public function listenToOnChangeAttribute<T>(obj: BBModel, key: String, callback: OnChangeAttributeCallback<T>) {
+    public function listenToOnChangeAttribute<T>(obj: BaseModel, key: String, callback: OnChangeAttributeCallback<T>) {
         this.listenTo(obj,'change:$key',callback);
     }
 }
@@ -31,12 +31,12 @@ class BBModel extends Model {
     "all" — this special event fires for any triggered event, passing the event name as the first argument.
 **/
 
-typedef OnAddCallback = BBModel -> Collection<BBModel> -> Dynamic -> Void;
-typedef OnRemoveCallback = BBModel -> Collection<BBModel> -> Dynamic -> Void;
-typedef OnUpdateCallback = Collection<BBModel> -> Dynamic -> Void;
-typedef OnRestCallback = Collection<BBModel> -> Dynamic -> Void;
-typedef OnSortCallback = Collection<BBModel> -> Dynamic -> Void;
-typedef OnChangeCallback = (BBModel -> Dynamic) -> Void;
-typedef OnChangeAttributeCallback<T> = BBModel -> T -> Dynamic -> Void;
-typedef OnDestoroyCallback = BBModel -> Collection<BBModel> -> Dynamic -> Void;
+typedef OnAddCallback = BaseModel -> Collection<BaseModel> -> Dynamic -> Void;
+typedef OnRemoveCallback = BaseModel -> Collection<BaseModel> -> Dynamic -> Void;
+typedef OnUpdateCallback = Collection<BaseModel> -> Dynamic -> Void;
+typedef OnRestCallback = Collection<BaseModel> -> Dynamic -> Void;
+typedef OnSortCallback = Collection<BaseModel> -> Dynamic -> Void;
+typedef OnChangeCallback = (BaseModel -> Dynamic) -> Void;
+typedef OnChangeAttributeCallback<T> = BaseModel -> T -> Dynamic -> Void;
+typedef OnDestoroyCallback = BaseModel -> Collection<BaseModel> -> Dynamic -> Void;
 typedef OnAllCallback = String -> Void;
