@@ -81,6 +81,7 @@ class App extends BackboneEvents implements BrushEditorListener {
             });
             listenTo(mainCanvas, "change:isEditing", function (mode: BaseModel, value: Bool) {
                 hidePanels();
+                jEditButton.toggleClass("editing", value);
             });
             listenTo(mainCanvas, "change:activeFigure", function (c: MainCanvas, value: DisplayObject) {
                 if (value != null && value.isImageFigure()) {
@@ -118,10 +119,11 @@ class App extends BackboneEvents implements BrushEditorListener {
                 brushEditorView.jq.toggle();
             });
             // 編集ボタン
-            jEditButton = new JQuery("#editButton");
+            jEditButton = new JQuery("#editModeButton");
             jEditButton.on(click, function (e: MouseEvent) {
                 hidePanels();
                 mainCanvas.isEditing = !mainCanvas.isEditing;
+                jEditButton.toggleClass("editing", mainCanvas.isEditing);
             });
             // 画像ボタン
             jImageButton = new JQuery("#imageEditorButton");

@@ -67,9 +67,6 @@ html(lang='ja')
               a#brushButton.bb-btn.btn-floating.wave-effect.btn-large.blue(title='ブラシ')
                 i.large.material-icons palette
             li
-              a#editButton.bb-btn.btn-floating.wave-effect.btn-large.green(title='編集モード')
-                i.large.material-icons edit
-            li
               a#imageEditorButton.bb-btn.btn-floating.wave-effect.btn-large.orange(style='display:none', title='画像を編集')
                 i.large.material-icons image
             li
@@ -138,6 +135,10 @@ html(lang='ja')
                 i.small.material-icons undo
               a#redoButton(title="やり直す",data-enabled="false")
                 i.small.material-icons redo
+          #editModeInputGroup.inputGroup
+            .inner.z-depth-1
+              a#editModeButton(title="編集モードへ",data-enabled="true")              
+                i.small.material-icons mode_edit
         #canvasWrapper
           canvas#mainCanvas(data-editing='false')
     if app_env == "development"
