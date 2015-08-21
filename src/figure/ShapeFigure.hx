@@ -212,7 +212,7 @@ class ShapeFigure extends Shape implements Layer {
         graphics.clear();
         graphics.setStrokeStyle(width,"round",1).beginStroke(color);
         graphics.moveTo(xx(s.x),yy(s.y));
-        if (Main.App.v.brush.supplemnt) {
+        if (Main.App.model.brush.supplemnt) {
             // 平均係数
             var m = supplementLength;
             for (i in m-1...transformedPoints.length) {
@@ -235,7 +235,7 @@ class ShapeFigure extends Shape implements Layer {
             }
         }
         graphics.endStroke();
-        if (Main.App.v.isDebug) {
+        if (Main.App.model.isDebug) {
             graphics
             .beginFill("blue")
             .drawCircle(xx(s.x),yy(s.y),3)

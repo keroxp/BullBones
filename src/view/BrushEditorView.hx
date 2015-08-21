@@ -22,19 +22,19 @@ class BrushEditorView extends ViewModel {
         mCanvas = cast jq.find("#brushPreviewCanvas").get()[0];
         mContext = mCanvas.getContext2d();
         jSupplementInput = jq.find("#supplementInput");
-        if (Main.App.v.brush.supplemnt) {
+        if (Main.App.model.brush.supplemnt) {
             jSupplementInput.attr("checked","checked");
         }
         jWidthInput = jq.find("#brushWidthInput");
-        jWidthInput.attr("value", Main.App.v.brush.width);
+        jWidthInput.attr("value", Main.App.model.brush.width);
         jAlphaInput = jq.find("#brushAlphaInput");
-        jAlphaInput.attr("value", Main.App.v.brush.alpha*100);
+        jAlphaInput.attr("value", Main.App.model.brush.alpha*100);
         jThickInput = jq.find("#brushThickInput");
-        jThickInput.attr("value", Main.App.v.brush.thickness);
+        jThickInput.attr("value", Main.App.model.brush.thickness);
         jq.find("input").on("input", updateBrush);
         jq.find("input").on("change", function (e: Event) {
             if (listener != null) {
-                listener.onBrushEditorChange(Main.App.v.brush);
+                listener.onBrushEditorChange(Main.App.model.brush);
             }
         });
         jSupplementInput.on("change", function (e: Event) {
@@ -45,7 +45,7 @@ class BrushEditorView extends ViewModel {
             }
             updateBrush(e);
             if (listener != null) {
-                listener.onBrushEditorChange(Main.App.v.brush);
+                listener.onBrushEditorChange(Main.App.model.brush);
             }
         });
         renderBrush(null);
@@ -62,12 +62,12 @@ class BrushEditorView extends ViewModel {
         brush.width = width();
         brush.alpha = alpha();
         brush.supplemnt = suppl();
-        Main.App.v.brush = brush;
+        Main.App.model.brush = brush;
         renderBrush(e);
     }
     private function renderBrush (e: Event) {
-        var width = Main.App.v.brush.width;
-        var color = Main.App.v.brush.color;
+        var width = Main.App.model.brush.width;
+        var color = Main.App.model.brush.color;
         var pad = 30;
         var padx = 30;
         var pady = 100;

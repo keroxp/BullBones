@@ -3,7 +3,7 @@ import model.ZoomEditor;
 import model.BrushEditor;
 import model.BaseModel;
 
-class V extends BaseModel {
+class AppModel extends BaseModel {
 
     @:isVar public var env(get, set):String;
     function set_env(value:String) {

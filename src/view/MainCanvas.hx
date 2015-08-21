@@ -140,10 +140,10 @@ implements ImageEditorListener {
 
     override public function init() {
         // event observing
-        listenTo(Main.App.v, "change:brush", drawBrushCircle);
+        listenTo(Main.App.model, "change:brush", drawBrushCircle);
         listenTo(Main.App, App.APP_WINDOW_RESIZE_EVENT, resizeCanvas);
-        listenTo(Main.App.v, "change:zoom", onChageZoomEditor);
-        listenTo(Main.App.v, "change:isDebug", function () {
+        listenTo(Main.App.model, "change:zoom", onChageZoomEditor);
+        listenTo(Main.App.model, "change:isDebug", function () {
             for (f in mFigureLayer.children) {
                 f.asShapeFigure(function(shape: ShapeFigure) {
                    shape.render();
@@ -210,7 +210,7 @@ implements ImageEditorListener {
 
     var scale(get,never): Float;
     function get_scale():Float {
-        return Main.App.v.zoom.scale;
+        return Main.App.model.zoom.scale;
     }
 
     function invalidate () {
@@ -224,13 +224,13 @@ implements ImageEditorListener {
     private var mPrevDirtyRect: Rectangle = new Rectangle();
     public function draw (clearAll: Bool = false) {
         if (!clearAll && mDirtyRect == null) return;
-        var pad = Main.App.v.brush.width + 10;
+        var pad = Main.App.model.brush.width + 10;
         if (clearAll) {
             mDirtyRect = new Rectangle(0,0,mCanvas.width,mCanvas.height);
         }
         mDirtyRect.pad(pad,pad,pad,pad);
         mStageDebugShape.graphics.clear();
-        if (Main.App.v.isDebug) {
+        if (Main.App.model.isDebug) {
             mStageDebugShape.graphics
             .beginStroke("red").setStrokeStyle(1)
             .drawRect(mDirtyRect.x+2,mDirtyRect.y+2,mDirtyRect.width-2,mDirtyRect.height-2);
@@ -305,7 +305,7 @@ implements ImageEditorListener {
         }
     }
     function drawBrushCircle () {
-        var w = Main.App.v.brush.width*scale;
+        var w = Main.App.model.brush.width*scale;
         mBrushCircle.graphics
         .clear()
         .setStrokeStyle(1,"round", "round")
@@ -402,8 +402,8 @@ implements ImageEditorListener {
     public function pushCommand(cmd: FigureCommand) {
         mUndoStack.push(cmd);
         mRedoStack.splice(0,mRedoStack.length);
-        Main.App.v.undoStackSize += 1;
-        Main.App.v.redoStackSize = 0;
+        Main.App.model.undoStackSize += 1;
+        Main.App.model.redoStackSize = 0;
     }
 
     public function undo() {
@@ -426,8 +426,8 @@ implements ImageEditorListener {
             } else {
                 invalidate();
             }
-            Main.App.v.undoStackSize -= 1;
-            Main.App.v.redoStackSize += 1;
+            Main.App.model.undoStackSize -= 1;
+            Main.App.model.redoStackSize += 1;
         }
     }
 
@@ -452,8 +452,8 @@ implements ImageEditorListener {
             } else {
                 invalidate();
             }
-            Main.App.v.undoStackSize += 1;
-            Main.App.v.redoStackSize -= 1;
+            Main.App.model.undoStackSize += 1;
+            Main.App.model.redoStackSize -= 1;
         }
     }
 
@@ -537,7 +537,7 @@ implements ImageEditorListener {
         ec = null;
     }
 
-    function onChageZoomEditor (v: V, val: ZoomEditor, options: Dynamic) {
+    function onChageZoomEditor (v: AppModel, val: ZoomEditor, options: Dynamic) {
         if (options.changer == this) {
             applyScaleToLayer(mMainLayer, val.scale, val.pivotX, val.pivotY);
         } else {
@@ -627,9 +627,9 @@ implements ImageEditorListener {
                     mBoundingBox.clear();
                 } else {
                     var f =  new ShapeFigure(p_main_local.x,p_main_local.y);
-                    f.width = Main.App.v.brush.width;
-                    f.color = Main.App.v.brush.color;
-                    if (Main.App.v.isDebug) {
+                    f.width = Main.App.model.brush.width;
+                    f.color = Main.App.model.brush.color;
+                    if (Main.App.model.isDebug) {
                         drawFuzzyPointGraph(f.points[0],0);
                     }
                     mDrawingFigure = f;
@@ -689,7 +689,7 @@ implements ImageEditorListener {
             if (!isEditing) {
                 var fp = mFgLayer.globalToLocal(e.x,e.y);
                 var pb = mBrushCircle.getTransformedBounds().clone();
-                var bw = Main.App.v.brush.width*scale/2;
+                var bw = Main.App.model.brush.width*scale/2;
                 mBrushCircle.x = ~~(fp.x+0.5-bw);
                 mBrushCircle.y = ~~(fp.y+0.5-bw);
                 extendDirtyRectWithDisplayObject(mBrushCircle,pb);
@@ -714,7 +714,7 @@ implements ImageEditorListener {
                 if (!isEditing) {
                     if (mDrawingFigure != null) {
                         mDrawingFigure.addPoint(p_local_main.x,p_local_main.y);
-                        var b = Main.App.v.brush;
+                        var b = Main.App.model.brush;
                         mBufferShape.graphics
                         .setStrokeStyle(b.width,"round", "round")
                         .beginStroke(b.color)
@@ -857,7 +857,7 @@ implements ImageEditorListener {
             }
         } else {
             // during exporting
-            var z = Main.App.v.zoom;
+            var z = Main.App.model.zoom;
             var lp = mMainLayer.globalToLocal(
                 e.totalDeltaX < 0 ? e.startX+e.totalDeltaX : e.startX,
                 e.totalDeltaY < 0 ? e.startY+e.totalDeltaY : e.startY
@@ -881,11 +881,11 @@ implements ImageEditorListener {
         if (toDraw) draw();
     }
     private function onMouseWheel (e: WheelEvent) {
-        var zoom = Main.App.v.zoom;
+        var zoom = Main.App.model.zoom;
         var z: ZoomEditor = e.deltaY < 0 ? zoom.zoomIn() : zoom.zoomOut();
         z.pivotX = e.clientX;
         z.pivotY = e.clientY;
-        Main.App.v.set("zoom", z, {
+        Main.App.model.set("zoom", z, {
             changer: this
         });
         invalidate();

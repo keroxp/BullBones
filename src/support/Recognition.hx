@@ -1,4 +1,4 @@
-package recognition;
+package support;
 import geometry.Vector2D;
 import geometry.Point;
 class Recognition {

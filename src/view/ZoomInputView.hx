@@ -7,15 +7,15 @@ class ZoomInputView extends ViewModel {
         super(jq);
         var self = this;
         jq.find("#zoomOutButton").on("click", function(e) {
-            Main.App.v.zoom = Main.App.v.zoom.zoomOut();
+            Main.App.model.zoom = Main.App.model.zoom.zoomOut();
         });
         jq.find("#zoomInButton").on("click", function(e) {
-            Main.App.v.zoom = Main.App.v.zoom.zoomIn();
+            Main.App.model.zoom = Main.App.model.zoom.zoomIn();
         });
         jZoomValue = jq.find("#zoomValue");
     }
     override public function init() {
-        listenTo(Main.App.v,"change:zoom", onChangeZoomScale);
+        listenTo(Main.App.model,"change:zoom", onChangeZoomScale);
     }
     private function onChangeZoomScale (model, value: ZoomEditor) {
         jZoomValue.html(Math.floor(value.scale*100)+"%");

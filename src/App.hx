@@ -27,7 +27,7 @@ using util.FigureUtil;
 typedef OnFileLoadListenr = ImageWrap -> Void
 
 class App extends BackboneEvents implements BrushEditorListener {
-    public var v(default, null): V;
+    public var model(default, null): AppModel;
     private var jModalLoading: JQuery;
     private var jSearchButton: JQuery;
     private var jBrushButton: JQuery;
@@ -51,11 +51,11 @@ class App extends BackboneEvents implements BrushEditorListener {
 
     public function new(attr: Dynamic) {
         super();
-        this.v = new V(attr);
+        this.model = new AppModel(attr);
         if (window.location.href.indexOf("http://localhost:8000") == 0) {
-            this.v.isDebug = true;
+            this.model.isDebug = true;
         }
-        trace(this.v.attributes);
+        trace(this.model.attributes);
     }
     public function start () {
         once("app:start", function (a: Dynamic) {
@@ -133,7 +133,7 @@ class App extends BackboneEvents implements BrushEditorListener {
             });
             // デバッグボタン
             new JQuery("#debugButton").on(click, function (e: MouseEvent){
-                this.v.isDebug = !this.v.isDebug;
+                this.model.isDebug = !this.model.isDebug;
             });
             // Undo/Redo
             var jUndoButton: JQuery = new JQuery("#undoButton").on(click, function(e: MouseEvent) {
@@ -143,7 +143,7 @@ class App extends BackboneEvents implements BrushEditorListener {
             var jLayerButton: JQuery = new JQuery("#layerButton").on(click, function(e: MouseEvent) {
                layerView.jq.toggle();
             });
-            listenTo(v, "change:undoStackSize", function (m,val:Int) {
+            listenTo(model, "change:undoStackSize", function (m,val:Int) {
                 if (val == 0) {
                     jUndoButton.attr("data-enabled","false");
                 } else if (jUndoButton.data("enabled") == false && val == 1) {
@@ -153,7 +153,7 @@ class App extends BackboneEvents implements BrushEditorListener {
             var jRedoButton: JQuery = new JQuery("#redoButton").on(click, function(e: MouseEvent) {
                 mainCanvas.redo();
             });
-            listenTo(v, "change:redoStackSize", function (m,val:Int) {
+            listenTo(model, "change:redoStackSize", function (m,val:Int) {
                 if (val == 0) {
                     jRedoButton.attr("data-enabled", "false");
                 } else if (jRedoButton.data("enabled") == false && val == 1) {
@@ -176,14 +176,14 @@ class App extends BackboneEvents implements BrushEditorListener {
             // hide loading
             haxe.Timer.delay(function() {
                 jModalLoading.fadeOut(700, function(){
-                    if (this.v.isDebug || !BrowserUtil.isBrowser()) {
+                    if (this.model.isDebug || !BrowserUtil.isBrowser()) {
                         modalView.openOnce(ModalView.ADD_TO_HOMESCREEN);
                     }
                 });
             }, 2400);
             // diable back action
             window.onunload = function (a) {};
-            if (!this.v.isDebug) {
+            if (!this.model.isDebug) {
                 window.onbeforeunload = function (a) {
                     return "ページを再読み込みしようとしています。\n保存されていないデータは消えてしまいます。";
                 };
@@ -246,7 +246,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     // Listeners
 
     public function onBrushEditorChange(editor:BrushEditor):Void {
-        this.v.brush = editor;
+        this.model.brush = editor;
     }
 
 
