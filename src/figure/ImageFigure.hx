@@ -21,7 +21,7 @@ class ImageFigure extends Bitmap implements Layer {
     }
 
     public function getTile():String {
-        return toString();
+        return "画像"+getLayerId();
     }
 
     public function getImageURL():String {
@@ -48,7 +48,7 @@ class ImageFigure extends Bitmap implements Layer {
     }
 
     override public function toString(): String {
-        return '画像'+getLayerId();
+        return '[ImageFigure id="${getLayerId()}"]';
     }
 
     public var filter(default, null):Filter;
