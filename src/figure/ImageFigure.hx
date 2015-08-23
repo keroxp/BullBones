@@ -1,5 +1,4 @@
 package figure;
-import createjs.easeljs.DisplayObject;
 import cv.ImageWrap;
 import deferred.Deferred;
 import deferred.Promise;
@@ -8,32 +7,12 @@ import cv.ImageUtil;
 import cv.Filter;
 import js.html.ImageData;
 import createjs.easeljs.Bitmap;
-class ImageFigure extends Bitmap implements Layer {
+class ImageFigure extends Bitmap {
     public var imageWrap(default,null): ImageWrap;
-    public var layerTitle: String;
+
     public function new (img: ImageWrap) {
         super(cast img.image.cloneNode(true));
         imageWrap = img;
-    }
-
-    public function getLayerId():Int {
-        return cast id;
-    }
-
-    public function getTile():String {
-        return "画像"+getLayerId();
-    }
-
-    public function getImageURL():String {
-        return imageWrap.src;
-    }
-
-    public function getDisplay():DisplayObject {
-        return this;
-    }
-
-    public function render():Dynamic {
-        return this;
     }
 
     override public function clone(): ImageFigure {
@@ -48,7 +27,7 @@ class ImageFigure extends Bitmap implements Layer {
     }
 
     override public function toString(): String {
-        return '[ImageFigure id="${getLayerId()}"]';
+        return '[ImageFigure id="${id}"]';
     }
 
     public var filter(default, null):Filter;

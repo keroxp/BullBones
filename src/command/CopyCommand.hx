@@ -15,7 +15,7 @@ class CopyCommand extends FigureCommand implements Undoable<CopyCommand, Dynamic
 
     public function undo():CopyCommand {
         if (isExcuted) {
-            mParent.removeChild(mCopied);
+            canvas.deleteFigure(mCopied,true);
         }
         return this;
     }
@@ -23,7 +23,7 @@ class CopyCommand extends FigureCommand implements Undoable<CopyCommand, Dynamic
     public function redo():CopyCommand {
         if (isExcuted) {
             var i = mParent.getChildIndex(target) + 1;
-            mParent.addChildAt(mCopied, i);
+            canvas.insertFigure(mCopied,true, i);
         }
         return this;
     }

@@ -14,14 +14,14 @@ class DeleteCommand extends FigureCommand implements Undoable<DeleteCommand, Dyn
 
     public function undo():DeleteCommand {
         if (isExcuted) {
-            mParent.addChildAt(target, mIndex);
+            canvas.insertFigure(target,true,mIndex);
         }
         return this;
     }
 
     public function redo():DeleteCommand {
         if (isExcuted) {
-            mParent.removeChild(target);
+            canvas.deleteFigure(target,true);
         }
         return this;
     }

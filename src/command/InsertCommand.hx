@@ -15,14 +15,14 @@ class InsertCommand extends FigureCommand implements Undoable<InsertCommand,Dyna
 
     public function undo():InsertCommand {
         if (isExcuted) {
-            mParent.removeChild(target);
+            canvas.deleteFigure(target,true);
         }
         return this;
     }
 
     public function redo():InsertCommand {
         if (isExcuted) {
-            mParent.addChildAt(target,mIndex);
+            canvas.insertFigure(target,true,mIndex);
         }
         return this;
     }

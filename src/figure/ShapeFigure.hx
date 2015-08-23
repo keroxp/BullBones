@@ -1,5 +1,6 @@
 package figure;
-import createjs.easeljs.DisplayObject;
+
+import geometry.Vertex;
 import createjs.easeljs.Rectangle;
 import createjs.easeljs.Point;
 import geometry.Vector2D;
@@ -7,48 +8,7 @@ import geometry.FuzzyPoint;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;
 
-class ShapeFigure extends Shape implements Layer {
-    public function new(x: Float, y: Float) {
-        super();
-        addPoint(x,y);
-    }
-
-    public function getLayerId():Int {
-        return cast id;
-    }
-
-    public function getTile():String {
-        return "図形"+getLayerId();
-    }
-
-    public function getImageURL():String {
-        return getCacheDataURL();
-    }
-
-    public function getDisplay():DisplayObject {
-        return this;
-    }
-
-
-    override public function clone(): Shape {
-        var ret = new ShapeFigure(points[0].x,points[0].y);
-        ret.points = points.map(function(p: FuzzyPoint) { return p.clone(); });
-        ret.transformedPoints = transformedPoints.map(function(p: FuzzyPoint) { return p.clone(); });
-        ret.vertexes = vertexes.map(function(vtx: Vertex) { return vtx.clone(); });
-        ret.shapeScaleX = shapeScaleX;
-        ret.shapeScaleY = shapeScaleY;
-        ret.color = color;
-        ret.width = width;
-        ret.supplementLength = supplementLength;
-        ret.isLine = isLine;
-        ret.mBounds = mBounds.clone();
-        var _clone = Reflect.field(this, "_cloneProps");
-        ret = Reflect.callMethod(this, _clone,[ret]);
-        // easeljs.DisplayObject#cloneはboundsをdeep copyしないので自前で上書きする
-        Reflect.setField(ret, "_bounds", getBounds().clone());
-        return ret.render();
-    }
-
+class ShapeFigure extends Shape {
     // 図形を構成する点（スケールは反映されてない）
     public var points(default, null): Array<FuzzyPoint> = new Array<FuzzyPoint>();
     // 図形を構成する点（スケール反映済み）
@@ -69,8 +29,32 @@ class ShapeFigure extends Shape implements Layer {
     // 描画の点の半径
     public var width: Float = 2;
 
+    public function new(x: Float, y: Float) {
+        super();
+        addPoint(x,y);
+    }
+
+    override public function clone(): ShapeFigure {
+        var ret = new ShapeFigure(points[0].x,points[0].y);
+        ret.points = points.map(function(p: FuzzyPoint) { return p.clone(); });
+        ret.transformedPoints = transformedPoints.map(function(p: FuzzyPoint) { return p.clone(); });
+        ret.vertexes = vertexes.map(function(vtx: Vertex) { return vtx.clone(); });
+        ret.shapeScaleX = shapeScaleX;
+        ret.shapeScaleY = shapeScaleY;
+        ret.color = color;
+        ret.width = width;
+        ret.supplementLength = supplementLength;
+        ret.isLine = isLine;
+        ret.mBounds = mBounds.clone();
+        var _clone = Reflect.field(this, "_cloneProps");
+        ret = Reflect.callMethod(this, _clone,[ret]);
+        // easeljs.DisplayObject#cloneはboundsをdeep copyしないので自前で上書きする
+        Reflect.setField(ret, "_bounds", getBounds().clone());
+        return ret.render();
+    }
+
     public override function toString(): String {
-        return '[ShapeFigure name="$name"]';
+        return '[ShapeFigure id="${id}"]';
     }
 
     private static var CLOSE_THRESH: Float = 20*20;
@@ -265,4 +249,5 @@ class ShapeFigure extends Shape implements Layer {
         updateCache();
         return this;
     }
+
 }

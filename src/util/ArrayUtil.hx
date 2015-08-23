@@ -55,4 +55,7 @@ class ArrayUtil {
     public static function clear<T>(arr: Array<T>): Array<T> {
         return arr.splice(0,arr.length);
     }
+    public static function last<T>(arr: Array<T>): T {
+        return arr[arr.length-1];
+    }
 }

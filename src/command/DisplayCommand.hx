@@ -1,4 +1,5 @@
 package command;
+import view.MainCanvas;
 import util.FigureUtil;
 import createjs.easeljs.DisplayObject;
 import figure.ShapeFigure;
@@ -15,8 +16,8 @@ implements Undoable<DisplayCommand,Dynamic,Void>{
     private var mBeforeScaleY: Float;
     private var mAfterScaleX: Float;
     private var mAfterScaleY: Float;
-    public function new (d: DisplayObject) {
-        super(d);
+    public function new (d: DisplayObject, canvas: MainCanvas) {
+        super(d,canvas);
         mBeforeMatrix = d.getMatrix().clone();
         mBeforeAlpha = d.alpha;
         d.asShapeFigure(function(fig: ShapeFigure) {

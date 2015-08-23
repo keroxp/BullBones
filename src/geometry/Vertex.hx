@@ -1,4 +1,4 @@
-package figure;
+package geometry;
 import protocol.Clonable;
 import geometry.FuzzyPoint;
 class Vertex implements Clonable {
