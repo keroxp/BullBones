@@ -13,6 +13,8 @@ class ImageFigure extends Bitmap {
     public function new (img: ImageWrap) {
         super(cast img.image.cloneNode(true));
         imageWrap = img;
+        cache(0,0,image.width,image.height);
+        updateCache();
     }
 
     override public function clone(): ImageFigure {

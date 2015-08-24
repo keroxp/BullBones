@@ -36,28 +36,72 @@ class LayerView extends ViewModel {
                 deselectAll();
             }
         });
-        listenTo(Main.App.mainCanvas, MainCanvas.ON_INSERT_EVENT, function(fig: DisplayObject) {
-           add(fig);
-        });
-        listenTo(Main.App.mainCanvas, MainCanvas.ON_DELETE_EVENT, function(fig: DisplayObject) {
-            remove(fig);
-        });
+        listenTo(Main.App.mainCanvas, MainCanvas.ON_INSERT_EVENT, add);
+        listenTo(Main.App.mainCanvas, MainCanvas.ON_DELETE_EVENT, remove);
+        listenTo(Main.App.mainCanvas, MainCanvas.ON_COPY_EVENT, copy);
     }
 
     public function deselectAll() {
         selectedItems.clear();
         jq.find(".layerItem.selected").removeClass("selected");
     }
-
-    function add(fig: DisplayObject) {
-        var layerItem = new LayerItemView(fig,this);
-        layerItem.title = createTitle(fig);
-        layerItems.push(layerItem);
-        jq.prepend(layerItem.render().jq);
+    function add(e: InsertEvent) {
+        var li = new LayerItemView(e.target,this);
+        var regex = new EReg('^${e.target.typeString()}([0-9]*)$', "i");
+        li.title = e.target.typeString() + calcNextTitlePostfix(li,regex);
+        _add(li, e.at);
     }
-    function remove(display: DisplayObject) {
+    function copy(e: CopyEvent) {
+        var li = new LayerItemView(e.target,this);
+        var src: LayerItemView = layerItems.findFirst(function(li: LayerItemView) {
+            return e.src.id == li.display.id;
+        });
+        var baseRegex = new EReg('^(.*)のコピー[0-9]*$', "i");
+        var base = src.title;
+        if (baseRegex.match(src.title)) {
+            base = baseRegex.matched(1);
+        }
+        var indexRegex = new EReg('^${base}のコピー([0-9]*)$', "i");
+        li.title = base + "のコピー" + calcNextTitlePostfix(li, indexRegex);
+        _add(li, e.at);
+    }
+    // レイヤータイトルのpostfixの数字を動的に計算する
+    function calcNextTitlePostfix(item: LayerItemView, regex: EReg): Int {
+        var indexes = layerItems.filter(function(li: LayerItemView) {
+            return li.display.type() == item.display.type() && regex.match(li.title);
+        }).map(function(li: LayerItemView) {
+            regex.match(li.title);
+            return Std.parseInt(regex.matched(1));
+        });
+        indexes.sort(function(a: Int, b: Int) {
+            if (a == b) return 0;
+            return a < b ? -1 : 1;
+        });
+        var next = 1;
+        for (i in indexes) {
+            if (next != i) {
+                break;
+            }
+            next += 1;
+        }
+        return next;
+    }
+    function _add(li: LayerItemView, at: Int) {
+        if (layerItems.length == 0) {
+            jq.prepend(li.render().jq);
+        } else {
+            if (at == layerItems.length) {
+                jq.prepend(li.render().jq);
+            } else {
+                li.render().jq.insertBefore(layerItems[at].jq);
+            }
+        }
+        layerItems.push(li);
+    }
+
+    function remove (e: DeleteEvent) {
         var rm: LayerItemView = layerItems.removeFirst(function(li: LayerItemView) {
-           return li.display.id == display.id;
+           return li.display.id == e.target.id;
         });
         rm.jq.remove();
     }
@@ -65,16 +109,6 @@ class LayerView extends ViewModel {
         layerItems.findFirst(function(li: LayerItemView) {
             return li.display == display;
         }).render();
-    }
-    function createTitle(fig: DisplayObject): String {
-        var num = layerItems.filter(function(li: LayerItemView) {
-           return li.display.type() == fig.type();
-        }).length+1;
-        var title = fig.typeString() + num;
-        var dup = layerItems.filter(function(li: LayerItemView) {
-            return li.title == title;
-        });
-        return title;
     }
 }
 

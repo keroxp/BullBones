@@ -46,6 +46,20 @@ import createjs.easeljs.Shape;
 using util.RectangleUtil;
 using util.ArrayUtil;
 using util.FigureUtil;
+
+typedef InsertEvent = {
+    public var target: DisplayObject;
+    public var at: Int;
+}
+typedef DeleteEvent = {
+    public var target: DisplayObject;
+}
+typedef CopyEvent = {
+    public var src: DisplayObject;
+    public var target: DisplayObject;
+    public var at: Int;
+}
+
 /*
 レイヤー構造
 [Stage]
@@ -105,6 +119,8 @@ implements ImageEditorListener {
     = "me.keroxp.app.BullBones:view.MainCanvas:ON_CANVAS_MOUSEUP_EVENT";
     public static var ON_INSERT_EVENT(default,null)
     = "me.keroxp.app.BullBones:view.MainCanvas:ON_INSERT_EVENT";
+    public static var ON_COPY_EVENT(default,null)
+    = "me.keroxp.app.BullBones:view.MainCanvas:ON_COPY_EVENT";
     public static var ON_DELETE_EVENT(default,null)
     = "me.keroxp.app.BullBones:view.MainCanvas:ON_DELETE_EVENT";
 
@@ -173,7 +189,12 @@ implements ImageEditorListener {
             mPopupMenu.dismiss(200);
         }
         set("activeFigure", value);
-        invalidate();
+//        invalidate();
+        if (value != null) {
+            extendDirtyRectWithDisplayObject(value);
+            drawBoundingBox();
+            draw();
+        }
         return value;
     }
 
@@ -357,7 +378,10 @@ implements ImageEditorListener {
         var fun = function(arg) {
             var i = index == null ? mFigureContainer.children.length : index;
             mFigureContainer.addChildAt(f,i);
-            trigger(ON_INSERT_EVENT, f);
+            trigger(ON_INSERT_EVENT, {
+                target: f,
+                at: i
+            });
         };
         silent ? fun(null) : pushCommand(new InsertCommand(f,this).exec(fun));
         extendDirtyRectWithDisplayObject(f);
@@ -369,7 +393,9 @@ implements ImageEditorListener {
         extendDirtyRectWithDisplayObject(f);
         var fun = function(a) {
             mFigureContainer.removeChild(f);
-            trigger(ON_DELETE_EVENT,f);
+            trigger(ON_DELETE_EVENT,{
+                target: f
+            });
         };
         silent ? fun(null) : pushCommand(new DeleteCommand(f,this).exec(fun));
         mBoundingBox.clear();
@@ -381,15 +407,28 @@ implements ImageEditorListener {
     }
 
     public function copyFigure(f: DisplayObject, silent: Bool = false) {
+        var i = mFigureContainer.getChildIndex(f);
         var fun = function(a){
             var fig = f.clone();
             fig.x = f.x+20;
             fig.y = f.y+20;
-            insertFigure(fig,true);
-            activeFigure = fig;
+            mFigureContainer.addChildAt(fig, i);
             return fig;
         };
-        silent ? fun(null) : pushCommand(new CopyCommand(f,this).exec(fun));
+        var copied: DisplayObject;
+        if (silent) {
+            copied = fun(null);
+        } else {
+            var cmd = new CopyCommand(f,this);
+            copied = cmd.exec(fun).copiedObject;
+            pushCommand(cmd);
+        }
+        trigger(ON_COPY_EVENT,{
+            src: f,
+            target: copied,
+            at: i
+        });
+        activeFigure = copied;
     }
 
     public function moveLayer(fig: DisplayObject, at: Int) {
@@ -477,6 +516,7 @@ implements ImageEditorListener {
             image.setFilterAsync(editor.createFilter())
             .done(function(img: ImageElement) {
                 image.alpha = editor.alpha;
+                Main.App.layerView.invalidate(image);
                 extendDirtyRectWithDisplayObject(image);
                 draw();
             }).fail(function(e) {

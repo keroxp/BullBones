@@ -1,21 +1,22 @@
 package command;
+import command.CopyCommand;
 import createjs.easeljs.DisplayObject;
 import command.Undoable.ExecType;
 import createjs.easeljs.Container;
 class CopyCommand extends FigureCommand implements Undoable<CopyCommand, Dynamic, DisplayObject>{
     private var mParent: Container;
-    private var mCopied: DisplayObject;
+    public var copiedObject: DisplayObject;
 
     public function exec(args:ExecType<Dynamic, DisplayObject>):CopyCommand {
         mParent = target.parent;
-        mCopied = args(null);
+        copiedObject = args(null);
         isExcuted = true;
         return this;
     }
 
     public function undo():CopyCommand {
         if (isExcuted) {
-            canvas.deleteFigure(mCopied,true);
+            canvas.deleteFigure(copiedObject,true);
         }
         return this;
     }
@@ -23,7 +24,7 @@ class CopyCommand extends FigureCommand implements Undoable<CopyCommand, Dynamic
     public function redo():CopyCommand {
         if (isExcuted) {
             var i = mParent.getChildIndex(target) + 1;
-            canvas.insertFigure(mCopied,true, i);
+            canvas.insertFigure(copiedObject,true, i);
         }
         return this;
     }
