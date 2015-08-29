@@ -399,7 +399,9 @@ implements ImageEditorListener {
         };
         silent ? fun(null) : pushCommand(new DeleteCommand(f,this).exec(fun));
         mBoundingBox.clear();
-        activeFigure = mFigureContainer.children.last();
+        if (isEditing) {
+            activeFigure = mFigureContainer.children.last();
+        }
         f.asImageFigure(function(imf: ImageFigure) {
             Main.App.floatingThumbnailView.remove(imf.imageWrap);
         });
@@ -428,7 +430,9 @@ implements ImageEditorListener {
             target: copied,
             at: i
         });
-        activeFigure = copied;
+        if (isEditing) {
+            activeFigure = copied;
+        }
     }
 
     public function moveLayer(fig: DisplayObject, at: Int) {
