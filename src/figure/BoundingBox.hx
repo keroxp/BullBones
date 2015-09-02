@@ -41,19 +41,19 @@ class BoundingBox {
         .beginStroke(color)
         .drawRoundRect(0.5,0.5,bounds.width,bounds.height,0)
         .endStroke();
-        drawCorner(mLTCorner,0,0);
-        drawCorner(mRTCorner,bounds.width,0);
-        drawCorner(mLBCorner,0,bounds.height);
-        drawCorner(mRBCorner,bounds.width,bounds.height);
+        drawCorner(mLTCorner,-cornerRadius,-cornerRadius);
+        drawCorner(mRTCorner,bounds.width-cornerRadius,-cornerRadius);
+        drawCorner(mLBCorner,-cornerRadius,bounds.height-cornerRadius);
+        drawCorner(mRBCorner,bounds.width-cornerRadius,bounds.height-cornerRadius);
         shape.setBounds(0,0,bounds.width,bounds.height);
         return this;
     }
     function drawCorner(s: Shape, x: Float, y: Float) {
         s.graphics
-        .setStrokeStyle(0.2)
+        .setStrokeStyle(1)
         .beginStroke(color)
         .beginFill(cornerFillColor)
-        .drawCircle(x,y,cornerRadius);
+        .drawRoundRect(x+0.5,y+0.5,cornerRadius*2,cornerRadius*2,0);
     }
     public function clear() {
         mBox.graphics.clear();
