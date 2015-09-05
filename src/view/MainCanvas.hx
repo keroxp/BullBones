@@ -72,7 +72,6 @@ typedef CopyEvent = {
     MainDebugShape          - メインレイヤのデバッグ用
     BufferShape             - 描画途中の図形
     [FigureLayer]           - 図形レイヤ
-    [ImageLayer]            - 画像レイヤ
   [BackgroundLayer]     - 背景レイヤ
     GridShape               - グリッド
     BackgroundShape         - 背景
@@ -437,6 +436,8 @@ implements ImageEditorListener {
 
     public function moveLayer(fig: DisplayObject, at: Int) {
         mFigureContainer.setChildIndex(fig, at);
+        extendDirtyRectWithDisplayObject(fig);
+        draw();
     }
 
     function thumbnalzieImage(f: ImageFigure) {

@@ -166,14 +166,14 @@ private class LayerItemView extends ViewModel {
             var tgtId = Std.parseInt(tgt.attr("data-layer-id"));
             var from = mLayerView.layerItems.indexOf(self);
             var to = mLayerView.layerItems.firstIndexOf(function(li: LayerItemView) {
-                return li.display.id == display.id;
+                return li.display.id == tgtId;
             });
             if (to < from) {
                 to += 1;
             }
             mLayerView.layerItems.remove(self);
             mLayerView.layerItems.insert(to,self);
-            Main.App.mainCanvas.moveLayer(display, mLayerView.layerItems.indexOf(self));
+            Main.App.mainCanvas.moveLayer(display,to);
         });
         jq.on("dragover", function (e) {
             jq.addClass("dragover");
@@ -194,7 +194,7 @@ private class LayerItemView extends ViewModel {
         jq.attr("data-layer-id", display.id);
         jVisibility.html(display.isVisible() ? "visibility" : "visibility off");
         jThumbnail.attr("src", display.getCacheDataURL());
-        jTitle.html(title);
+        jTitle.html(title+'(${display.parent.getChildIndex(display)})');
         return this;
     }
 }
