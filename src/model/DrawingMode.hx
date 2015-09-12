@@ -24,18 +24,43 @@ class DrawingMode extends BaseModel {
         return get("mirroringType");
     }
 
+    @:isVar public var pivotEnabled(get, set):Bool;
+
+    function get_pivotEnabled():Bool {
+        return get("pivotEnabled");
+    }
+
+    function set_pivotEnabled(value:Bool) {
+        set("pivotEnabled", value);
+        return value;
+    }
+
+    @:isVar public var pivot(get, set):Point;
+
+    function get_pivot():Point {
+        return get("pivot");
+    }
+
+    function set_pivot(value:Point) {
+        set("pivot", value);
+        return value;
+    }
+
     public function new(?opts: DrawingModeOptions) {
         super (opts == null ? {
             isMirroring: false,
-            mirroingType: MirroringType.None
+            mirroingType: MirroringType.None,
+            pivotEnabled: false,
+            pivot: null
         } : opts);
     }
-
 }
 
 typedef DrawingModeOptions = {
     isMirroring: Bool,
-    mirroringType: MirroringType
+    mirroringType: MirroringType,
+    pivotEnabled: Bool,
+    pivot: Point
 }
 
 enum MirroringType {

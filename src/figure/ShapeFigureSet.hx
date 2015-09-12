@@ -32,17 +32,35 @@ class ShapeFigureSet extends Container  {
 
     public function addShape(shape: ShapeFigure) {
         var hasNoChild = getNumChildren() == 0;
+        var ex: Float = 0;
+        var ey: Float = 0;
         if (shape.x < x || hasNoChild) {
+            var diff = x - shape.x;
             x = shape.x;
             shape.x = 0;
+            for (child in children) {
+                child.x += diff;
+                if (ex < child.x) {
+                    ex = child.x;
+                }
+            }
         } else {
             shape.x -= x;
+            ex = shape.x;
         }
         if (shape.y < y || hasNoChild) {
+            var diff = y - shape.y;
             y = shape.y;
             shape.y = 0;
+            for (child in children) {
+                child.y += diff;
+                if (ey < child.y) {
+                    ey = child.y;
+                }
+            }
         } else {
             shape.y -= y;
+            ey = shape.y;
         }
         addChild(shape);
         var b = getBounds();
@@ -50,9 +68,8 @@ class ShapeFigureSet extends Container  {
         if (hasNoChild) {
             b = cb.clone();
         } else {
-            b.extend(shape.x,shape.y,cb.width,cb.height);
+            b.extend(ex,ey,cb.width,cb.height);
         }
-        trace(b);
         setBounds(0,0,b.width,b.height);
     }
 
