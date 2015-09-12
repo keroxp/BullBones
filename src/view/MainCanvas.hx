@@ -1,4 +1,5 @@
 package view;
+import figure.FigureType;
 import figure.ShapeFigureSet;
 import model.DrawingMode.MirroringType;
 import model.DrawingMode;
@@ -229,8 +230,6 @@ implements ImageEditorListener {
         return value;
     }
 
-    public var drawingMode(default, null): DrawingMode = new DrawingMode();
-
     function onChangeEditing (m, value: Bool) {
         if (value) {
             activeFigure = mFigureContainer.children.findLast(function(e: DisplayObject) { return e.visible; });
@@ -350,11 +349,11 @@ implements ImageEditorListener {
 //        mBrushCircle.x = p.x;
 //        mBrushCircle.y = p.y;
     }
-    public function extendDirtyRect(x: Float, y: Float, width: Float = 0, height: Float = 0) {
+    public function extendDirtyRect(gx: Float, gy: Float, width: Float = 0, height: Float = 0) {
         if (mDirtyRect == null) {
-            mDirtyRect = new Rectangle(x,y,width,height);
+            mDirtyRect = new Rectangle(gx,gy,width,height);
         } else {
-            mDirtyRect.extend(x,y,width,height);
+            mDirtyRect.extend(gx,gy,width,height);
         }
     }
     public function extendDirtyRectWithRect(r: Rectangle) {
@@ -516,7 +515,7 @@ implements ImageEditorListener {
     }
 
     public function onImageEditorChange(editor: ImageEditor):Void {
-        if (activeFigure.isImageFigure()) {
+        if (activeFigure.type() == FigureType.Image) {
             var image: ImageFigure = cast activeFigure;
             image.setFilterAsync(editor.createFilter())
             .done(function(img: ImageElement) {
@@ -654,7 +653,7 @@ implements ImageEditorListener {
 
     function getPopupItmes (fig: DisplayObject): Array<PopupItem> {
         var ret: Array<PopupItem> = [];
-        if (fig.isImageFigure()) {
+        if (fig.type() == FigureType.Image) {
             var hide = new PopupItem("隠す",function(p) {
                 thumbnalzieImage(cast fig);
                 var i = mFigureContainer.getChildIndex(fig)-1;
@@ -691,9 +690,9 @@ implements ImageEditorListener {
                         drawFuzzyPointGraph(f.points[0],0);
                     }
                     mDrawingFigure = f;
-                    if (drawingMode.isMirroring) {
+                    if (Main.App.drawingMode.isMirroring) {
                         mMirrorFigure = f.clone();
-                        switch (drawingMode.mirroringType) {
+                        switch (Main.App.drawingMode.mirroringType) {
                             case MirroringType.None: {}
                             case MirroringType.Line: {
 
@@ -757,7 +756,7 @@ implements ImageEditorListener {
         if (!isExporting) {
             if (!isEditing) {
                 var fp = mFgContainer.globalToLocal(e.x,e.y);
-                var pb = mBrushCircle.getTransformedBounds().clone();
+                var pb = mBrushCircle.getTransformedBounds();
                 var bw = Main.App.model.brush.width*scale/2;
                 mBrushCircle.x = ~~(fp.x+0.5-bw);
                 mBrushCircle.y = ~~(fp.y+0.5-bw);
@@ -784,12 +783,22 @@ implements ImageEditorListener {
                     if (mDrawingFigure != null) {
                         mDrawingFigure.addPoint(p_local_main.x,p_local_main.y);
                         var b = Main.App.model.brush;
-                        if (drawingMode.isMirroring) {
-                            var isPoint = drawingMode.mirroringType == MirroringType.Point;
-                            var pivY = isPoint ? e.y-e.startY : 0;
-                            var prevPivY = isPoint ? e.y-e.prevY : 0;
-                            var m = mMainContainer.globalToLocal(e.x - (e.x-e.startX)*2,e.y - pivY);
-                            var mp = mMainContainer.globalToLocal(e.prevX - (e.prevX-e.startX)*2,e.prevY - pivY);
+                        if (Main.App.drawingMode.isMirroring) {
+                            var isPoint = Main.App.drawingMode.mirroringType == MirroringType.Point;
+                            var s_p_local_main = mMainContainer.globalToLocal(e.startX,e.startY);
+                            var p_local_main_prev = mMainContainer.globalToLocal(e.prevX,e.prevY);
+                            var pivY = isPoint ? p_local_main.y-s_p_local_main.y : 0;
+                            var prevPivY = isPoint ? p_local_main.y-p_local_main_prev.y : 0;
+                            var m = new Point(
+                                p_local_main.x - (p_local_main.x-s_p_local_main.x)*2,
+                                p_local_main.y - pivY
+                            );
+                            var mp = new Point(
+                                p_local_main_prev.x - (p_local_main_prev.x-s_p_local_main.x)*2,
+                                p_local_main_prev.y - pivY
+                            );
+//                            var m = mMainContainer.globalToLocal(e.x - (e.x-e.startX)*2,e.y - pivY);
+//                            var mp = mMainContainer.globalToLocal(e.prevX - (e.prevX-e.startX)*2,e.prevY - pivY);
                             mMirrorFigure.addPoint(m.x,m.y);
                             mBufferShape.graphics
                             .setStrokeStyle(b.width,"round", "round")
@@ -797,8 +806,8 @@ implements ImageEditorListener {
                             .moveTo(mp.x,mp.y)
                             .curveTo(mp.x,mp.y,m.x,m.y)
                             .endStroke();
-                            extendDirtyRect(mp.x,mp.y);
-                            extendDirtyRect(m.x,m.y);
+                            var gm = mMainContainer.localToGlobal(m.x,m.y);
+                            extendDirtyRect(gm.x,gm.y);
                         }
                         mBufferShape.graphics
                         .setStrokeStyle(b.width,"round", "round")
@@ -806,8 +815,7 @@ implements ImageEditorListener {
                         .moveTo(p_local_main_prev.x,p_local_main_prev.y)
                         .curveTo(p_local_main_prev.x,p_local_main_prev.y,p_local_main.x,p_local_main.y)
                         .endStroke();
-                        extendDirtyRect(p_local_main.x,p_local_main.y);
-                        extendDirtyRect(p_local_main_prev.x,p_local_main_prev.y);
+                        extendDirtyRect(e.x,e.y);
                         toDraw = true;
                     }
                 } else {
@@ -816,7 +824,7 @@ implements ImageEditorListener {
                         activeFigure.x += e.deltaX/scale;
                         activeFigure.y += e.deltaY/scale;
                         mBoundingBox.shape.x += e.deltaX;
-                        mBoundingBox.shape.y += e.deltaY;
+                          mBoundingBox.shape.y += e.deltaY;
                         extendDirtyRectWithDisplayObject(activeFigure,pb);
                         mPopupMenu.dismiss(200);
                         toDraw = true;
@@ -910,12 +918,13 @@ implements ImageEditorListener {
         if (!isExporting) {
             if (!isEditing) {
                 if (mDrawingFigure != null && mDrawingFigure.points.length > 1) {
-                    if (drawingMode.isMirroring) {
+                    if (Main.App.drawingMode.isMirroring) {
                         var set = ShapeFigureSet.createWithShapes([
                             mDrawingFigure.render(),
                             mMirrorFigure.render()
                         ]);
-                        insertFigure(set);
+                        insertFigure(set.render());
+                        extendDirtyRectWithDisplayObject(set, set.getTransformedBounds());
                     } else {
                         mDrawingFigure.calcVertexes();
                         insertFigure(mDrawingFigure.render());
@@ -923,7 +932,6 @@ implements ImageEditorListener {
                     }
                 }
                 toDraw = true;
-                mDrawingFigure = null;
             } else {
                 if (mDragBegan) {
                     drawBoundingBox();

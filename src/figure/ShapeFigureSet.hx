@@ -29,21 +29,35 @@ class ShapeFigureSet extends Container  {
         }
         return ret;
     }
+
     public function addShape(shape: ShapeFigure) {
-        if (shape.parent != null) {
-            var p = shape.parent.localToLocal(shape.x,shape.y,this);
-            shape.x = p.x;
-            shape.y = p.y;
+        var hasNoChild = getNumChildren() == 0;
+        if (shape.x < x || hasNoChild) {
+            x = shape.x;
+            shape.x = 0;
+        } else {
+            shape.x -= x;
+        }
+        if (shape.y < y || hasNoChild) {
+            y = shape.y;
+            shape.y = 0;
+        } else {
+            shape.y -= y;
         }
         addChild(shape);
         var b = getBounds();
         var cb = shape.getBounds();
-        if (b == null) {
+        if (hasNoChild) {
             b = cb.clone();
         } else {
             b.extend(shape.x,shape.y,cb.width,cb.height);
         }
-        setBounds(b.x,b.y,b.width,b.height);
+        trace(b);
+        setBounds(0,0,b.width,b.height);
+    }
+
+    override public function toString():String {
+        return "[ShapeFigureSet]";
     }
 
     public function getShape(index: Int): ShapeFigure {
@@ -56,6 +70,10 @@ class ShapeFigureSet extends Container  {
                 shape.render();
             });
         }
+        var pad = 10;
+        var padded = getTransformedBounds().clone().pad(pad,pad,pad,pad);
+        cache(-pad,-pad,padded.width,padded.height);
+        updateCache();
         return this;
     }
 

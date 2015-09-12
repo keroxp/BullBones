@@ -1,4 +1,5 @@
 package view;
+import figure.FigureType;
 import util.Log;
 import createjs.easeljs.DisplayObject;
 import cv.ImageWrap.AspectPolicy;
@@ -53,7 +54,7 @@ class ImageEditorView extends ViewModel {
     private var mThumbData: ImageData;
     private var mImage: ImageFigure;
     public function onactiveFigureChange (canvas: MainCanvas, value: DisplayObject) {
-        if (value != null && value.isImageFigure() && value != mImage) {
+        if (value != null && value.type() == FigureType.Image && value != mImage) {
             var fig: ImageFigure = cast value;
             mThumbData = fig.imageWrap.getResizedImageData(220,100,AspectPolicy.AspectToFit);
             mImage = fig;

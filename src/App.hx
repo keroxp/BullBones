@@ -1,5 +1,7 @@
 package ;
 
+import figure.FigureType;
+import model.DrawingMode;
 import view.LayerView;
 import createjs.easeljs.DisplayObject;
 import cv.ImageWrap;
@@ -28,6 +30,7 @@ typedef OnFileLoadListenr = ImageWrap -> Void
 
 class App extends BackboneEvents implements BrushEditorListener {
     public var model(default, null): AppModel;
+    public var drawingMode(default, null): DrawingMode;
     private var jModalLoading: JQuery;
     private var jSearchButton: JQuery;
     private var jBrushButton: JQuery;
@@ -53,6 +56,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     public function new(attr: Dynamic) {
         super();
         this.model = new AppModel(attr);
+        this.drawingMode = new DrawingMode();
         if (window.location.href.indexOf("http://localhost:8000") == 0) {
             this.model.isDebug = true;
         }
@@ -85,7 +89,7 @@ class App extends BackboneEvents implements BrushEditorListener {
                 jEditButton.toggleClass("editing", value);
             });
             listenTo(mainCanvas, "change:activeFigure", function (c: MainCanvas, value: DisplayObject) {
-                if (value != null && value.isImageFigure()) {
+                if (value != null && value.type() == FigureType.Image) {
                     jImageButton.show();
                 } else {
                     jImageButton.hide();
@@ -140,6 +144,15 @@ class App extends BackboneEvents implements BrushEditorListener {
             var jUndoButton: JQuery = new JQuery("#undoButton").on(click, function(e: MouseEvent) {
                 mainCanvas.undo();
             });
+            var jRedoButton: JQuery = new JQuery("#redoButton").on(click, function(e: MouseEvent) {
+                mainCanvas.redo();
+            });
+            var jLineSymmetryButton: JQuery = new JQuery("#lineSymmetryButton");
+            jLineSymmetryButton.on(click, function(e: MouseEvent) {
+                drawingMode.isMirroring = !drawingMode.isMirroring;
+                drawingMode.mirroringType = MirroringType.Line;
+                jLineSymmetryButton.toggleClass("editing", drawingMode.isMirroring);
+            });
             // Layer
             jLayerButton = new JQuery("#layerButton").on(click, function(e: MouseEvent) {
                layerView.jq.toggle();
@@ -151,9 +164,6 @@ class App extends BackboneEvents implements BrushEditorListener {
                 } else if (jUndoButton.data("enabled") == false && val == 1) {
                     jUndoButton.attr("data-enabled", "true");
                 }
-            });
-            var jRedoButton: JQuery = new JQuery("#redoButton").on(click, function(e: MouseEvent) {
-                mainCanvas.redo();
             });
             listenTo(model, "change:redoStackSize", function (m,val:Int) {
                 if (val == 0) {

@@ -194,7 +194,7 @@ private class LayerItemView extends ViewModel {
         jq.attr("data-layer-id", display.id);
         jVisibility.html(display.isVisible() ? "visibility" : "visibility off");
         jThumbnail.attr("src", display.getCacheDataURL());
-        jTitle.html(title+'(${display.parent.getChildIndex(display)})');
+        jTitle.html(title);
         return this;
     }
 }

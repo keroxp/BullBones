@@ -114,11 +114,11 @@ html(lang='ja')
                 label(for='imageAlpha') 透明度
                 input#imageAlpha(type='range', min='0', max='100', value='100')
         #belowbar
-          #layerInputGroup.inputGroup
+          .inputGroup
             .inner.z-depth-1
               a#layerButton(title="レイヤーを表示", data-enabled="true")
                 i.small.material-icons layers
-          #otherInputGroup.inputGroup
+          .inputGroup
             .inner.z-depth-1
               a(href="/about",target="_blank",title="BullBonesについて")
                 i.small.material-icons info_outline
@@ -135,7 +135,11 @@ html(lang='ja')
                 i.small.material-icons undo
               a#redoButton(title="やり直す",data-enabled="false")
                 i.small.material-icons redo
-          #editModeInputGroup.inputGroup
+          .inputGroup
+            .inner.z-depth-1
+              a#lineSymmetryButton(title="線対称モード",data-enabled="true")
+                i.small.material-icons flip
+          .inputGroup
             .inner.z-depth-1
               a#editModeButton(title="編集モードへ",data-enabled="true")              
                 i.small.material-icons mode_edit

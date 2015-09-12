@@ -24,13 +24,18 @@ class DrawingMode extends BaseModel {
         return get("mirroringType");
     }
 
-    public function new() {
-        super ({
+    public function new(?opts: DrawingModeOptions) {
+        super (opts == null ? {
             isMirroring: false,
             mirroingType: MirroringType.None
-        });
+        } : opts);
     }
 
+}
+
+typedef DrawingModeOptions = {
+    isMirroring: Bool,
+    mirroringType: MirroringType
 }
 
 enum MirroringType {
