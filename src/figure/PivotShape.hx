@@ -1,30 +1,41 @@
 package figure;
+import geometry.Scalar;
+import geometry.Scalar;
+import geometry.Scalar;
 import util.BrowserUtil;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;
 class PivotShape extends Shape {
-    public var coreRadius: Float;
+    public var coreRadius(default, null): Scalar;
+    public var totalRadius(default, null): Scalar;
     public function new(coreRadius: Float = 6) {
         super();
-        this.coreRadius = coreRadius;
+        trace(coreRadius);
+        this.coreRadius = new Scalar(coreRadius);
+        this.totalRadius = this.coreRadius + 5;
+    }
+    public function adjustPivot(pivX: Float, pivY: Float) {
+        x = pivX - totalRadius.toFloat();
+        y = pivY - totalRadius.toFloat();
     }
     public function render() {
-        var cen = coreRadius+5;
-        inline function size (float: Float) return float*BrowserUtil.window.devicePixelRatio;
+        var dpr = BrowserUtil.window.devicePixelRatio;
+        var rad = totalRadius;
+        var crad = coreRadius;
         this.graphics
         .beginFill("#455a64")
-        .drawCircle(cen,cen,size(cen))
+        .drawCircle(rad,rad,rad)
         .endFill()
         .beginFill("#e3f2fd")
-        .drawCircle(cen,cen,size(cen-1))
+        .drawCircle(rad,rad,totalRadius-1)
         .endFill()
         .beginFill("#fff")
-        .drawCircle(cen,cen,size(coreRadius+2))
+        .drawCircle(rad,rad,coreRadius+2)
         .endFill()
         .beginFill("#2979ff")
-        .drawCircle(cen,cen,size(coreRadius))
+        .drawCircle(rad,rad,crad)
         .endFill();
-        setBounds(0,0,size(cen*2),size(cen*2));
+        setBounds(0,0,rad*2,rad*2);
     }
 
     override public function toString(): String {

@@ -1,5 +1,6 @@
 package figure;
 
+import geometry.Scalar;
 import util.BrowserUtil;
 import geometry.Vertex;
 import createjs.easeljs.Rectangle;
@@ -28,7 +29,7 @@ class ShapeFigure extends Shape {
     // 色
     public var color: String = "#000000";
     // 描画の点の半径
-    public var width: Float = 2;
+    public var width: Scalar = Scalar.valueOf(2);
 
     public function new(x: Float, y: Float) {
         super();
@@ -194,9 +195,8 @@ class ShapeFigure extends Shape {
         // render
         var s = transformedPoints[0];
         var e = transformedPoints[transformedPoints.length-1];
-        var dpr = BrowserUtil.window.devicePixelRatio;
         graphics.clear();
-        graphics.setStrokeStyle(width*dpr,"round",1).beginStroke(color);
+        graphics.setStrokeStyle(width,"round",1).beginStroke(color);
         graphics.moveTo(xx(s.x),yy(s.y));
         if (Main.App.model.brush.supplemnt) {
             // 平均係数
@@ -224,18 +224,18 @@ class ShapeFigure extends Shape {
         if (Main.App.model.isDebug) {
             graphics
             .beginFill("blue")
-            .drawCircle(xx(s.x),yy(s.y),3*dpr)
-            .drawCircle(xx(e.x),yy(e.y),3*dpr)
+            .drawCircle(xx(s.x),yy(s.y),Scalar.valueOf(3))
+            .drawCircle(xx(e.x),yy(e.y),Scalar.valueOf(3))
             .endFill();
             for (vec in vertexes) {
-                graphics.setStrokeStyle(3*dpr).beginStroke("red");
-                graphics.drawCircle(xx(vec.point.x),yy(vec.point.y),5*dpr);
+                graphics.setStrokeStyle(Scalar.valueOf(3)).beginStroke("red");
+                graphics.drawCircle(xx(vec.point.x),yy(vec.point.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
             var cp = getClosedPoint();
             if (cp != null) {
-                graphics.setStrokeStyle(3*dpr).beginStroke("pink");
-                graphics.drawCircle(xx(cp.x),yy(cp.y),5*dpr);
+                graphics.setStrokeStyle(Scalar.valueOf(3)).beginStroke("pink");
+                graphics.drawCircle(xx(cp.x),yy(cp.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
         }
