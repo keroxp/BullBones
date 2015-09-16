@@ -261,9 +261,10 @@ implements ImageEditorListener {
     }
 
     var scale(get,never): Float;
-    function get_scale():Float {
-        return Main.App.model.zoom.scale;
-    }
+    inline function get_scale():Float return Main.App.model.zoom.scale;
+
+    var dpr(get,never): Float;
+    inline function get_dpr(): Float return window.devicePixelRatio;
 
     function invalidate () {
         drawBackground();
@@ -284,7 +285,7 @@ implements ImageEditorListener {
         mStageDebugShape.graphics.clear();
         if (Main.App.model.isDebug) {
             mStageDebugShape.graphics
-            .beginStroke("red").setStrokeStyle(1)
+            .beginStroke("red").setStrokeStyle(1*dpr)
             .drawRect(mDirtyRect.x+2,mDirtyRect.y+2,mDirtyRect.width-2,mDirtyRect.height-2);
         }
         Reflect.setField(mStage,"drawRect",mDirtyRect.union(mPrevDirtyRect).pad(5,5,5,5));
@@ -295,7 +296,7 @@ implements ImageEditorListener {
     function drawFuzzyPointGraph (p: FuzzyPoint, i: Int) {
         if (i == 0) {
             mFuzzySketchGraph.graphics.clear();
-            mFuzzySketchGraph.graphics.setStrokeStyle(1).beginStroke("red").moveTo(0,mCanvas.height);
+            mFuzzySketchGraph.graphics.setStrokeStyle(1*dpr).beginStroke("red").moveTo(0,mCanvas.height);
         }
         mFuzzySketchGraph.graphics.lineTo(i*3, mCanvas.height-p.velocity/3);
     }
@@ -312,7 +313,7 @@ implements ImageEditorListener {
     function drawGrid (deltaX: Float = 0, deltaY: Float = 0) {
         mGrid.graphics
         .clear()
-        .setStrokeStyle(1,0)
+        .setStrokeStyle(1*dpr,0)
         .beginStroke("#fff");
         var i: Float = cast vGridUnit;
         var w = vGridUnit*vGridDivision*scale;
@@ -360,9 +361,9 @@ implements ImageEditorListener {
         var w = Main.App.model.brush.width*scale;
         mBrushCircle.graphics
         .clear()
-        .setStrokeStyle(1,"round", "round")
+        .setStrokeStyle(1*dpr,"round", "round")
         .beginStroke(mPressed ? "#2196F3" : "#000")
-        .drawCircle(w/2+1,w/2+1,w/2)
+        .drawCircle(w/2+1,w/2+1,w/2*dpr)
         .endStroke();
         mBrushCircle.cache(0,0,w+2,w+2);
         mBrushCircle.updateCache();
@@ -568,12 +569,19 @@ implements ImageEditorListener {
     }
 
     function resizeCanvas () {
-        var w: Float = window.innerWidth;
-        var h: Float = window.innerHeight;
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        var d = dpr;
         this.jq.attr({
-            width : w,
-            height: h
+            width : Math.round(w * d),
+            height: Math.round(h * d)
         });
+        this.jq.css({
+            width: w+"px",
+            height: h+"px"
+        });
+//        mStage.scaleX = 1/d;
+//        mStage.scaleY = 1/d;
         invalidate();
         Log.d("onWindowChange"+w+","+h);
     }
@@ -657,19 +665,22 @@ implements ImageEditorListener {
 
     function showPopupMenu () {
         if (!isExporting && activeFigure != null) {
+            var d = dpr;
             var p = mMainContainer.localToGlobal(
                 activeFigure.x,
                 activeFigure.y
             );
+            p.x /= d;
+            p.y /= d;
             var margin = 20;
-            var b = activeFigure.getTransformedBounds().scale(scale,scale);
+            var b = activeFigure.getTransformedBounds().scale(scale,scale).scale(1/d,1/d);
             var w = mPopupMenu.jq.outerWidth();
             var h = mPopupMenu.jq.outerHeight();
             var x = p.x+(b.width-w)*0.5;
             var y = p.y-h-margin;
             var dir = "bottom";
             var o = mMainContainer.globalToLocal(0,0);
-            if (p.y < h && mCanvas.height-h < p.y+b.height) {
+            if (p.y < h && jq.outerHeight()-h < p.y+b.height) {
                 dir = "top";
                 y = p.y+b.height*0.5;
             } else {
@@ -857,7 +868,7 @@ implements ImageEditorListener {
 //                            var mp = mMainContainer.globalToLocal(e.prevX - (e.prevX-e.startX)*2,e.prevY - pivY);
                             mMirrorFigure.addPoint(m.x,m.y);
                             mBufferShape.graphics
-                            .setStrokeStyle(b.width,"round", "round")
+                            .setStrokeStyle(b.width*dpr,"round", "round")
                             .beginStroke(b.color)
                             .moveTo(mp.x,mp.y)
                             .curveTo(mp.x,mp.y,m.x,m.y)
@@ -866,7 +877,7 @@ implements ImageEditorListener {
                             extendDirtyRect(gm.x,gm.y);
                         }
                         mBufferShape.graphics
-                        .setStrokeStyle(b.width,"round", "round")
+                        .setStrokeStyle(b.width*dpr,"round", "round")
                         .beginStroke(b.color)
                         .moveTo(p_local_main_prev.x,p_local_main_prev.y)
                         .curveTo(p_local_main_prev.x,p_local_main_prev.y,p_local_main.x,p_local_main.y)

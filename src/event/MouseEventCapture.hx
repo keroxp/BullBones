@@ -40,18 +40,18 @@ class MouseEventCapture {
     }
     private function getClientX(e: UIEvent): Float {
         if (BrowserUtil.isBrowser()) {
-            return Reflect.getProperty(e,"clientX") ;
+            return Reflect.getProperty(e,"clientX") * BrowserUtil.window.devicePixelRatio;
         } else {
             var te: TouchEvent = cast e;
-            return te.touches.item(0).clientX;
+            return te.touches.item(0).clientX * BrowserUtil.window.devicePixelRatio;
         }
     }
     private function getClientY(e: UIEvent): Float {
         if (BrowserUtil.isBrowser()) {
-            return Reflect.getProperty(e,"clientY");
+            return Reflect.getProperty(e,"clientY") * BrowserUtil.window.devicePixelRatio;
         } else {
             var te: TouchEvent = cast e;
-            return te.touches.item(0).clientY;
+            return te.touches.item(0).clientY * BrowserUtil.window.devicePixelRatio;
         }
     }
     private function down(e: UIEvent): MouseEventCapture {

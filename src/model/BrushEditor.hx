@@ -1,4 +1,5 @@
 package model;
+import util.BrowserUtil;
 class BrushEditor {
     public var thickness: Int = 255;
     public var alpha: Float = 1.0;

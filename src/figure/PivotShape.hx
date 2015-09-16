@@ -1,4 +1,5 @@
 package figure;
+import util.BrowserUtil;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;
 class PivotShape extends Shape {
@@ -9,20 +10,21 @@ class PivotShape extends Shape {
     }
     public function render() {
         var cen = coreRadius+5;
+        inline function size (float: Float) return float*BrowserUtil.window.devicePixelRatio;
         this.graphics
         .beginFill("#455a64")
-        .drawCircle(cen,cen,cen)
+        .drawCircle(cen,cen,size(cen))
         .endFill()
         .beginFill("#e3f2fd")
-        .drawCircle(cen,cen,cen-1)
+        .drawCircle(cen,cen,size(cen-1))
         .endFill()
         .beginFill("#fff")
-        .drawCircle(cen,cen,coreRadius+2)
+        .drawCircle(cen,cen,size(coreRadius+2))
         .endFill()
         .beginFill("#2979ff")
-        .drawCircle(cen,cen,coreRadius)
+        .drawCircle(cen,cen,size(coreRadius))
         .endFill();
-        setBounds(0,0,cen*2,cen*2);
+        setBounds(0,0,size(cen*2),size(cen*2));
     }
 
     override public function toString(): String {
