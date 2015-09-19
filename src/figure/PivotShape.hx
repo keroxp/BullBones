@@ -10,9 +10,8 @@ class PivotShape extends Shape {
     public var totalRadius(default, null): Scalar;
     public function new(coreRadius: Float = 6) {
         super();
-        trace(coreRadius);
         this.coreRadius = new Scalar(coreRadius);
-        this.totalRadius = this.coreRadius + 5;
+        this.totalRadius = this.coreRadius.addf(5);
     }
     public function adjustPivot(pivX: Float, pivY: Float) {
         x = pivX - totalRadius.toFloat();
@@ -20,17 +19,17 @@ class PivotShape extends Shape {
     }
     public function render() {
         var dpr = BrowserUtil.window.devicePixelRatio;
-        var rad = totalRadius;
-        var crad = coreRadius;
+        var rad = totalRadius.toFloat();
+        var crad = coreRadius.toFloat();
         this.graphics
         .beginFill("#455a64")
         .drawCircle(rad,rad,rad)
         .endFill()
         .beginFill("#e3f2fd")
-        .drawCircle(rad,rad,totalRadius-1)
+        .drawCircle(rad,rad,totalRadius.subf(1))
         .endFill()
         .beginFill("#fff")
-        .drawCircle(rad,rad,coreRadius+2)
+        .drawCircle(rad,rad,coreRadius.addf(2))
         .endFill()
         .beginFill("#2979ff")
         .drawCircle(rad,rad,crad)

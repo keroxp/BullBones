@@ -278,7 +278,7 @@ implements ImageEditorListener {
     private var mPrevDirtyRect: Rectangle = new Rectangle();
     public function draw (clearAll: Bool = false) {
         if (!clearAll && mDirtyRect == null) return;
-        var pad = Main.App.model.brush.width + 10;
+        var pad = Main.App.model.brush.width.addf(10);
         if (clearAll) {
             mDirtyRect = new Rectangle(0,0,mCanvas.width,mCanvas.height);
         }
@@ -352,7 +352,7 @@ implements ImageEditorListener {
         }
     }
     function drawBrushCircle () {
-        var w = Main.App.model.brush.width*scale;
+        var w = Main.App.model.brush.width.toFloat()*scale;
         mBrushCircle.graphics
         .clear()
         .setStrokeStyle(Scalar.valueOf(1),"round", "round")

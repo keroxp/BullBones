@@ -4,59 +4,49 @@ import util.BrowserUtil;
 /*
     Retina対応のためdevicePixelRatioを加算したFloat
  */
-abstract Scalar(Float) from Float to Float {
-    public static inline function valueOf(float: Float): Float return new Scalar(float);
+abstract Scalar(Float) {
+    public static inline function valueOf(float: Float): Scalar return new Scalar(float);
     public inline function new(value: Float, scale: Bool = true) {
-        this = conv(value, scale);
+        this = scale ? conv(value) : value;
     }
-    private inline function conv(value: Float, flag: Bool): Float {
-        return flag ? value * BrowserUtil.dpr : value;
+    private static function conv(value: Float): Float {
+        return value * BrowserUtil.dpr;
     }
-
-    @:to
-    public inline function toInt(): Int return Std.int(this);
 
     @:to
     public inline function toFloat(): Float return this;
 
-    @:op(A+B) @:commutive
+    @:to
+    public inline function toInt(): Int return Std.int(this);
+
+    private inline function toScalar(): Scalar return new Scalar(toFloat(), false);
+
+    @:op(A+B)
     public static function add(lhd: Scalar, rhd: Scalar): Scalar {
         return new Scalar(lhd.toFloat()+rhd.toFloat(), false);
     }
 
-    @:op(A-B) @:commutive
+    @:op(A-B)
     public static function sub(lhd: Scalar, rhd: Scalar): Scalar {
         return new Scalar(lhd.toFloat()-rhd.toFloat(), false);
     }
 
-    @:op(A*B) @:commutive
+    @:op(A*B)
     public static function mul(lhd: Scalar, rhd: Scalar): Scalar {
         return new Scalar(lhd.toFloat()*rhd.toFloat(), false);
     }
 
-    @:op(A/B) @:commutive
+    @:op(A/B)
     public static function div(lhd: Scalar, rhd: Scalar): Scalar {
         return new Scalar(lhd.toFloat()/rhd.toFloat(), false);
     }
 
-    @:op(A+B) @:commutive
-    public static function addFloat(lhd: Scalar, rhd: Float): Scalar {
-        return lhd+new Scalar(rhd);
+    public function addf(rhd: Float): Scalar {
+        return new Scalar(toFloat()+conv(rhd), false);
     }
 
-    @:op(A-B) @:commutive
-    public static function subFloat(lhd: Scalar, rhd: Float): Scalar {
-        return lhd-new Scalar(rhd);
-    }
-
-    @:op(A*B) @:commutive
-    public static function mulFloat(lhd: Scalar, rhd: Float): Scalar {
-        return lhd*new Scalar(rhd);
-    }
-
-    @:op(A/B) @:commutive
-    public static function divFloat(lhd: Scalar, rhd: Float): Scalar {
-        return lhd/new Scalar(rhd);
+    public function subf(rhd: Float): Scalar {
+        return new Scalar(toFloat()-conv(rhd), false);
     }
 
 }
