@@ -1,4 +1,7 @@
 package view;
+import util.BrowserUtil;
+import geometry.Scalar;
+import geometry.Scalar;
 import model.BrushEditor;
 import js.html.CanvasRenderingContext2D;
 import js.html.CanvasElement;
@@ -20,6 +23,8 @@ class BrushEditorView extends ViewModel {
     public function new(j: JQuery) {
         super(j);
         mCanvas = cast jq.find("#brushPreviewCanvas").get()[0];
+        mCanvas.width *= cast BrowserUtil.dpr;
+        mCanvas.height *= cast BrowserUtil.dpr;
         mContext = mCanvas.getContext2d();
         jSupplementInput = jq.find("#supplementInput");
         if (Main.App.model.brush.supplemnt) {
@@ -59,7 +64,7 @@ class BrushEditorView extends ViewModel {
     private function updateBrush (e: Event) {
         var brush  = new BrushEditor();
         brush.thickness = thick();
-        brush.width = width();
+        brush.width = Scalar.valueOf(width());
         brush.alpha = alpha();
         brush.supplemnt = suppl();
         Main.App.model.brush = brush;

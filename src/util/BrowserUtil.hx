@@ -1,13 +1,14 @@
 package util;
+import js.html.Window;
 import js.html.Document;
 import js.Browser;
-import js.html.DOMWindow;
 class BrowserUtil {
     private static function ua (): String {
         return window.navigator.userAgent.toLowerCase();
     }
-    public static var window: DOMWindow =  Browser.window;
+    public static var window: Window =  Browser.window;
     public static var document: Document = Browser.document;
+    public static var dpr: Float = window.devicePixelRatio;
 
     public static function isMobile () {
         return !isBrowser();

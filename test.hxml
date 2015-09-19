@@ -1,0 +1,8 @@
+-lib createjs
+-lib jQueryExtern
+-cp src
+-cp lib
+-cp tests
+-main TestMain
+-debug
+-js tests/test.js

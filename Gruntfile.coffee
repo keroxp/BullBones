@@ -16,6 +16,13 @@ module.exports = (grunt) ->
         tasks: [
           "haxe:build"
         ]
+      haxeTest:
+        files: [
+          "tests/**/*.hx"
+        ]
+        tasks: [
+          "haxe:test"
+        ]
       stylus:
         files: [
           "public/styl/*.styl"
@@ -45,6 +52,14 @@ module.exports = (grunt) ->
         classpath: ["lib","src"]
         misc: ["-debug"]
         output: "public/js/main.js"
+      test:
+        main: "TestMain"
+        libs: [
+          "createjs"
+          "jQueryExtern"
+        ]
+        classpath: ["lib","src","tests"]
+        output: "tests/test.js"
     stylus:
       build:
         files:
@@ -86,4 +101,4 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks "grunt-bower-concat"
   grunt.registerTask "build", ["bower_concat", "stylus", "copy"]
   grunt.registerTask "dest", ["build", "uglify", "cssmin"]
-  grunt.registerTask "default", ["haxe", "build", "watch"]
+  grunt.registerTask "default", ["haxe", "build", "watch:haxe"]
