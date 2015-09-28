@@ -852,7 +852,7 @@ implements ImageEditorListener {
                                 .setStrokeStyle(b.width,"round", "round")
                                 .beginStroke(b.color)
                                 .moveTo(mp.x,mp.y)
-                                .curveTo(mp.x,mp.y,m.x,m.y)
+                                .lineTo(m.x,m.y)
                                 .endStroke();
                                 var gm = mMainContainer.localToGlobal(m.x,m.y);
                                 extendDirtyRect(gm.x,gm.y);
@@ -861,7 +861,7 @@ implements ImageEditorListener {
                             .setStrokeStyle(b.width,"round", "round")
                             .beginStroke(b.color)
                             .moveTo(p_local_main_prev.x,p_local_main_prev.y)
-                            .curveTo(p_local_main_prev.x,p_local_main_prev.y,p_local_main.x,p_local_main.y)
+                            .lineTo(p_local_main.x,p_local_main.y)
                             .endStroke();
                             extendDirtyRect(e.x,e.y);
                         }

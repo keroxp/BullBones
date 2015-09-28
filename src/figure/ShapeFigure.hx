@@ -192,32 +192,52 @@ class ShapeFigure extends Shape {
     private var isFirstRendering = true;
     public function render (): ShapeFigure {
         if (points.length < 2) return this;
-        // render
         var s = transformedPoints[0];
         var e = transformedPoints[transformedPoints.length-1];
         graphics.clear();
-        graphics.setStrokeStyle(width,"round",1).beginStroke(color);
+        graphics.setStrokeStyle(width,"round","round").beginStroke(color);
         graphics.moveTo(xx(s.x),yy(s.y));
-        if (Main.App.model.brush.supplemnt) {
-            // 平均係数
-            var m = supplementLength;
-            for (i in m-1...transformedPoints.length) {
-                var avp = new Point();
-                var seg: Array<FuzzyPoint> = transformedPoints.slice(i-m+1,i+1);
-                for (p in seg){
-                    avp.x += p.x;
-                    avp.y += p.y;
-                }
-                var x = avp.x/m;
-                var y = avp.y/m;
-                graphics.lineTo(xx(x),yy(y));
-            }
-            var e = transformedPoints[transformedPoints.length-1];
-            graphics.lineTo(xx(e.x),yy(e.y));
+        if (points.length == 2) {
+            graphics.lineTo(xx(e.x), yy(e.y));
+            graphics.endStroke();
         } else {
-            for (i in 1...transformedPoints.length) {
-                var p = transformedPoints[i];
-                graphics.lineTo(xx(p.x),yy(p.y));
+            if (Main.App.model.brush.supplemnt) {
+                var m = supplementLength;
+                for (i in m-1...transformedPoints.length) {
+                    var avp = new Point();
+                    var seg: Array<FuzzyPoint> = transformedPoints.slice(i-m+1,i+1);
+                    for (p in seg){
+                        avp.x += p.x;
+                        avp.y += p.y;
+                    }
+                    var x = avp.x/m;
+                    var y = avp.y/m;
+                    graphics.lineTo(xx(x),yy(y));
+                }
+                var e = transformedPoints[transformedPoints.length-1];
+                graphics.lineTo(xx(e.x),yy(e.y));
+            } else {
+                var i = 1;
+                while (i < transformedPoints.length-2) {
+                    var p = transformedPoints[i];
+                    var n = transformedPoints[i+1];
+                    var c = (p.x+n.x)*.5;
+                    var d = (p.y+n.y)*.5;
+                    graphics.quadraticCurveTo(
+                        xx(p.x),
+                        yy(p.y),
+                        xx(c),
+                        yy(d)
+                    );
+                    i = i+1|0;
+                }
+                // last 2 points
+                graphics.quadraticCurveTo(
+                    xx(transformedPoints[i].x),
+                    yy(transformedPoints[i].y),
+                    xx(transformedPoints[i+1].x),
+                    yy(transformedPoints[i+1].y)
+                );
             }
         }
         graphics.endStroke();
@@ -245,9 +265,12 @@ class ShapeFigure extends Shape {
             y = mBounds.y;
             isFirstRendering = false;
         }
-        var pad = 10;
-        var padded = mBounds.clone().pad(pad,pad,pad,pad);
-        cache(-pad,-pad,padded.width,padded.height);
+        var pad = width.toFloat();
+        cache(
+            -pad,-pad,
+            mBounds.width+pad*2,
+            mBounds.height+pad*2
+        );
         updateCache();
         return this;
     }
