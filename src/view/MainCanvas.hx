@@ -290,6 +290,8 @@ implements ImageEditorListener {
                     console.warn(tag+": spend "+t+" ms");
                 }
             ');
+        } else {
+            untyped __js__('func.apply(this, args || [])');
         }
     }
     public function draw (clearAll: Bool = false) {
