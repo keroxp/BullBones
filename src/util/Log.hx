@@ -12,4 +12,7 @@ class Log {
     public static inline function l(msg: Dynamic) {
         BrowserUtil.window.console.log(msg);
     }
+    public static inline function w(msg: Dynamic) {
+        BrowserUtil.window.console.warn(msg);
+    }
 }

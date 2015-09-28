@@ -1,5 +1,6 @@
 package figure;
 
+import protocol.Clonable;
 import geometry.Scalar;
 import util.BrowserUtil;
 import geometry.Vertex;
@@ -9,38 +10,49 @@ import geometry.Vector2D;
 import geometry.FuzzyPoint;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;
+using util.ArrayUtil;
 
 class ShapeFigure extends Shape {
-    // 図形を構成する点（スケールは反映されてない）
+    public static var DEFAULT_COLOR = "#000000";
+    public static var DEFAULT_WIDTH = Scalar.valueOf(2);
+    // non-scaled points
     public var points(default, null): Array<FuzzyPoint> = new Array<FuzzyPoint>();
-    // 図形を構成する点（スケール反映済み）
+    // scaled-points
     public var transformedPoints(default, null) : Array<FuzzyPoint> = new Array<FuzzyPoint>();
-    // 頂点っぽい点
     public var vertexes(default, null): Array<Vertex> = new Array<Vertex>();
-    // 補完係数
     public var supplementLength = 5;
-    // 直線フラグ
     private var isLine: Bool = false;
-    // 図形のbounds
+    // local bounding box
     private var mBounds: Rectangle;
-    // 内部的なスケール値
+    // local scale
     public var shapeScaleX(default,null): Float = 1.0;
     public var shapeScaleY(default,null): Float = 1.0;
-    // 色
-    public var color: String = "#000000";
-    // 描画の点の半径
-    public var width: Scalar = Scalar.valueOf(2);
+    public var color: String = DEFAULT_COLOR;
+    public var width: Scalar = DEFAULT_WIDTH;
 
-    public function new(x: Float, y: Float) {
+    public function new() {
         super();
-        addPoint(x,y);
     }
 
+    public function recycle() {
+        shapeScaleX = 1.0;
+        shapeScaleY = 1.0;
+        supplementLength = 5;
+        points.clear();
+        transformedPoints.clear();
+        vertexes.clear();
+        color = DEFAULT_COLOR;
+        width = DEFAULT_WIDTH;
+        isLine = false;
+        mBounds.reset();
+        setTransform();
+        uncache();
+    }
     override public function clone(): ShapeFigure {
-        var ret = new ShapeFigure(points[0].x,points[0].y);
-        ret.points = points.map(function(p: FuzzyPoint) { return p.clone(); });
-        ret.transformedPoints = transformedPoints.map(function(p: FuzzyPoint) { return p.clone(); });
-        ret.vertexes = vertexes.map(function(vtx: Vertex) { return vtx.clone(); });
+        var ret = new ShapeFigure();
+        ret.points = points.cloneArray();
+        ret.transformedPoints = transformedPoints.cloneArray();
+        ret.vertexes = vertexes.cloneArray();
         ret.shapeScaleX = shapeScaleX;
         ret.shapeScaleY = shapeScaleY;
         ret.color = color;
@@ -50,7 +62,7 @@ class ShapeFigure extends Shape {
         ret.mBounds = mBounds.clone();
         var _clone = Reflect.field(this, "_cloneProps");
         ret = Reflect.callMethod(this, _clone,[ret]);
-        // easeljs.DisplayObject#cloneはboundsをdeep copyしないので自前で上書きする
+        // do depp copy _bounds because easeljs.DisplayObject#clone does not :(
         Reflect.setField(ret, "_bounds", getBounds().clone());
         return ret.render();
     }
@@ -60,22 +72,22 @@ class ShapeFigure extends Shape {
     }
 
     private static var CLOSE_THRESH: Float = 20*20;
-    public function getClosedPoint (): Point {
+    private static var sTempPoint: Point = new Point();
+    public function getClosedPoint (dest: Point): Bool {
         var last = transformedPoints.length;
         var pts = transformedPoints;
         for (i in 0...2) {
             for (j in last-2...last) {
                  if (pts[i].rawDistance(pts[j]) < CLOSE_THRESH) {
-                     return new Point(
-                        (pts[i].x+pts[j].x)/2,
-                        (pts[i].y+pts[j].y)/2
-                     );
+                     dest.x = (pts[i].x+pts[j].x)*.5;
+                     dest.y = (pts[i].y+pts[j].y)*.5;
+                     return true;
                  }
             }
         }
-        return null;
+        return false;
     }
-    // 頂点っぽい点を見つける
+    // find points that is like vertex
     public function calcVertexes () {
         var pts = transformedPoints;
         vertexes = [];
@@ -119,7 +131,7 @@ class ShapeFigure extends Shape {
             transformedPoints.push(fp);
         } else {
             var fp = new FuzzyPoint(x,y,points[points.length-1]);
-            // 同じ位置は追加しない
+            // don't apend point that is very close to last
             if (fp.rawDistance(points[points.length-1]) > 0) {
                 points.push(fp);
                 transformedPoints.push(fp);
@@ -252,14 +264,14 @@ class ShapeFigure extends Shape {
                 graphics.drawCircle(xx(vec.point.x),yy(vec.point.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
-            var cp = getClosedPoint();
-            if (cp != null) {
+            if (getClosedPoint(sTempPoint)) {
                 graphics.setStrokeStyle(Scalar.valueOf(3)).beginStroke("pink");
-                graphics.drawCircle(xx(cp.x),yy(cp.y),Scalar.valueOf(5));
+                graphics.drawCircle(xx(sTempPoint.x),yy(sTempPoint.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
         }
-        // 最初のレンダリングの際のみ、shapeのtlanslationを合わせる
+        // Only first rendering, adjust x and y axis with local bounds.
+        // it is nesessary because just calling drawXX mehthod does not define actual bounds.
         if (isFirstRendering) {
             x = mBounds.x;
             y = mBounds.y;
