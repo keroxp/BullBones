@@ -1,4 +1,5 @@
 package figure;
+import util.CursorUtil;
 import geometry.Scalar;
 import createjs.easeljs.Rectangle;
 import geometry.Point;
@@ -14,6 +15,10 @@ typedef Corner = {
     isTop: Bool
 }
 class BoundingBox {
+    private static var CORNER_LT = {isLeft: true, isTop: true};
+    private static var CORNER_RT = {isLeft: false, isTop: true};
+    private static var CORNER_LB = {isLeft: true, isTop: false};
+    private static var CORNER_RB = {isLeft: false, isTop: false};
     public var shape(default, null): Container;
     var mLTCorner: Shape;
     var mRTCorner: Shape;
@@ -82,25 +87,23 @@ class BoundingBox {
         }
         if (isLeft(x)) {
             if (isTop(y)) {
-                return {isLeft: true, isTop: true};
+                return CORNER_LT;
             } else if (isBottom(y)) {
-                return {isLeft: true, isTop: false};
+                return CORNER_LB;
             }
         }else if (isRight(x)) {
             if (isTop(y)) {
-                return {isLeft: false, isTop: true};
+                return CORNER_RT;
             } else if (isBottom(y)) {
-                return {isLeft: false, isTop: false};
+                return CORNER_RB;
             }
         }
         return null;
     }
 
     public static function getPointerCSS(corner: Corner): String {
-        if (corner == null) return "pointer";
-        var a = corner.isTop ? "n" : "s";
-        var b = corner.isLeft ? "w" : "e";
-        return a+b+"-resize";
+        if (corner == null) return CursorUtil.POINTER;
+        return CursorUtil.resizeCursor(corner.isLeft,corner.isTop);
     }
 
 }

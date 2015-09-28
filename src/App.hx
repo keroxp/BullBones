@@ -116,7 +116,7 @@ class App extends BackboneEvents implements BrushEditorListener {
                 mainCanvas.isEditing = false;
                 searchView.toggle();
             });
-            var click = BrowserUtil.isMobile() ? "touchstart" : "click";
+            var click = BrowserUtil.isMobile ? "touchstart" : "click";
             // ブラシボタン
             var brushButton = new JQuery("#brushButton");
             brushButton.on(click, function(e: MouseEvent) {
@@ -194,7 +194,7 @@ class App extends BackboneEvents implements BrushEditorListener {
             // hide loading
             haxe.Timer.delay(function() {
                 jModalLoading.fadeOut(700, function(){
-                    if (this.model.isDebug || !BrowserUtil.isBrowser()) {
+                    if (this.model.isDebug || !BrowserUtil.isBrowser) {
                         modalView.openOnce(ModalView.ADD_TO_HOMESCREEN);
                     }
                 });

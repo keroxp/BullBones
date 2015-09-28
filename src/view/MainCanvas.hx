@@ -1,4 +1,5 @@
 package view;
+import util.CursorUtil;
 import js.html.Performance;
 import geometry.Scalar;
 import geometry.Scalar;
@@ -158,6 +159,7 @@ implements ImageEditorListener {
         mBgContainer.addChild(mGrid);
 
         mFgContainer.addChild(mBoundingBox.shape);
+        mBrushCircle.visible = false;
         mFgContainer.addChild(mBrushCircle);
         mFgContainer.addChild(mFuzzySketchGraph);
         mSymmetryPivotShape.render();
@@ -593,8 +595,6 @@ implements ImageEditorListener {
             width: w+"px",
             height: h+"px"
         });
-//        mStage.scaleX = 1/d;
-//        mStage.scaleY = 1/d;
         invalidate();
         Log.d("onWindowChange"+w+","+h);
     }
@@ -794,7 +794,7 @@ implements ImageEditorListener {
                     jq.css("cursor", mCurrentPointerCSS = "move");
                 }
                 case CanvasEventState.Grabbing: {
-                    jq.css("cursor",mCurrentPointerCSS = BrowserUtil.grabbingCursor());
+                    jq.css("cursor",mCurrentPointerCSS = CursorUtil.grabbingCursor());
                 }
                 case CanvasEventState.Scaling(corner): {
                     mDisplayCommand = new DisplayCommand(activeFigure, this);
@@ -812,6 +812,7 @@ implements ImageEditorListener {
     private var mCurrentPointerCSS: String;
     private static var MOVED_THRESH = 2*2;
     function updateBrushCircle(e: MouseEventCapture) {
+        mBrushCircle.visible = true;
         var fp = mFgContainer.globalToLocal(e.x,e.y);
         var pb = mBrushCircle.getTransformedBounds();
         var bw = Main.App.model.brush.width.toFloat()*scale/2;
@@ -821,7 +822,7 @@ implements ImageEditorListener {
     }
     function onMouseMove (e: MouseEventCapture) {
         var toDraw = false;
-        if (!BrowserUtil.isBrowser()) {
+        if (!BrowserUtil.isBrowser) {
             e.srcEvent.preventDefault();
         }
         var p_local_main = mMainContainer.globalToLocal(e.x,e.y);
@@ -830,13 +831,13 @@ implements ImageEditorListener {
             if (!mPressed) {
                 var nextCursor = mCurrentPointerCSS;
                 if (!isEditing) {
-                    if (mCurrentPointerCSS != "none") {
-                        nextCursor = "none";
+                    if (mCurrentPointerCSS != CursorUtil.NONE) {
+                        nextCursor = CursorUtil.NONE;
                     }
                     if (Main.App.drawingMode.pivotEnabled) {
                         var p_local_fg = mFgContainer.globalToLocal(e.x,e.y);
                         if (mSymmetryPivotShape.hitTest(p_local_fg.x,p_local_fg.y)) {
-                            nextCursor = "move";
+                            nextCursor = CursorUtil.MOVE;
                         }
                     }
                     updateBrushCircle(e);
@@ -845,10 +846,10 @@ implements ImageEditorListener {
                         var c = mBoundingBox.hitsCorner(p_local_main.x,p_local_main.y);
                         if (c != null) {
                             nextCursor = BoundingBox.getPointerCSS(c);
-                        } else if (mCurrentPointerCSS != "move" && activeFigure.getTransformedBounds().containsPoint(p_local_main.x,p_local_main.y)){
-                            nextCursor = "move";
-                        } else if (mCurrentPointerCSS != BrowserUtil.grabCursor()) {
-                            nextCursor = BrowserUtil.grabCursor();
+                        } else if (mCurrentPointerCSS != CursorUtil.MOVE && activeFigure.getTransformedBounds().containsPoint(p_local_main.x,p_local_main.y)){
+                            nextCursor = CursorUtil.MOVE;
+                        } else if (mCurrentPointerCSS != CursorUtil.grabCursor()) {
+                            nextCursor = CursorUtil.grabCursor();
                         }
                     }
                 }
@@ -926,41 +927,41 @@ implements ImageEditorListener {
                             mPopupMenu.dismiss(200);
                         }
                         case Scaling(corner): {
-                            var tBounds = activeFigure.getTransformedBounds().clone();
+                            activeFigure.getTransformedBounds().copy(sTempRect);
                             inline function doScaleX (width: Float) {
-                                var sx = width/tBounds.width;
+                                var sx = width/sTempRect.width;
                                 if (0 < sx) {
                                     activeFigure.scaleX *= sx;
                                 }
                             }
                             inline function doScaleY (height: Float) {
-                                var sy = height/tBounds.height;
+                                var sy = height/sTempRect.height;
                                 if (0 < sy) {
                                     activeFigure.scaleY *= sy;
                                 }
                             }
                             inline function constrainScaleX () {
-                                if (p_local_main.x < tBounds.right()) {
-                                    if (tBounds.right() < p_local_main_prev.x) {
-                                        doScaleX(tBounds.right()-e.x);
+                                if (p_local_main.x < sTempRect.right()) {
+                                    if (sTempRect.right() < p_local_main_prev.x) {
+                                        doScaleX(sTempRect.right()-e.x);
                                     } else {
-                                        doScaleX(tBounds.width-e.deltaX/scale);
+                                        doScaleX(sTempRect.width-e.deltaX/scale);
                                     }
                                     activeFigure.x = p_local_main.x;
                                 }
                             }
                             inline function constrainScaleY () {
-                                if (p_local_main.y < tBounds.bottom()) {
-                                    if (tBounds.bottom() < p_local_main_prev.y) {
-                                        doScaleY(tBounds.bottom()-p_local_main.y);
+                                if (p_local_main.y < sTempRect.bottom()) {
+                                    if (sTempRect.bottom() < p_local_main_prev.y) {
+                                        doScaleY(sTempRect.bottom()-p_local_main.y);
                                     } else {
-                                        doScaleY(tBounds.height-e.deltaY/scale);
+                                        doScaleY(sTempRect.height-e.deltaY/scale);
                                     }
                                     activeFigure.y = p_local_main.y;
                                 }
                             }
-                            corner.isLeft? constrainScaleX() : doScaleX(tBounds.width+e.deltaX/scale);
-                            corner.isTop? constrainScaleY() : doScaleY(tBounds.height+e.deltaY/scale);
+                            corner.isLeft? constrainScaleX() : doScaleX(sTempRect.width+e.deltaX/scale);
+                            corner.isTop? constrainScaleY() : doScaleY(sTempRect.height+e.deltaY/scale);
                             if (modifiedByShift()) {
                                 var d = activeFigure;
                                 var s = (d.scaleX+d.scaleY)*0.5;
@@ -969,13 +970,13 @@ implements ImageEditorListener {
                                 var w = oBounds.width*s;
                                 var h = oBounds.height*s;
                                 if (corner.isLeft) {
-                                    d.x = tBounds.right()-w;
+                                    d.x = sTempRect.right()-w;
                                 }
                                 if (corner.isTop) {
-                                    d.y = tBounds.bottom()-h;
+                                    d.y = sTempRect.bottom()-h;
                                 }
                             }
-                            extendDirtyRectWithDisplayObject(activeFigure,tBounds);
+                            extendDirtyRectWithDisplayObject(activeFigure,sTempRect);
                             drawBoundingBox();
                         }
                         default: {}
@@ -1038,7 +1039,7 @@ implements ImageEditorListener {
                             mBoundingBox.clear();
                             drawBoundingBox();
                         }
-                        jq.css("cursor", BrowserUtil.grabCursor());
+                        jq.css("cursor", CursorUtil.grabCursor());
                     }
                     case CanvasEventState.Scaling: {
                         activeFigure.asShapeFigure(function(shape: ShapeFigure) {
@@ -1075,7 +1076,7 @@ implements ImageEditorListener {
         mBufferShape.graphics.clear();
         mPressed = false;
         mEventState = Idle;
-        mBrushCircle.visible = BrowserUtil.isBrowser() && !isEditing;
+        mBrushCircle.visible = BrowserUtil.isBrowser && !isEditing;
         drawBrushCircle();
         trigger(ON_CANVAS_MOUSEUP_EVENT);
         if (toDraw) requestDraw("onMouseUp", draw);

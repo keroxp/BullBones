@@ -10,13 +10,14 @@ class BrowserUtil {
     public static var document: Document = Browser.document;
     public static var dpr: Float = window.devicePixelRatio;
 
-    public static function isMobile () {
-        return !isBrowser();
+    private static function _isMobile () {
+        return !_isBrowser();
     }
-    public static function isBrowser() {
-        return !isMobilePhone() && !isTablet();
+    private static function _isBrowser() {
+        return !_isMobilePhone() && !_isTablet();
     }
-    public static function isMobilePhone () {
+
+    private static function _isMobilePhone () {
         var u = ua();
         return (u.indexOf("windows") != -1 && u.indexOf("phone") != -1)
         || u.indexOf("iphone") != -1
@@ -25,7 +26,7 @@ class BrowserUtil {
         || (u.indexOf("firefox") != -1 && u.indexOf("mobile") != -1)
         || u.indexOf("blackberry") != -1;
     }
-    public static function isTablet () {
+    private static function _isTablet () {
         var u = ua();
         return (u.indexOf("windows") != -1 && u.indexOf("touch") != -1)
         || u.indexOf("ipad") != -1
@@ -35,20 +36,18 @@ class BrowserUtil {
         || u.indexOf("silk") != -1
         || u.indexOf("playbook") != -1;
     }
-    public static function isFireFox () {
+    private static function _isFireFox () {
         return ua().indexOf("firefox") > -1;
     }
-    public static function isWebKit() {
+    private static function _isWebKit() {
         return ua().indexOf("webkit") > -1;
     }
-    public static function grabCursor(): String {
-        if (isFireFox()) return "-moz-grab";
-        if (isWebKit()) return "-webkit-grab";
-        return "pointer";
-    }
-    public static function grabbingCursor(): String {
-        if (isFireFox()) return "-moz-grabbing";
-        if (isWebKit()) return "-webkit-grabbing";
-        return "pointer";
-    }
+
+    public static var isMobilePhone: Bool = _isMobilePhone();
+    public static var isMobile: Bool = _isMobile();
+    public static var isBrowser: Bool = _isBrowser();
+    public static var isTablet: Bool = _isTablet();
+    public static var isFireFox: Bool = _isFireFox();
+    public static var isWebKit: Bool = _isWebKit();
+
 }

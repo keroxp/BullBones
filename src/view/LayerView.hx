@@ -152,7 +152,7 @@ private class LayerItemView extends ViewModel {
         });
         jq.on("dragstart", function(e) {
             jq.addClass("dragging");
-            if (BrowserUtil.isFireFox()) {
+            if (BrowserUtil.isFireFox) {
                 // FireFoxではこれをしないとドラッグイベントが始まらない
                 var oe: DragEvent = e.originalEvent;
                 oe.dataTransfer.setData("text", "dummy");
