@@ -1,4 +1,5 @@
 package figure;
+import geometry.Scalar;
 import createjs.easeljs.Rectangle;
 import geometry.Point;
 import event.MouseEventCapture;
@@ -19,7 +20,7 @@ class BoundingBox {
     var mLBCorner: Shape;
     var mRBCorner: Shape;
     var mBox: Shape;
-    public var cornerRadius = 5.0;
+    public var cornerRadius = Scalar.valueOf(5.0);
     public var color = "#000";
     public var cornerFillColor = "#fff";
     public function new() {
@@ -37,14 +38,15 @@ class BoundingBox {
     }
     public function render (bounds: Rectangle): BoundingBox {
         mBox.graphics
-        .setStrokeStyle(1)
+        .setStrokeStyle(Scalar.valueOf(1))
         .beginStroke(color)
         .drawRoundRect(0.5,0.5,bounds.width,bounds.height,0)
         .endStroke();
-        drawCorner(mLTCorner,-cornerRadius,-cornerRadius);
-        drawCorner(mRTCorner,bounds.width-cornerRadius,-cornerRadius);
-        drawCorner(mLBCorner,-cornerRadius,bounds.height-cornerRadius);
-        drawCorner(mRBCorner,bounds.width-cornerRadius,bounds.height-cornerRadius);
+        var cr = cornerRadius.toFloat();
+        drawCorner(mLTCorner,-cr,-cr);
+        drawCorner(mRTCorner,bounds.width-cr,-cr);
+        drawCorner(mLBCorner,-cr,bounds.height-cr);
+        drawCorner(mRBCorner,bounds.width-cr,bounds.height-cr);
         shape.setBounds(0,0,bounds.width,bounds.height);
         return this;
     }
@@ -53,7 +55,7 @@ class BoundingBox {
         .setStrokeStyle(1)
         .beginStroke(color)
         .beginFill(cornerFillColor)
-        .drawRoundRect(x+0.5,y+0.5,cornerRadius*2,cornerRadius*2,0);
+        .drawRoundRect(x+0.5,y+0.5,cornerRadius.toFloat()*2,cornerRadius.toFloat()*2,0);
     }
     public function clear() {
         mBox.graphics.clear();
@@ -64,7 +66,7 @@ class BoundingBox {
     }
 
     public function hitsCorner(x: Float, y: Float): Corner {
-        var hw = cornerRadius*2;
+        var hw = cornerRadius.toFloat()*2;
         var bounds = shape.getTransformedBounds();
         inline function isLeft (_x: Float): Bool {
             return bounds.x-hw <= _x && _x <= bounds.x+hw;
