@@ -1,11 +1,10 @@
 package figure;
 
-import protocol.Clonable;
+import performance.ObjectPool;
 import geometry.Scalar;
-import util.BrowserUtil;
+import geometry.Point;
 import geometry.Vertex;
 import createjs.easeljs.Rectangle;
-import createjs.easeljs.Point;
 import geometry.Vector2D;
 import geometry.FuzzyPoint;
 import createjs.easeljs.Shape;
@@ -15,6 +14,18 @@ using util.ArrayUtil;
 class ShapeFigure extends Shape {
     public static var DEFAULT_COLOR = "#000000";
     public static var DEFAULT_WIDTH = Scalar.valueOf(2);
+    private static var LINE_LENGTH_THRESH: Float = 150*150;
+    private static var LINE_RECOGNIZE_THRESH = 20;
+    private static var PI_1_5 = Math.PI/1.5;
+    private static var PI_2 = Math.PI/2;
+    private static var PI_2_5 = Math.PI/2.5;
+    private static var PI_3 = Math.PI/3;
+    private static var PI_3_5 = Math.PI/3.5;
+    private static var PI_4 = Math.PI/4;
+    private static var PI_4_5 = Math.PI/4.5;
+    private static var CLOSE_THRESH: Float = 20*20;
+    private static var sPointPool: ObjectPool<Point> = new ObjectPool<Point>([new Point()]);
+    private static var sVectorPool: ObjectPool<Vector2D> = new ObjectPool<Vector2D>([new Vector2D(), new Vector2D()]);
     // non-scaled points
     public var points(default, null): Array<FuzzyPoint> = new Array<FuzzyPoint>();
     // scaled-points
@@ -48,6 +59,7 @@ class ShapeFigure extends Shape {
         setTransform();
         uncache();
     }
+
     override public function clone(): ShapeFigure {
         var ret = new ShapeFigure();
         ret.points = points.cloneArray();
@@ -71,8 +83,6 @@ class ShapeFigure extends Shape {
         return '[ShapeFigure id="${id}"]';
     }
 
-    private static var CLOSE_THRESH: Float = 20*20;
-    private static var sTempPoint: Point = new Point();
     public function getClosedPoint (dest: Point): Bool {
         var last = transformedPoints.length;
         var pts = transformedPoints;
@@ -97,8 +107,16 @@ class ShapeFigure extends Shape {
                 var cur = pts[i];
                 var prev = pts[i-1];
                 var next = pts[i+1];
-                var a = Vector2D.v(pts[i],pts[i+1]);
-                var b = Vector2D.v(pts[i-1],pts[i]);//
+                var a = sVectorPool.get();
+                a.set(
+                    pts[i+1].x-pts[i].x,
+                    pts[i+1].y-pts[i].y
+                );
+                var b = sVectorPool.get();
+                b.set(
+                    pts[i].x-pts[i-1].x,
+                    pts[i].y-pts[i-1].y
+                );
                 var cos = a.dot(b)/(a.power()*b.power());
                 var rad = Math.acos(cos);
                 if (PI_4_5 < rad && rad < PI_1_5) {
@@ -116,13 +134,6 @@ class ShapeFigure extends Shape {
             }
         }
     }
-    private static var PI_1_5 = Math.PI/1.5;
-    private static var PI_2 = Math.PI/2;
-    private static var PI_2_5 = Math.PI/2.5;
-    private static var PI_3 = Math.PI/3;
-    private static var PI_3_5 = Math.PI/3.5;
-    private static var PI_4 = Math.PI/4;
-    private static var PI_4_5 = Math.PI/4.5;
     public function addPoint (x: Float, y: Float) {
         calcBounds(x,y);
         if (points.length == 0) {
@@ -171,14 +182,6 @@ class ShapeFigure extends Shape {
         }
         setBounds(0,0,r-l,b-t);
     }
-    public function s2e (): Vector2D {
-        var s = points[0];
-        var e = points[points.length-1];
-        return Vector2D.v(s,e);
-    }
-    private static var LINE_LENGTH_THRESH: Float = 150*150;
-    private static var LINE_RECOGNIZE_THRESH = 20;
-
     public function applyScale(sx: Float, sy: Float): ShapeFigure {
         // apply scale
         var px = mBounds.x;
@@ -216,15 +219,13 @@ class ShapeFigure extends Shape {
             if (Main.App.model.brush.supplemnt) {
                 var m = supplementLength;
                 for (i in m-1...transformedPoints.length) {
-                    var avp = new Point();
+                    var avp = sPointPool.get();
                     var seg: Array<FuzzyPoint> = transformedPoints.slice(i-m+1,i+1);
                     for (p in seg){
                         avp.x += p.x;
                         avp.y += p.y;
                     }
-                    var x = avp.x/m;
-                    var y = avp.y/m;
-                    graphics.lineTo(xx(x),yy(y));
+                    graphics.lineTo(xx(avp.x/m),yy(avp.y/m));
                 }
                 var e = transformedPoints[transformedPoints.length-1];
                 graphics.lineTo(xx(e.x),yy(e.y));
@@ -264,9 +265,10 @@ class ShapeFigure extends Shape {
                 graphics.drawCircle(xx(vec.point.x),yy(vec.point.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
-            if (getClosedPoint(sTempPoint)) {
+            var p = sPointPool.get();
+            if (getClosedPoint(p)) {
                 graphics.setStrokeStyle(Scalar.valueOf(3)).beginStroke("pink");
-                graphics.drawCircle(xx(sTempPoint.x),yy(sTempPoint.y),Scalar.valueOf(5));
+                graphics.drawCircle(xx(p.x),yy(p.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
         }

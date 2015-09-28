@@ -1,4 +1,5 @@
 package geometry;
+import performance.Poolable;
 class FuzzyPoint extends Point {
     public var timestamp(default, null): Date;
     public var prev(default,null): FuzzyPoint;
@@ -10,7 +11,7 @@ class FuzzyPoint extends Point {
         }
         return 0;
     }
-    override function clone(): FuzzyPoint {
+    override public function clone(): FuzzyPoint {
         var ret = new FuzzyPoint(x,y,prev);
         ret.timestamp = timestamp;
         return ret;
@@ -20,4 +21,11 @@ class FuzzyPoint extends Point {
         this.timestamp = Date.now();
         this.prev = prev;
     }
+
+    override public function recycle():Void {
+        timestamp = null;
+        prev = null;
+        velocity = 0;
+    }
+
 }

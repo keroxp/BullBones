@@ -1,13 +1,17 @@
 package geometry;
-class Vector2D {
+import performance.Poolable;
+class Vector2D implements Poolable {
     public var dx: Float;
     public var dy: Float;
-    public function new(?dx: Float = 0, ?dy: Float = 0) {
-        this.dx = dx;
-        this.dy = dy;
+    public function new(dx: Float = 0, dy: Float = 0) {
+        set(dx,dy);
     }
     public static function v(from :Point, to:Point): Vector2D {
         return new Vector2D(to.x-from.x,to.y-from.y);
+    }
+    public function set(dx: Float, dy: Float) {
+        this.dx = dx;
+        this.dy = dy;
     }
     public function dot (vec: Vector2D): Float {
         return dx*vec.dx + dy*vec.dy;
@@ -30,4 +34,9 @@ class Vector2D {
     public function normalize (): Vector2D {
         return multiply(power());
     }
+
+    public function recycle():Void {
+        dx = dy = 0;
+    }
+
 }
