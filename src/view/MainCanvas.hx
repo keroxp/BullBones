@@ -208,7 +208,6 @@ implements ImageEditorListener {
             requestDraw("change:pivotEnabled", draw);
         });
         on("change:isEditing", onChangeEditing);
-        Main.App.onFileLoad = onFileLoad;
     }
 
     @:isVar public var activeFigure(get,set):DisplayObject;
@@ -439,7 +438,7 @@ implements ImageEditorListener {
             activeFigure = mFigureContainer.children.last();
         }
         f.asImageFigure(function(imf: ImageFigure) {
-            Main.App.floatingThumbnailView.remove(imf.imageWrap);
+            Main.App.floatingThumbnailView.remove(imf.imageWrap.id);
         });
         requestDraw("deleteFigure",draw);
     }
@@ -480,16 +479,12 @@ implements ImageEditorListener {
     function thumbnalzieImage(f: ImageFigure) {
         f.visible = false;
         var tv = Main.App.floatingThumbnailView;
-        if (!tv.contains(f.imageWrap)) {
-            tv.add(f.imageWrap, function () {
-                f.visible = true;
-                tv.hide(f.imageWrap);
-                extendDirtyRectWithDisplayObject(f);
-                requestDraw("thumbnalzieImage:add", draw);
-            });
-        } else {
-            tv.show(f.imageWrap);
-        }
+        tv.add(f.imageWrap, function () {
+            f.visible = true;
+            tv.remove(f.imageWrap.id);
+            extendDirtyRectWithDisplayObject(f);
+            requestDraw("thumbnalzieImage:add", draw);
+        });
         extendDirtyRectWithDisplayObject(f);
         requestDraw("thumbnalzieImage", draw);
     }
@@ -575,7 +570,7 @@ implements ImageEditorListener {
         insertFigure(im);
     }
 
-    function onFileLoad (img: ImageWrap) {
+    public function onFileLoad (img: ImageWrap) {
         var im = new ImageFigure(img);
         var p =  mMainContainer.globalToLocal(0,0);
         im.x = p.x;

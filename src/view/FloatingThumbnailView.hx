@@ -15,45 +15,30 @@ class FloatingThumbnailView extends ViewModel {
         jq.append(thumb.jq);
         thumbs.push(thumb);
     }
-    function find(img: ImageWrap): FloatingThumbnail {
+    function find(imageId: String): FloatingThumbnail {
         var tgt: FloatingThumbnail = null;
         for (t in thumbs) {
-            if (t.id == img.id) {
+            if (t.imageId == imageId) {
                 tgt = t;
                 break;
             }
         }
         return tgt;
     }
-    public function remove(img: ImageWrap) {
-        var tgt = find(img);
+    public function remove(imageId: String) {
+        var tgt = find(imageId);
         if (tgt != null) {
             tgt.jq.remove();
             thumbs.remove(tgt);
-        }
-    }
-    public function contains(img: ImageWrap): Bool {
-        return find(img) != null;
-    }
-    public function hide(img: ImageWrap) {
-        var tgt = find(img);
-        if (tgt != null) {
-            tgt.jq.hide();
-        }
-    }
-    public function show(img: ImageWrap) {
-        var tgt = find(img);
-        if (tgt != null) {
-            tgt.jq.show();
         }
     }
 }
 
 class FloatingThumbnail extends ViewModel {
     public var jImg: JQuery;
-    public var id: String;
+    public var imageId: String;
     public function new(src: String, id: String) {
-        this.id = id;
+        this.imageId = id;
         var html =
         '<div class="floating-thumb circle z-depth-1">
          </div>';
