@@ -5,7 +5,7 @@ import createjs.easeljs.Rectangle;
 import createjs.easeljs.Point;
 import createjs.easeljs.Shape;
 import createjs.easeljs.Container;
-using util.FigureUtil;
+using figure.Figures;
 using util.RectangleUtil;
 class ShapeFigureSet extends Container  {
     public function new() {

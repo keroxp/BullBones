@@ -51,7 +51,7 @@ import createjs.easeljs.Stage;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;
 using util.ArrayUtil;
-using util.FigureUtil;
+using figure.Figures;
 
 typedef InsertEvent = {
     public var target: DisplayObject;

@@ -25,7 +25,7 @@ import jQuery.JQuery;
 import js.html.MouseEvent;
 import view.SearchView;
 import js.Browser;
-using util.FigureUtil;
+using figure.Figures;
 typedef OnFileLoadListenr = ImageWrap -> Void
 
 class App extends BackboneEvents implements BrushEditorListener {

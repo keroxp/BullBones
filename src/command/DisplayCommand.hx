@@ -1,11 +1,10 @@
 package command;
 import view.MainCanvas;
-import util.FigureUtil;
 import createjs.easeljs.DisplayObject;
 import figure.ShapeFigure;
 import createjs.easeljs.Matrix2D;
 import command.Undoable.ExecType;
-using util.FigureUtil;
+using figure.Figures;
 class DisplayCommand extends FigureCommand
 implements Undoable<DisplayCommand,Dynamic,Void>{
     private var mBeforeAlpha: Float;
