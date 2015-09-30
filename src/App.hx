@@ -99,7 +99,6 @@ class App extends BackboneEvents implements BrushEditorListener {
             brushEditorView.listener = this;
             // 画像エディタ
             imageEditorView = new ImageEditorView(new JQuery("#imageEditorView"));
-            imageEditorView.listener = mainCanvas;
             // ThumbView
             floatingThumbnailView = new FloatingThumbnailView(new JQuery("#floatingThumbnailView"));
             // Zoom
@@ -130,7 +129,7 @@ class App extends BackboneEvents implements BrushEditorListener {
             jImageButton = new JQuery("#imageEditorButton");
             jImageButton.on(click, function(e: MouseEvent) {
                 hidePanels(imageEditorView);
-                imageEditorView.jq.toggle();
+                imageEditorView.toggle();
             });
             // デバッグボタン
             new JQuery("#debugButton").on(click, function (e: MouseEvent){

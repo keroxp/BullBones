@@ -1,8 +1,9 @@
 package view;
+import cv.AspectPolicy;
+import cv.Images;
 import figure.FigureType;
 import util.Log;
 import createjs.easeljs.DisplayObject;
-import cv.ImageWrap.AspectPolicy;
 import js.html.CanvasElement;
 import rollbar.Rollbar;
 import model.ImageEditor;
@@ -11,39 +12,29 @@ import js.html.ImageData;
 import js.html.Event;
 import jQuery.JQuery;
 using figure.Figures;
-interface ImageEditorListener {
-    public function onImageEditorChange (editor: ImageEditor): Void;
-}
 
 class ImageEditorView extends ViewModel {
     private var mCanvas: CanvasElement;
-    private var mEditor: ImageEditor = new ImageEditor();
-    public var listener: ImageEditorListener;
+    private var mAlpha: Float = 1.0;
+    private var mDirty: Bool = false;
     public function new(jq: JQuery) {
         super(jq);
         // img
         mCanvas = cast jq.find("#imageEditorPreviewCanvas").get()[0];
         jq.find("#grayInput").on("change", function(e){
-            mEditor.gray = !mEditor.gray;
-            renderThumb();
-            postOnChange(mEditor);
+            mImage.editor.gray = !mImage.editor.gray;
         });
         jq.find("#lineExtractInput").on("change", function (e) {
-            mEditor.lineExtraction = !mEditor.lineExtraction;
+            mImage.editor.lineExtraction = !mImage.editor.lineExtraction;
             jq.find("#lineExtractInputWrapper").toggle();
-            renderThumb();
-            postOnChange(mEditor);
         });
         jq.find("#lineExtractSwitchInput").on("change", function(e: Event) {
-            mEditor.useLaplacian8 = !mEditor.useLaplacian8;
-            renderThumb();
-            postOnChange(mEditor);
+            mImage.editor.useLaplacian8 = !mImage.editor.useLaplacian8;
         });
         jq.find("#imageAlpha").on("input", function(e) {
-            mEditor.alpha = Std.parseInt(cast new JQuery(e.target).val())/100;
-            renderThumb();
+            mAlpha = Std.parseInt(cast new JQuery(e.target).val())/100;
         }).on("change", function(e) {
-            postOnChange(mEditor);
+            mImage.editor.alpha = mAlpha;
         });
     }
 
@@ -54,34 +45,60 @@ class ImageEditorView extends ViewModel {
     private var mThumbData: ImageData;
     private var mImage: ImageFigure;
     public function onactiveFigureChange (canvas: MainCanvas, value: DisplayObject) {
-        if (value != null && value.type() == FigureType.Image && value != mImage) {
-            var fig: ImageFigure = cast value;
-            mThumbData = fig.imageWrap.getResizedImageData(220,100,AspectPolicy.AspectToFit);
-            mImage = fig;
-        }
-        if (mThumbData != null) {
-            renderThumb();
+        if (value == mImage) return;
+        if (value != null && value.type() == FigureType.Image) {
+            mImage = cast value;
+            listenTo(mImage.editor, "change", reRenderThumb);
+        } else if (mImage != null){
+            stopListening(mImage.editor, "change", reRenderThumb);
+            mImage = null;
+            mThumbData = null;
         }
     }
-    private function renderThumb() {
-        var f = mEditor.createFilter(true);
+
+    public function toggle() {
+        if (jq.css("display") == "none") {
+            open();
+        } else {
+            hide();
+        }
+    }
+    public function open () {
+        mThumbData = Images.getResizedImageData(
+            cast mImage.image,
+            220,100,
+            AspectPolicy.AspectToFit
+        );
+        renderThumb(mThumbData);
+        jq.show();
+    }
+
+    public function hide() {
+        jq.hide();
+        mImage = null;
+        mThumbData = null;
+        var ctx = mCanvas.getContext2d();
+        ctx.clearRect(0,0,220,100);
+    }
+
+    private function reRenderThumb() {
+        var f = mImage.editor.createFilter(true);
         f.applyToImageData(mThumbData).done(function(id: ImageData) {
-            var x = (220-id.width)*0.5;
-            var y = (100-id.height)*0.5;
-            var ctx = mCanvas.getContext2d();
-            ctx.clearRect(0,0,220,100);
-            ctx.globalAlpha = mEditor.alpha;
-            ctx.globalCompositeOperation = "destination-in";
-            ctx.putImageData(id,x,y);
+            renderThumb(id);
         }).fail(function (e) {
             Log.e(e);
             Rollbar.error(e);
         });
+    }
 
+    private function renderThumb (id: ImageData) {
+        var x = (220-id.width)*0.5;
+        var y = (100-id.height)*0.5;
+        var ctx = mCanvas.getContext2d();
+        ctx.clearRect(0,0,220,100);
+        ctx.globalAlpha = mAlpha;
+        ctx.globalCompositeOperation = "destination-in";
+        ctx.putImageData(id,x,y);
     }
-    private function postOnChange (editor: ImageEditor) {
-        if (listener != null) {
-            listener.onImageEditorChange(editor);
-        }
-    }
+
 }

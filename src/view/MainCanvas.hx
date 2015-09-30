@@ -33,7 +33,6 @@ import util.BrowserUtil;
 import js.Browser;
 import figure.ImageFigure;
 import model.ImageEditor;
-import view.ImageEditorView.ImageEditorListener;
 import view.SearchView.SearchResultListener;
 import view.ViewModel;
 import ajax.BingSearch.BingSearchResult;
@@ -90,8 +89,7 @@ enum CanvasEventState {
     BackgroundShape         - 背景
  */
 class MainCanvas extends ViewModel
-implements SearchResultListener
-implements ImageEditorListener {
+implements SearchResultListener {
     private static var sTempRect = new Rectangle();
     private static var sTempPoint = new Point();
     var mStage: Stage;
@@ -413,6 +411,9 @@ implements ImageEditorListener {
         var fun = function(arg) {
             var i = index == null ? mFigureContainer.children.length : index;
             mFigureContainer.addChildAt(f,i);
+            f.asImageFigure(function (imf: ImageFigure) {
+                listenTo(imf.editor, "change", onImageEditorChange);
+            });
             trigger(ON_INSERT_EVENT, {
                 target: f,
                 at: i
@@ -428,6 +429,10 @@ implements ImageEditorListener {
         extendDirtyRectWithDisplayObject(f);
         var fun = function(a) {
             mFigureContainer.removeChild(f);
+            f.asImageFigure(function(imf: ImageFigure) {
+                stopListening(imf.editor, "change", onImageEditorChange);
+                Main.App.floatingThumbnailView.remove(imf.imageWrap.id);
+            });
             trigger(ON_DELETE_EVENT,{
                 target: f
             });
@@ -437,9 +442,6 @@ implements ImageEditorListener {
         if (isEditing) {
             activeFigure = mFigureContainer.children.last();
         }
-        f.asImageFigure(function(imf: ImageFigure) {
-            Main.App.floatingThumbnailView.remove(imf.imageWrap.id);
-        });
         requestDraw("deleteFigure",draw);
     }
 
@@ -557,25 +559,27 @@ implements ImageEditorListener {
                 extendDirtyRectWithDisplayObject(image);
                 requestDraw("onImageEditorChange", draw);
             }).fail(function(e) {
+                Log.e(e);
                 Rollbar.error(e);
             });
         }
     }
 
-    public function onSearchResultLoad(img: ImageWrap, result: BingSearchResult):Void {
-        var im = new ImageFigure(img);
+    function insertImageFiguew(iw: ImageWrap) {
+        var im = new ImageFigure(iw);
         var p =  mMainContainer.globalToLocal(0,0);
         im.x = p.x;
         im.y = p.y;
         insertFigure(im);
+        isEditing = true;
+    }
+
+    public function onSearchResultLoad(img: ImageWrap, result: BingSearchResult):Void {
+        insertImageFiguew(img);
     }
 
     public function onFileLoad (img: ImageWrap) {
-        var im = new ImageFigure(img);
-        var p =  mMainContainer.globalToLocal(0,0);
-        im.x = p.x;
-        im.y = p.y;
-        insertFigure(im);
+        insertImageFiguew(img);
     }
 
     function resizeCanvas () {

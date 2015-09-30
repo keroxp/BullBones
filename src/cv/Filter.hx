@@ -27,7 +27,6 @@ class Filter implements Clonable {
     public function applyToImageData (inImg: ImageData): Promise<ImageData,ErrorEvent,Dynamic> {
         var def = new Deferred<ImageData,ErrorEvent,Dynamic>();
         var worker = new Worker("/worker/filter.js");
-        var canvas = BrowserUtil.document.createElement("canvas");
         worker.onmessage = function (e: MessageEvent) {
             def.resolve(e.data.result);
         }

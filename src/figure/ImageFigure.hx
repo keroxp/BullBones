@@ -1,14 +1,17 @@
 package figure;
+import model.ImageEditor;
 import cv.ImageWrap;
 import deferred.Deferred;
 import deferred.Promise;
 import js.html.ImageElement;
-import cv.ImageUtil;
+import cv.Images;
 import cv.Filter;
 import js.html.ImageData;
 import createjs.easeljs.Bitmap;
 class ImageFigure extends Bitmap {
+    // non-filterd, non-scaled, original image,
     public var imageWrap(default,null): ImageWrap;
+    public var editor: ImageEditor = new ImageEditor();
 
     public function new (img: ImageWrap) {
         super(cast img.image.cloneNode(true));
@@ -38,7 +41,8 @@ class ImageFigure extends Bitmap {
         this.filter = filter;
         var pr = new Deferred<ImageElement,Dynamic,Float>();
         var self = this;
-        filter.applyToImageData(imageWrap.getImageData()).done(function(filtered: ImageData){
+        filter.applyToImageData(Images.getImageData(imageWrap.image))
+        .done(function(filtered: ImageData){
             self.image.onload = function (e) {
                 var w = self.image.width;
                 var h = self.image.height;
@@ -47,11 +51,12 @@ class ImageFigure extends Bitmap {
                 pr.resolve(self.image);
             };
             self.image.onerror = function (e) {
+                trace("hoge");
                 pr.reject(e);
             };
-            self.image.src = ImageUtil.toDataUrl(filtered);
+            self.image.src = Images.toDataUrl(filtered);
         }).fail(function(e) {
-           pr.reject(e);
+            pr.reject(e);
         });
         return pr;
     }
