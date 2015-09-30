@@ -1,5 +1,6 @@
 package ;
 
+import js.Error;
 import figure.FigureType;
 import model.MirroringInfo;
 import view.LayerView;
@@ -9,7 +10,6 @@ import view.ZoomInputView;
 import view.FloatingThumbnailView;
 import util.Log;
 import js.html.DragEvent;
-import js.html.DOMError;
 import js.html.PopStateEvent;
 import util.BrowserUtil;
 import view.ModalView;
@@ -26,7 +26,6 @@ import js.html.MouseEvent;
 import view.SearchView;
 import js.Browser;
 using figure.Figures;
-typedef OnFileLoadListenr = ImageWrap -> Void
 
 class App extends BackboneEvents implements BrushEditorListener {
     public var model(default, null): AppModel;
@@ -48,7 +47,6 @@ class App extends BackboneEvents implements BrushEditorListener {
     public var layerView(default,null): LayerView;
     var window = BrowserUtil.window;
     var document = BrowserUtil.document;
-    public var onFileLoad: OnFileLoadListenr;
     public static var APP_WINDOW_RESIZE_EVENT = "BullBones:APP_WINDOW_RESIZE_EVENT";
     public static var APP_ON_START_EVENT = "BullBones:APP_ON_START";
 
@@ -245,17 +243,19 @@ class App extends BackboneEvents implements BrushEditorListener {
     private function onDrop (e: DragEvent) {
         e.preventDefault();
         e.stopPropagation();
-        Log.d(e);
         var files = e.dataTransfer.files;
         if (files.length > 0) {
             var f = files.item(0);
-            Loader.loadFile(f)
-            .done(function (img: ImageWrap) {
-                if (onFileLoad != null) onFileLoad(img);
-            }).fail(function (e: DOMError) {
-                Log.e(e);
-                Browser.alert("読み込めない形式です");
-            });
+            try {
+                Loader.loadFile(f)
+                .done(function (img: ImageWrap) {
+                    mainCanvas.onFileLoad(img);
+                }).fail(function (e: Error) {
+                    Browser.alert(e);
+                });
+            } catch (err: Error) {
+                Browser.alert(err.message);
+            }
         }
     }
 
