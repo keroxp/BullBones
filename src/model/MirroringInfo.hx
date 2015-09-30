@@ -1,16 +1,16 @@
 package model;
 import createjs.easeljs.Point;
 import model.BaseModel;
-class DrawingMode extends BaseModel {
-    @:isVar public var isMirroring(get, set):Bool;
+class MirroringInfo extends BaseModel {
+    @:isVar public var enabled(get, set):Bool;
 
-    function set_isMirroring(value:Bool) {
-        set("isMirroring", value);
+    function set_enabled(value:Bool) {
+        set("enabled", value);
         return value;
     }
 
-    function get_isMirroring():Bool {
-        return get("isMirroring");
+    function get_enabled():Bool {
+        return get("enabled");
     }
 
     @:isVar public var mirroringType(get, set):MirroringType;
@@ -46,9 +46,13 @@ class DrawingMode extends BaseModel {
         return value;
     }
 
+    public function getMirrorX(x: Float): Float {
+        return x - (x-pivot.x)*2;
+    }
+
     public function new(?opts: DrawingModeOptions) {
         super (opts == null ? {
-            isMirroring: false,
+            enabled: false,
             mirroingType: MirroringType.None,
             pivotEnabled: false,
             pivot: null
@@ -57,7 +61,7 @@ class DrawingMode extends BaseModel {
 }
 
 typedef DrawingModeOptions = {
-    isMirroring: Bool,
+    enabled: Bool,
     mirroringType: MirroringType,
     pivotEnabled: Bool,
     pivot: Point

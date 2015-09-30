@@ -39,7 +39,7 @@ class MouseEventCapture {
     public function new() {
     }
     private function getClientX(e: UIEvent): Float {
-        if (BrowserUtil.isBrowser()) {
+        if (BrowserUtil.isBrowser) {
             return Reflect.getProperty(e,"clientX") * BrowserUtil.window.devicePixelRatio;
         } else {
             var te: TouchEvent = cast e;
@@ -47,7 +47,7 @@ class MouseEventCapture {
         }
     }
     private function getClientY(e: UIEvent): Float {
-        if (BrowserUtil.isBrowser()) {
+        if (BrowserUtil.isBrowser) {
             return Reflect.getProperty(e,"clientY") * BrowserUtil.window.devicePixelRatio;
         } else {
             var te: TouchEvent = cast e;
@@ -76,21 +76,22 @@ class MouseEventCapture {
         srcEvent = e;
         return this;
     }
+
     public function onDown (el: Element,  callback: MouseEventCaptureCallback) {
-        var ev = BrowserUtil.isBrowser() ? "mousedown" : "touchstart";
+        var ev = BrowserUtil.isBrowser ? "mousedown" : "touchstart";
         el.addEventListener(ev, function (e: UIEvent) {
             callback(down(e));
         }, false);
     }
     public function onMove(el: Element, callback: MouseEventCaptureCallback) {
-        var ev = BrowserUtil.isBrowser() ? "mousemove" : "touchmove";
+        var ev = BrowserUtil.isBrowser ? "mousemove" : "touchmove";
         el.addEventListener(ev, function (e: UIEvent) {
             callback(move(e));
         }, false);
     }
 
     public function onUp(el: Element, callback: MouseEventCaptureCallback) {
-        var ev = BrowserUtil.isBrowser() ? "mouseup" : "touchend";
+        var ev = BrowserUtil.isBrowser ? "mouseup" : "touchend";
         el.addEventListener(ev, function (e: UIEvent) {
             callback(up(e));
         }, false);

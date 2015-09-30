@@ -1,4 +1,5 @@
 package util;
+import protocol.Clonable;
 class ArrayUtil {
     public static function findFirst<T>(arr: Array<T>, callback: T -> Bool): T {
         for (i in 0...arr.length) {
@@ -57,5 +58,12 @@ class ArrayUtil {
     }
     public static function last<T>(arr: Array<T>): T {
         return arr[arr.length-1];
+    }
+    public static function cloneArray<T : Clonable>(arr: Array<T>): Array<T> {
+        var ret = new Array<T>();
+        for (v in arr) {
+            ret.push(v.clone());
+        }
+        return ret;
     }
 }

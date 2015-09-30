@@ -1,56 +1,73 @@
 package figure;
 
+import createjs.easeljs.Matrix2D;
+import geometry.Geometries;
+import geometry.Geometries;
+import performance.ObjectPool;
 import geometry.Scalar;
-import util.BrowserUtil;
+import geometry.Point;
 import geometry.Vertex;
 import createjs.easeljs.Rectangle;
-import createjs.easeljs.Point;
 import geometry.Vector2D;
 import geometry.FuzzyPoint;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;
+using util.ArrayUtil;
 
 class ShapeFigure extends Shape {
-    // 図形を構成する点（スケールは反映されてない）
+    public static var DEFAULT_COLOR = "#000000";
+    public static var DEFAULT_WIDTH = Scalar.valueOf(2);
+    private static var LINE_LENGTH_THRESH: Float = 150*150;
+    private static var LINE_RECOGNIZE_THRESH = 20;
+    private static var CLOSE_THRESH: Float = 20*20;
+    private static var sPointPool: ObjectPool<Point> = new ObjectPool<Point>([new Point()]);
+    private static var sVectorPool: ObjectPool<Vector2D> = new ObjectPool<Vector2D>([new Vector2D(), new Vector2D()]);
+    // non-scaled points
     public var points(default, null): Array<FuzzyPoint> = new Array<FuzzyPoint>();
-    // 図形を構成する点（スケール反映済み）
+    // scaled-points
     public var transformedPoints(default, null) : Array<FuzzyPoint> = new Array<FuzzyPoint>();
-    // 頂点っぽい点
     public var vertexes(default, null): Array<Vertex> = new Array<Vertex>();
-    // 補完係数
     public var supplementLength = 5;
-    // 直線フラグ
-    private var isLine: Bool = false;
-    // 図形のbounds
     private var mBounds: Rectangle;
-    // 内部的なスケール値
+    // local scale
     public var shapeScaleX(default,null): Float = 1.0;
     public var shapeScaleY(default,null): Float = 1.0;
-    // 色
-    public var color: String = "#000000";
-    // 描画の点の半径
-    public var width: Scalar = Scalar.valueOf(2);
+    public var color: String = DEFAULT_COLOR;
+    public var width: Scalar = DEFAULT_WIDTH;
 
-    public function new(x: Float, y: Float) {
+    public function new() {
         super();
-        addPoint(x,y);
+    }
+
+    public function recycle() {
+        shapeScaleX = 1.0;
+        shapeScaleY = 1.0;
+        supplementLength = 5;
+        points.clear();
+        transformedPoints.clear();
+        vertexes.clear();
+        color = DEFAULT_COLOR;
+        width = DEFAULT_WIDTH;
+        mBounds.reset();
+        setTransform();
+        uncache();
+        setBounds(0,0,0,0);
     }
 
     override public function clone(): ShapeFigure {
-        var ret = new ShapeFigure(points[0].x,points[0].y);
-        ret.points = points.map(function(p: FuzzyPoint) { return p.clone(); });
-        ret.transformedPoints = transformedPoints.map(function(p: FuzzyPoint) { return p.clone(); });
-        ret.vertexes = vertexes.map(function(vtx: Vertex) { return vtx.clone(); });
+        var ret = new ShapeFigure();
+        ret.points = points.cloneArray();
+        ret.transformedPoints = transformedPoints.cloneArray();
+        ret.vertexes = vertexes.cloneArray();
         ret.shapeScaleX = shapeScaleX;
         ret.shapeScaleY = shapeScaleY;
         ret.color = color;
         ret.width = width;
         ret.supplementLength = supplementLength;
-        ret.isLine = isLine;
         ret.mBounds = mBounds.clone();
         var _clone = Reflect.field(this, "_cloneProps");
         ret = Reflect.callMethod(this, _clone,[ret]);
-        // easeljs.DisplayObject#cloneはboundsをdeep copyしないので自前で上書きする
+        // do depp copy _bounds because easeljs.DisplayObject#clone does not :(
         Reflect.setField(ret, "_bounds", getBounds().clone());
         return ret.render();
     }
@@ -59,23 +76,21 @@ class ShapeFigure extends Shape {
         return '[ShapeFigure id="${id}"]';
     }
 
-    private static var CLOSE_THRESH: Float = 20*20;
-    public function getClosedPoint (): Point {
+    public function getClosedPoint (dest: Point): Bool {
         var last = transformedPoints.length;
         var pts = transformedPoints;
         for (i in 0...2) {
             for (j in last-2...last) {
                  if (pts[i].rawDistance(pts[j]) < CLOSE_THRESH) {
-                     return new Point(
-                        (pts[i].x+pts[j].x)/2,
-                        (pts[i].y+pts[j].y)/2
-                     );
+                     dest.x = (pts[i].x+pts[j].x)*.5;
+                     dest.y = (pts[i].y+pts[j].y)*.5;
+                     return true;
                  }
             }
         }
-        return null;
+        return false;
     }
-    // 頂点っぽい点を見つける
+    // find points that is like vertex
     public function calcVertexes () {
         var pts = transformedPoints;
         vertexes = [];
@@ -85,11 +100,19 @@ class ShapeFigure extends Shape {
                 var cur = pts[i];
                 var prev = pts[i-1];
                 var next = pts[i+1];
-                var a = Vector2D.v(pts[i],pts[i+1]);
-                var b = Vector2D.v(pts[i-1],pts[i]);//
+                var a = sVectorPool.get();
+                a.set(
+                    pts[i+1].x-pts[i].x,
+                    pts[i+1].y-pts[i].y
+                );
+                var b = sVectorPool.get();
+                b.set(
+                    pts[i].x-pts[i-1].x,
+                    pts[i].y-pts[i-1].y
+                );
                 var cos = a.dot(b)/(a.power()*b.power());
                 var rad = Math.acos(cos);
-                if (PI_4_5 < rad && rad < PI_1_5) {
+                if (Geometries.PI_4_5 < rad && rad < Geometries.PI_1_5) {
                     var vtx = new Vertex(cur,rad);
                     var THRESH = 10*10;
                     var isFirst = vertexes.length == 0;
@@ -104,13 +127,6 @@ class ShapeFigure extends Shape {
             }
         }
     }
-    private static var PI_1_5 = Math.PI/1.5;
-    private static var PI_2 = Math.PI/2;
-    private static var PI_2_5 = Math.PI/2.5;
-    private static var PI_3 = Math.PI/3;
-    private static var PI_3_5 = Math.PI/3.5;
-    private static var PI_4 = Math.PI/4;
-    private static var PI_4_5 = Math.PI/4.5;
     public function addPoint (x: Float, y: Float) {
         calcBounds(x,y);
         if (points.length == 0) {
@@ -119,7 +135,7 @@ class ShapeFigure extends Shape {
             transformedPoints.push(fp);
         } else {
             var fp = new FuzzyPoint(x,y,points[points.length-1]);
-            // 同じ位置は追加しない
+            // don't apend point that is very close to last
             if (fp.rawDistance(points[points.length-1]) > 0) {
                 points.push(fp);
                 transformedPoints.push(fp);
@@ -159,14 +175,6 @@ class ShapeFigure extends Shape {
         }
         setBounds(0,0,r-l,b-t);
     }
-    public function s2e (): Vector2D {
-        var s = points[0];
-        var e = points[points.length-1];
-        return Vector2D.v(s,e);
-    }
-    private static var LINE_LENGTH_THRESH: Float = 150*150;
-    private static var LINE_RECOGNIZE_THRESH = 20;
-
     public function applyScale(sx: Float, sy: Float): ShapeFigure {
         // apply scale
         var px = mBounds.x;
@@ -192,32 +200,50 @@ class ShapeFigure extends Shape {
     private var isFirstRendering = true;
     public function render (): ShapeFigure {
         if (points.length < 2) return this;
-        // render
         var s = transformedPoints[0];
         var e = transformedPoints[transformedPoints.length-1];
         graphics.clear();
-        graphics.setStrokeStyle(width,"round",1).beginStroke(color);
+        graphics.setStrokeStyle(width,"round","round").beginStroke(color);
         graphics.moveTo(xx(s.x),yy(s.y));
-        if (Main.App.model.brush.supplemnt) {
-            // 平均係数
-            var m = supplementLength;
-            for (i in m-1...transformedPoints.length) {
-                var avp = new Point();
-                var seg: Array<FuzzyPoint> = transformedPoints.slice(i-m+1,i+1);
-                for (p in seg){
-                    avp.x += p.x;
-                    avp.y += p.y;
-                }
-                var x = avp.x/m;
-                var y = avp.y/m;
-                graphics.lineTo(xx(x),yy(y));
-            }
-            var e = transformedPoints[transformedPoints.length-1];
-            graphics.lineTo(xx(e.x),yy(e.y));
+        if (points.length == 2) {
+            graphics.lineTo(xx(e.x), yy(e.y));
+            graphics.endStroke();
         } else {
-            for (i in 1...transformedPoints.length) {
-                var p = transformedPoints[i];
-                graphics.lineTo(xx(p.x),yy(p.y));
+            if (Main.App.model.brush.supplemnt) {
+                var m = supplementLength;
+                for (i in m-1...transformedPoints.length) {
+                    var avp = sPointPool.get();
+                    var seg = transformedPoints.slice(i-m+1,i+1);
+                    for (p in seg){
+                        avp.x += p.x;
+                        avp.y += p.y;
+                    }
+                    graphics.lineTo(xx(avp.x/m),yy(avp.y/m));
+                }
+                var e = transformedPoints[transformedPoints.length-1];
+                graphics.lineTo(xx(e.x),yy(e.y));
+            } else {
+                var i = 1;
+                while (i < transformedPoints.length-2) {
+                    var p = transformedPoints[i];
+                    var n = transformedPoints[i+1];
+                    var c = (p.x+n.x)*.5;
+                    var d = (p.y+n.y)*.5;
+                    graphics.quadraticCurveTo(
+                        xx(p.x),
+                        yy(p.y),
+                        xx(c),
+                        yy(d)
+                    );
+                    i = i+1|0;
+                }
+                // last 2 points
+                graphics.quadraticCurveTo(
+                    xx(transformedPoints[i].x),
+                    yy(transformedPoints[i].y),
+                    xx(transformedPoints[i+1].x),
+                    yy(transformedPoints[i+1].y)
+                );
             }
         }
         graphics.endStroke();
@@ -232,22 +258,26 @@ class ShapeFigure extends Shape {
                 graphics.drawCircle(xx(vec.point.x),yy(vec.point.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
-            var cp = getClosedPoint();
-            if (cp != null) {
+            var p = sPointPool.get();
+            if (getClosedPoint(p)) {
                 graphics.setStrokeStyle(Scalar.valueOf(3)).beginStroke("pink");
-                graphics.drawCircle(xx(cp.x),yy(cp.y),Scalar.valueOf(5));
+                graphics.drawCircle(xx(p.x),yy(p.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
         }
-        // 最初のレンダリングの際のみ、shapeのtlanslationを合わせる
+        // Only first rendering, adjust x and y axis with local bounds.
+        // it is nesessary because just calling drawXX mehthod does not define actual bounds.
         if (isFirstRendering) {
             x = mBounds.x;
             y = mBounds.y;
             isFirstRendering = false;
         }
-        var pad = 10;
-        var padded = mBounds.clone().pad(pad,pad,pad,pad);
-        cache(-pad,-pad,padded.width,padded.height);
+        var pad = width.toFloat();
+        cache(
+            -pad,-pad,
+            mBounds.width+pad*2,
+            mBounds.height+pad*2
+        );
         updateCache();
         return this;
     }

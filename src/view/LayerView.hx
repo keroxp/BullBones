@@ -7,7 +7,7 @@ import util.BrowserUtil;
 import js.html.DragEvent;
 import jQuery.JQuery;
 using util.ArrayUtil;
-using util.FigureUtil;
+using figure.Figures;
 class LayerView extends ViewModel {
     var jListView: JQuery;
     public var selectedItems(default, null): Array<LayerItemView> = new Array<LayerItemView>();
@@ -152,7 +152,7 @@ private class LayerItemView extends ViewModel {
         });
         jq.on("dragstart", function(e) {
             jq.addClass("dragging");
-            if (BrowserUtil.isFireFox()) {
+            if (BrowserUtil.isFireFox) {
                 // FireFoxではこれをしないとドラッグイベントが始まらない
                 var oe: DragEvent = e.originalEvent;
                 oe.dataTransfer.setData("text", "dummy");

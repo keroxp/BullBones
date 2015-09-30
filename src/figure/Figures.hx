@@ -1,10 +1,10 @@
-package util;
+package figure;
 import js.Error;
 import figure.FigureType;
 import figure.ImageFigure;
 import figure.ShapeFigure;
 import createjs.easeljs.DisplayObject;
-class FigureUtil {
+class Figures {
     public static function type(d: DisplayObject): FigureType {
         var s = d.toString();
         if (s.indexOf("ShapeFigureSet") > 0) {

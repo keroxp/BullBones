@@ -1,7 +1,7 @@
 package ;
 
 import figure.FigureType;
-import model.DrawingMode;
+import model.MirroringInfo;
 import view.LayerView;
 import createjs.easeljs.DisplayObject;
 import cv.ImageWrap;
@@ -25,12 +25,11 @@ import jQuery.JQuery;
 import js.html.MouseEvent;
 import view.SearchView;
 import js.Browser;
-using util.FigureUtil;
+using figure.Figures;
 typedef OnFileLoadListenr = ImageWrap -> Void
 
 class App extends BackboneEvents implements BrushEditorListener {
     public var model(default, null): AppModel;
-    public var drawingMode(default, null): DrawingMode;
     private var jModalLoading: JQuery;
     private var jSearchButton: JQuery;
     private var jBrushButton: JQuery;
@@ -56,7 +55,6 @@ class App extends BackboneEvents implements BrushEditorListener {
     public function new(attr: Dynamic) {
         super();
         this.model = new AppModel(attr);
-        this.drawingMode = new DrawingMode();
         if (window.location.href.indexOf("http://localhost:8000") == 0) {
             this.model.isDebug = true;
         }
@@ -116,7 +114,7 @@ class App extends BackboneEvents implements BrushEditorListener {
                 mainCanvas.isEditing = false;
                 searchView.toggle();
             });
-            var click = BrowserUtil.isMobile() ? "touchstart" : "click";
+            var click = BrowserUtil.isMobile ? "touchstart" : "click";
             // ブラシボタン
             var brushButton = new JQuery("#brushButton");
             brushButton.on(click, function(e: MouseEvent) {
@@ -150,14 +148,14 @@ class App extends BackboneEvents implements BrushEditorListener {
             // 線対称
             var jLineSymmetryButton: JQuery = new JQuery("#lineSymmetryButton");
             jLineSymmetryButton.on(click, function(e: MouseEvent) {
-                drawingMode.isMirroring = !drawingMode.isMirroring;
-                drawingMode.mirroringType = MirroringType.Line;
-                jLineSymmetryButton.toggleClass("editing", drawingMode.isMirroring);
+                mainCanvas.mirroringInfo.enabled = !mainCanvas.mirroringInfo.enabled;
+                mainCanvas.mirroringInfo.mirroringType = MirroringType.Line;
+                jLineSymmetryButton.toggleClass("editing", mainCanvas.mirroringInfo.enabled);
             });
             var jLineSymmetryPivotButton: JQuery = new JQuery("#lineSymmetryPivotButton");
             jLineSymmetryPivotButton.on(click, function(e: MouseEvent) {
-                drawingMode.pivotEnabled = !drawingMode.pivotEnabled;
-                jLineSymmetryPivotButton.toggleClass("editing", drawingMode.pivotEnabled);
+                mainCanvas.mirroringInfo.pivotEnabled = !mainCanvas.mirroringInfo.pivotEnabled;
+                jLineSymmetryPivotButton.toggleClass("editing", mainCanvas.mirroringInfo.pivotEnabled);
             });
             // Layer
             jLayerButton = new JQuery("#layerButton").on(click, function(e: MouseEvent) {
@@ -194,7 +192,7 @@ class App extends BackboneEvents implements BrushEditorListener {
             // hide loading
             haxe.Timer.delay(function() {
                 jModalLoading.fadeOut(700, function(){
-                    if (this.model.isDebug || !BrowserUtil.isBrowser()) {
+                    if (this.model.isDebug || !BrowserUtil.isBrowser) {
                         modalView.openOnce(ModalView.ADD_TO_HOMESCREEN);
                     }
                 });

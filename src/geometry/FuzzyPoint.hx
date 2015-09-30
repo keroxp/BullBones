@@ -10,14 +10,21 @@ class FuzzyPoint extends Point {
         }
         return 0;
     }
-    override function clone(): FuzzyPoint {
+    override public function clone(): FuzzyPoint {
         var ret = new FuzzyPoint(x,y,prev);
         ret.timestamp = timestamp;
         return ret;
     }
-    public function new(x: Float, y: Float, ?prev: FuzzyPoint = null) {
+    public function new(x: Float, y: Float, prev: FuzzyPoint = null) {
         super(x,y);
         this.timestamp = Date.now();
         this.prev = prev;
     }
+
+    override public function recycle():Void {
+        timestamp = null;
+        prev = null;
+        velocity = 0;
+    }
+
 }

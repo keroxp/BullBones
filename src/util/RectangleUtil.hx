@@ -1,4 +1,5 @@
 package util;
+import util.RectangleUtil;
 import createjs.easeljs.Rectangle;
 import geometry.Point;
 using util.RectangleUtil;
@@ -35,10 +36,10 @@ class RectangleUtil {
     private inline static function call(o: Dynamic, method: String, args: Array<Dynamic>): Dynamic {
         return Reflect.callMethod(o, Reflect.field(o, method), args);
     }
-    public static function extend(r: Rectangle, x: Float, y:Float, ?width: Float = 0, ?height:Float = 0):Rectangle {
+    public static function extend(r: Rectangle, x: Float, y:Float, width: Float = 0, height:Float = 0):Rectangle {
         return call(r,"extend",[x,y,width,height]);
     }
-    public static function pad(r: Rectangle, ?top: Float = 0, ?left: Float = 0, ?bottom: Float = 0, ?right: Float = 0):Rectangle {
+    public static function pad(r: Rectangle, top: Float = 0, left: Float = 0, bottom: Float = 0, right: Float = 0):Rectangle {
         return call(r,"pad",[top,left,bottom,right]);
     }
     public static function union(r: Rectangle, rect: Rectangle):Rectangle {
@@ -49,5 +50,8 @@ class RectangleUtil {
     }
     public static function isEmpty(r: Rectangle): Bool {
         return call(r,"isEmpty",[]);
+    }
+    public static function setValues(r: Rectangle, x: Float = 0, y: Float = 0,width: Float = 0, height: Float = 0): Rectangle {
+        return call(r,"setValues", [x,y,width,height]);
     }
 }

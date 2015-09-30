@@ -10,7 +10,7 @@ import figure.ImageFigure;
 import js.html.ImageData;
 import js.html.Event;
 import jQuery.JQuery;
-using util.FigureUtil;
+using figure.Figures;
 interface ImageEditorListener {
     public function onImageEditorChange (editor: ImageEditor): Void;
 }

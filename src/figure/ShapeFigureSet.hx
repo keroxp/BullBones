@@ -1,11 +1,12 @@
 package figure;
+import performance.ObjectPool;
 import util.RectangleUtil;
 import createjs.easeljs.DisplayObject;
 import createjs.easeljs.Rectangle;
 import createjs.easeljs.Point;
 import createjs.easeljs.Shape;
 import createjs.easeljs.Container;
-using util.FigureUtil;
+using figure.Figures;
 using util.RectangleUtil;
 class ShapeFigureSet extends Container  {
     public function new() {
@@ -70,7 +71,6 @@ class ShapeFigureSet extends Container  {
         } else {
             b.extend(ex,ey,cb.width,cb.height);
         }
-        setBounds(0,0,b.width,b.height);
     }
 
     override public function toString():String {
