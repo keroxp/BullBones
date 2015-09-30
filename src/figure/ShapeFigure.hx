@@ -1,5 +1,8 @@
 package figure;
 
+import createjs.easeljs.Matrix2D;
+import geometry.Geometries;
+import geometry.Geometries;
 import performance.ObjectPool;
 import geometry.Scalar;
 import geometry.Point;
@@ -16,13 +19,6 @@ class ShapeFigure extends Shape {
     public static var DEFAULT_WIDTH = Scalar.valueOf(2);
     private static var LINE_LENGTH_THRESH: Float = 150*150;
     private static var LINE_RECOGNIZE_THRESH = 20;
-    private static var PI_1_5 = Math.PI/1.5;
-    private static var PI_2 = Math.PI/2;
-    private static var PI_2_5 = Math.PI/2.5;
-    private static var PI_3 = Math.PI/3;
-    private static var PI_3_5 = Math.PI/3.5;
-    private static var PI_4 = Math.PI/4;
-    private static var PI_4_5 = Math.PI/4.5;
     private static var CLOSE_THRESH: Float = 20*20;
     private static var sPointPool: ObjectPool<Point> = new ObjectPool<Point>([new Point()]);
     private static var sVectorPool: ObjectPool<Vector2D> = new ObjectPool<Vector2D>([new Vector2D(), new Vector2D()]);
@@ -32,8 +28,6 @@ class ShapeFigure extends Shape {
     public var transformedPoints(default, null) : Array<FuzzyPoint> = new Array<FuzzyPoint>();
     public var vertexes(default, null): Array<Vertex> = new Array<Vertex>();
     public var supplementLength = 5;
-    private var isLine: Bool = false;
-    // local bounding box
     private var mBounds: Rectangle;
     // local scale
     public var shapeScaleX(default,null): Float = 1.0;
@@ -54,10 +48,10 @@ class ShapeFigure extends Shape {
         vertexes.clear();
         color = DEFAULT_COLOR;
         width = DEFAULT_WIDTH;
-        isLine = false;
         mBounds.reset();
         setTransform();
         uncache();
+        setBounds(0,0,0,0);
     }
 
     override public function clone(): ShapeFigure {
@@ -70,7 +64,6 @@ class ShapeFigure extends Shape {
         ret.color = color;
         ret.width = width;
         ret.supplementLength = supplementLength;
-        ret.isLine = isLine;
         ret.mBounds = mBounds.clone();
         var _clone = Reflect.field(this, "_cloneProps");
         ret = Reflect.callMethod(this, _clone,[ret]);
@@ -119,7 +112,7 @@ class ShapeFigure extends Shape {
                 );
                 var cos = a.dot(b)/(a.power()*b.power());
                 var rad = Math.acos(cos);
-                if (PI_4_5 < rad && rad < PI_1_5) {
+                if (Geometries.PI_4_5 < rad && rad < Geometries.PI_1_5) {
                     var vtx = new Vertex(cur,rad);
                     var THRESH = 10*10;
                     var isFirst = vertexes.length == 0;
@@ -220,7 +213,7 @@ class ShapeFigure extends Shape {
                 var m = supplementLength;
                 for (i in m-1...transformedPoints.length) {
                     var avp = sPointPool.get();
-                    var seg: Array<FuzzyPoint> = transformedPoints.slice(i-m+1,i+1);
+                    var seg = transformedPoints.slice(i-m+1,i+1);
                     for (p in seg){
                         avp.x += p.x;
                         avp.y += p.y;

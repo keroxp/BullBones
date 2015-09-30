@@ -2,13 +2,11 @@ package view;
 import util.CursorUtil;
 import js.html.Performance;
 import geometry.Scalar;
-import geometry.Scalar;
 import figure.PivotShape;
 import figure.FigureType;
 import figure.ShapeFigureSet;
-import model.DrawingMode.MirroringType;
-import model.DrawingMode;
-import model.DrawingMode;
+import model.MirroringInfo.MirroringType;
+import model.MirroringInfo;
 import backbone.haxe.BackboneCollection;
 import model.BaseModel;
 import backbone.Collection;
@@ -68,7 +66,7 @@ typedef CopyEvent = {
 
 enum CanvasEventState {
     Idle;
-    Drawing(drawing: ShapeFigure);
+    Drawing(drawing: ShapeFigure, ?mirror: ShapeFigure);
     Dragging(dragging: DisplayObject);
     Grabbing;
     Scaling(corner: Corner);
@@ -111,7 +109,6 @@ implements ImageEditorListener {
     var mSymmetryPivotShape: PivotShape = new PivotShape();
     var mStageDebugShape: Shape = new Shape();
     var mMainDebugShape: Shape = new Shape();
-    var mMirrorFigure: ShapeFigure;
     var mUndoStack: Array<FigureCommand> = new Array<FigureCommand>();
     var mRedoStack: Array<FigureCommand> = new Array<FigureCommand>();
     var mCanvas: CanvasElement;
@@ -195,7 +192,7 @@ implements ImageEditorListener {
             }
             invalidate();
         });
-        listenTo(Main.App.drawingMode, "change:pivotEnabled", function(m: DrawingMode, val: Bool) {
+        listenTo(mirroringInfo, "change:pivotEnabled", function(m: MirroringInfo, val: Bool) {
             mSymmetryPivotShape.visible = val;
             var piv = m.pivot;
             if (piv == null) {
@@ -262,6 +259,8 @@ implements ImageEditorListener {
         invalidate();
         return value;
     }
+    
+    public var mirroringInfo(default, null): MirroringInfo = new MirroringInfo();
 
     function onChangeEditing (m, value: Bool) {
         if (value) {
@@ -652,11 +651,10 @@ implements ImageEditorListener {
             }
             applyScaleToLayer(mMainContainer, val.scale, pivX, pivY);
         }
-        var dm = Main.App.drawingMode;
-        if (dm.pivotEnabled) {
+        if (mirroringInfo.pivotEnabled) {
             var piv = mFigureContainer.localToLocal(
-                dm.pivot.x,
-                dm.pivot.y,
+                mirroringInfo.pivot.x,
+                mirroringInfo.pivot.y,
                 mFgContainer
             );
             var w = mSymmetryPivotShape.getBounds().width*0.5;
@@ -736,8 +734,11 @@ implements ImageEditorListener {
         if (!isExporting) {
             var hitted: DisplayObject = null;
             if (!isEditing) {
-                var dm = Main.App.drawingMode;
-                if (dm.pivotEnabled && mSymmetryPivotShape.hitTest(p_fg_local.x,p_fg_local.y)) {
+                // set start point as pivot anywasy even if pivot is disabled.
+                if (!mirroringInfo.pivotEnabled) {
+                    mirroringInfo.pivot = p_main_local;
+                }
+                if (mirroringInfo.pivotEnabled && mSymmetryPivotShape.hitTest(p_fg_local.x,p_fg_local.y)) {
                     hitted = mSymmetryPivotShape;
                     mEventState = CanvasEventState.Dragging(hitted);
                 } else {
@@ -745,22 +746,14 @@ implements ImageEditorListener {
                     f.addPoint(p_main_local.x,p_main_local.y);
                     f.width = Main.App.model.brush.width;
                     f.color = Main.App.model.brush.color;
-                    mEventState = CanvasEventState.Drawing(f);
-                    if (dm.isMirroring) {
-                        var dm = dm;
-                        var piv: Point = dm.pivotEnabled ? dm.pivot : p_main_local;
-                        // lazy instantiation
-                        if (mMirrorFigure == null) {
-                            mMirrorFigure = new ShapeFigure();
-                        } else {
-                            mMirrorFigure.recycle();
-                        }
-                        mMirrorFigure.addPoint(
-                            p_main_local.x - (p_main_local.x-piv.x)*2,
-                            p_main_local.y
-                        );
-                        mMirrorFigure.width = Main.App.model.brush.width;
-                        mMirrorFigure.color = Main.App.model.brush.color;
+                    if (mirroringInfo.enabled) {
+                        var m = new ShapeFigure();
+                        m.addPoint(mirroringInfo.getMirrorX(p_main_local.x), p_main_local.y);
+                        m.width = Main.App.model.brush.width;
+                        m.color = Main.App.model.brush.color;
+                        mEventState = Drawing(f,m);
+                    } else {
+                        mEventState = Drawing(f);
                     }
                     drawBrushCircle();
                 }
@@ -834,7 +827,7 @@ implements ImageEditorListener {
                     if (mCurrentPointerCSS != CursorUtil.NONE) {
                         nextCursor = CursorUtil.NONE;
                     }
-                    if (Main.App.drawingMode.pivotEnabled) {
+                    if (mirroringInfo.pivotEnabled) {
                         var p_local_fg = mFgContainer.globalToLocal(e.x,e.y);
                         if (mSymmetryPivotShape.hitTest(p_local_fg.x,p_local_fg.y)) {
                             nextCursor = CursorUtil.MOVE;
@@ -859,19 +852,16 @@ implements ImageEditorListener {
             } else {
                 if (!isEditing) {
                     switch(mEventState) {
-                        case Drawing(drawing): {
-                            drawing.addPoint(p_local_main.x,p_local_main.y);
+                        case Drawing(drawing, mirror): {
                             var b = Main.App.model.brush;
-                            var dm = Main.App.drawingMode;
-                            if (dm.isMirroring) {
-                                var s_p_local_main = mMainContainer.globalToLocal(e.startX, e.startY);
-                                var p_local_main_prev = mMainContainer.globalToLocal(e.prevX,e.prevY);
-                                var piv: Point = dm.pivotEnabled ? dm.pivot : s_p_local_main;
-                                var mx = p_local_main.x - (p_local_main.x-piv.x)*2;
+                            drawing.addPoint(p_local_main.x,p_local_main.y);
+                            if (mirroringInfo.enabled) {
+                                var mx = mirroringInfo.getMirrorX(p_local_main.x);
                                 var my = p_local_main.y;
-                                var mpx = p_local_main_prev.x - (p_local_main_prev.x-piv.x)*2;
+                                mirror.addPoint(mx,my);
+                                var p_local_main_prev = mMainContainer.globalToLocal(e.prevX,e.prevY);
+                                var mpx = mirroringInfo.getMirrorX(p_local_main_prev.x);
                                 var mpy = p_local_main_prev.y;
-                                mMirrorFigure.addPoint(mx,my);
                                 mBufferShape.graphics
                                 .setStrokeStyle(b.width,"round", "round")
                                 .beginStroke(b.color)
@@ -899,7 +889,7 @@ implements ImageEditorListener {
                                     mSymmetryPivotShape.y+w,
                                     mFigureContainer
                                 );
-                                Main.App.drawingMode.pivot = piv;
+                                mirroringInfo.pivot = piv;
                                 extendDirtyRectWithDisplayObject(mSymmetryPivotShape);
                             }
                         }
@@ -1008,13 +998,12 @@ implements ImageEditorListener {
         if (!isExporting) {
             if (!isEditing) {
                 switch (mEventState) {
-                    case CanvasEventState.Drawing(drawing): {
+                    case CanvasEventState.Drawing(drawing,mirror): {
                         if (drawing.points.length > 1) {
-                            if (Main.App.drawingMode.isMirroring) {
-                                var set = ShapeFigureSet.createWithShapes([
-                                    drawing.render(),
-                                    mMirrorFigure.render()
-                                ]);
+                            if (mirroringInfo.enabled) {
+                                var first = drawing.render();
+                                var second = mirror.render();
+                                var set = ShapeFigureSet.createWithShapes([first,second]);
                                 insertFigure(set.render());
                                 extendDirtyRectWithDisplayObject(set, set.getTransformedBounds());
                             } else {
