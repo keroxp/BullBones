@@ -100,12 +100,12 @@ class ShapeFigure extends Shape {
                 var cur = pts[i];
                 var prev = pts[i-1];
                 var next = pts[i+1];
-                var a = sVectorPool.get();
+                var a = sVectorPool.take();
                 a.set(
                     pts[i+1].x-pts[i].x,
                     pts[i+1].y-pts[i].y
                 );
-                var b = sVectorPool.get();
+                var b = sVectorPool.take();
                 b.set(
                     pts[i].x-pts[i-1].x,
                     pts[i].y-pts[i-1].y
@@ -212,7 +212,7 @@ class ShapeFigure extends Shape {
             if (Main.App.model.brush.supplemnt) {
                 var m = supplementLength;
                 for (i in m-1...transformedPoints.length) {
-                    var avp = sPointPool.get();
+                    var avp = sPointPool.take();
                     var seg = transformedPoints.slice(i-m+1,i+1);
                     for (p in seg){
                         avp.x += p.x;
@@ -258,7 +258,7 @@ class ShapeFigure extends Shape {
                 graphics.drawCircle(xx(vec.point.x),yy(vec.point.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
-            var p = sPointPool.get();
+            var p = sPointPool.take();
             if (getClosedPoint(p)) {
                 graphics.setStrokeStyle(Scalar.valueOf(3)).beginStroke("pink");
                 graphics.drawCircle(xx(p.x),yy(p.y),Scalar.valueOf(5));

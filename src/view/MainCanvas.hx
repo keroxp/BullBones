@@ -1,4 +1,6 @@
 package view;
+import performance.GeneralObjectPool;
+import performance.ObjectPool;
 import util.CursorUtil;
 import js.html.Performance;
 import geometry.Scalar;
@@ -91,7 +93,11 @@ enum CanvasEventState {
 class MainCanvas extends ViewModel
 implements SearchResultListener {
     private static var sTempRect = new Rectangle();
-    private static var sTempPoint = new Point();
+    private static var sPointPool = GeneralObjectPool.create(
+        10,
+        function () { return new Point(); },
+        function (p: Point) { p.x = p.y = 0;}
+    );
     var mStage: Stage;
     var mFgContainer: Container = new Container();
     var mBgContainer: Container = new Container();
@@ -192,19 +198,18 @@ implements SearchResultListener {
         });
         listenTo(mirroringInfo, "change:pivotEnabled", function(m: MirroringInfo, val: Bool) {
             mSymmetryPivotShape.visible = val;
-            var piv = m.pivot;
-            if (piv == null) {
-                piv = mFgContainer.globalToLocal(
-                    mCanvas.width*0.5,
-                    mCanvas.height*0.5
-                );
-                m.pivot = piv;
-            }
             extendDirtyRectWithDisplayObject(mSymmetryPivotShape);
-            mSymmetryPivotShape.adjustPivot(piv.x,piv.y);
+            mSymmetryPivotShape.adjustPivot(m.pivotX,m.pivotY);
             extendDirtyRectWithDisplayObject(mSymmetryPivotShape);
             requestDraw("change:pivotEnabled", draw);
         });
+        var piv = mFgContainer.globalToLocal(
+            mCanvas.width*0.5,
+            mCanvas.height*0.5,
+            sPointPool.take()
+        );
+        mirroringInfo.pivotX = piv.x;
+        mirroringInfo.pivotY = piv.y;
         on("change:isEditing", onChangeEditing);
     }
 
@@ -269,7 +274,7 @@ implements SearchResultListener {
 
     var scale(get,never): Float;
     inline function get_scale():Float return Main.App.model.zoom.scale;
-
+    
     function invalidate () {
         drawBackground();
         drawGrid();
@@ -358,13 +363,14 @@ implements SearchResultListener {
             var p = mMainContainer.localToLocal(
                 activeFigure.x,
                 activeFigure.y,
-                mFgContainer
+                mFgContainer,
+                sPointPool.take()
             );
             mBoundingBox.shape.x = p.x;
             mBoundingBox.shape.y = p.y;
             var bounds = activeFigure.getTransformedBounds().scale(scale,scale);
             mBoundingBox.render(bounds);
-            var g = mMainContainer.localToGlobal(bounds.x,bounds.y);
+            var g = mMainContainer.localToGlobal(bounds.x,bounds.y,sPointPool.take());
             extendDirtyRect(g.x,g.y,bounds.width,bounds.height);
         }
     }
@@ -393,10 +399,10 @@ implements SearchResultListener {
     }
     public function extendDirtyRectWithDisplayObject(o: DisplayObject, ?prevBounds: Rectangle) {
         var b = o.getTransformedBounds();
-        var g = o.parent.localToGlobal(b.x,b.y);
+        var g = o.parent.localToGlobal(b.x,b.y, sPointPool.take());
         sTempRect.setValues(g.x,g.y,b.width,b.height);
         if (prevBounds != null) {
-            var pg = o.parent.localToGlobal(prevBounds.x,prevBounds.y);
+            var pg = o.parent.localToGlobal(prevBounds.x,prevBounds.y, sPointPool.take());
             sTempRect.extend(pg.x,pg.y,prevBounds.width,prevBounds.height);
         }
         extendDirtyRect(
@@ -567,7 +573,7 @@ implements SearchResultListener {
 
     function insertImageFiguew(iw: ImageWrap) {
         var im = new ImageFigure(iw);
-        var p =  mMainContainer.globalToLocal(0,0);
+        var p =  mMainContainer.globalToLocal(0,0,sPointPool.take());
         im.x = p.x;
         im.y = p.y;
         insertFigure(im);
@@ -644,7 +650,7 @@ implements SearchResultListener {
             var pivY = mCanvas.height/2;
             if (activeFigure != null) {
                 var c = activeFigure.getTransformedBounds().center();
-                var p = mMainContainer.localToGlobal(c.x,c.y);
+                var p = mMainContainer.localToGlobal(c.x,c.y,sPointPool.take());
                 pivX = p.x;
                 pivY = p.y;
             }
@@ -652,8 +658,8 @@ implements SearchResultListener {
         }
         if (mirroringInfo.pivotEnabled) {
             var piv = mFigureContainer.localToLocal(
-                mirroringInfo.pivot.x,
-                mirroringInfo.pivot.y,
+                mirroringInfo.pivotX,
+                mirroringInfo.pivotY,
                 mFgContainer
             );
             var w = mSymmetryPivotShape.getBounds().width*0.5;
@@ -663,7 +669,7 @@ implements SearchResultListener {
     }
 
     private function applyScaleToLayer(container: Container, scale: Float, g_pivX: Float, g_pivY: Float) {
-        var piv = container.globalToLocal(g_pivX,g_pivY);
+        var piv = container.globalToLocal(g_pivX,g_pivY,sPointPool.take());
         container.scaleX = scale;
         container.scaleY = scale;
         container.regX = piv.x;
@@ -677,7 +683,8 @@ implements SearchResultListener {
             var d = BrowserUtil.window.devicePixelRatio;
             var p = mMainContainer.localToGlobal(
                 activeFigure.x,
-                activeFigure.y
+                activeFigure.y,
+                sPointPool.take()
             );
             p.x /= d;
             p.y /= d;
@@ -688,7 +695,7 @@ implements SearchResultListener {
             var x = p.x+(b.width-w)*0.5;
             var y = p.y-h-margin;
             var dir = "bottom";
-            var o = mMainContainer.globalToLocal(0,0);
+            var o = mMainContainer.globalToLocal(0,0,sPointPool.take());
             if (p.y < h && jq.outerHeight()-h < p.y+b.height) {
                 dir = "top";
                 y = p.y+b.height*0.5;
@@ -728,14 +735,15 @@ implements SearchResultListener {
     var mDisplayCommand: DisplayCommand;
     function onMouseDown (e: MouseEventCapture) {
         mPressed = true;
-        var p_main_local = mMainContainer.globalToLocal(e.x,e.y);
-        var p_fg_local = mFgContainer.globalToLocal(e.x,e.y);
+        var p_main_local = mMainContainer.globalToLocal(e.x,e.y,sPointPool.take());
+        var p_fg_local = mFgContainer.globalToLocal(e.x,e.y,sPointPool.take());
         if (!isExporting) {
             var hitted: DisplayObject = null;
             if (!isEditing) {
                 // set start point as pivot anywasy even if pivot is disabled.
                 if (!mirroringInfo.pivotEnabled) {
-                    mirroringInfo.pivot = p_main_local;
+                    mirroringInfo.pivotX = p_main_local.x;
+                    mirroringInfo.pivotY = p_main_local.y;
                 }
                 if (mirroringInfo.pivotEnabled && mSymmetryPivotShape.hitTest(p_fg_local.x,p_fg_local.y)) {
                     hitted = mSymmetryPivotShape;
@@ -805,7 +813,7 @@ implements SearchResultListener {
     private static var MOVED_THRESH = 2*2;
     function updateBrushCircle(e: MouseEventCapture) {
         mBrushCircle.visible = true;
-        var fp = mFgContainer.globalToLocal(e.x,e.y);
+        var fp = mFgContainer.globalToLocal(e.x,e.y,sPointPool.take());
         var pb = mBrushCircle.getTransformedBounds();
         var bw = Main.App.model.brush.width.toFloat()*scale/2;
         mBrushCircle.x = ~~(fp.x+0.5-bw);
@@ -817,8 +825,8 @@ implements SearchResultListener {
         if (!BrowserUtil.isBrowser) {
             e.srcEvent.preventDefault();
         }
-        var p_local_main = mMainContainer.globalToLocal(e.x,e.y);
-        var p_local_main_prev = mMainContainer.globalToLocal(e.prevX,e.prevY);
+        var p_local_main = mMainContainer.globalToLocal(e.x,e.y, sPointPool.take());
+        var p_local_main_prev = mMainContainer.globalToLocal(e.prevX,e.prevY, sPointPool.take());
         if (!isExporting) {
             if (!mPressed) {
                 var nextCursor = mCurrentPointerCSS;
@@ -827,7 +835,7 @@ implements SearchResultListener {
                         nextCursor = CursorUtil.NONE;
                     }
                     if (mirroringInfo.pivotEnabled) {
-                        var p_local_fg = mFgContainer.globalToLocal(e.x,e.y);
+                        var p_local_fg = mFgContainer.globalToLocal(e.x,e.y, sPointPool.take());
                         if (mSymmetryPivotShape.hitTest(p_local_fg.x,p_local_fg.y)) {
                             nextCursor = CursorUtil.MOVE;
                         }
@@ -858,7 +866,7 @@ implements SearchResultListener {
                                 var mx = mirroringInfo.getMirrorX(p_local_main.x);
                                 var my = p_local_main.y;
                                 mirror.addPoint(mx,my);
-                                var p_local_main_prev = mMainContainer.globalToLocal(e.prevX,e.prevY);
+                                var p_local_main_prev = mMainContainer.globalToLocal(e.prevX,e.prevY, sPointPool.take());
                                 var mpx = mirroringInfo.getMirrorX(p_local_main_prev.x);
                                 var mpy = p_local_main_prev.y;
                                 mBufferShape.graphics
@@ -867,7 +875,7 @@ implements SearchResultListener {
                                 .moveTo(mpx,mpy)
                                 .lineTo(mx,my)
                                 .endStroke();
-                                var gm = mMainContainer.localToGlobal(mx,my);
+                                var gm = mMainContainer.localToGlobal(mx,my, sPointPool.take());
                                 extendDirtyRect(gm.x,gm.y);
                             }
                             mBufferShape.graphics
@@ -886,9 +894,11 @@ implements SearchResultListener {
                                 var piv = mFgContainer.localToLocal(
                                     mSymmetryPivotShape.x+w,
                                     mSymmetryPivotShape.y+w,
-                                    mFigureContainer
+                                    mFigureContainer,
+                                    sPointPool.take()
                                 );
-                                mirroringInfo.pivot = piv;
+                                mirroringInfo.pivotX = piv.x;
+                                mirroringInfo.pivotY = piv.y;
                                 extendDirtyRectWithDisplayObject(mSymmetryPivotShape);
                             }
                         }
@@ -979,7 +989,7 @@ implements SearchResultListener {
                 var y = e.totalDeltaY < 0 ? e.startY+e.totalDeltaY : e.startY;
                 var w = e.totalDeltaX < 0 ? -e.totalDeltaX : e.totalDeltaX;
                 var h = e.totalDeltaY < 0 ? -e.totalDeltaY : e.totalDeltaY;
-                var p = mFgContainer.globalToLocal(x,y);
+                var p = mFgContainer.globalToLocal(x,y,sPointPool.take());
                 mExportShape.alpha = 0.4;
                 mExportShape.graphics
                 .clear()
@@ -1053,7 +1063,8 @@ implements SearchResultListener {
             var z = Main.App.model.zoom;
             var lp = mMainContainer.globalToLocal(
                 e.totalDeltaX < 0 ? e.startX+e.totalDeltaX : e.startX,
-                e.totalDeltaY < 0 ? e.startY+e.totalDeltaY : e.startY
+                e.totalDeltaY < 0 ? e.startY+e.totalDeltaY : e.startY,
+                sPointPool.take()
             );
             var w = Math.abs(e.totalDeltaX/z.scale);
             var h = Math.abs(e.totalDeltaY/z.scale);

@@ -35,19 +35,31 @@ class MirroringInfo extends BaseModel {
         return value;
     }
 
-    @:isVar public var pivot(get, set):Point;
+    @:isVar public var pivotX(get, set): Float;
 
-    function get_pivot():Point {
-        return get("pivot");
-    }
-
-    function set_pivot(value:Point) {
-        set("pivot", value);
+    function set_pivotX(value:Float) {
+        set("pivotX", value);
         return value;
     }
 
+    function get_pivotX():Float {
+        return get("pivotX");
+    }
+
+    @:isVar public var pivotY(get, set): Float;
+
+    function get_pivotY():Float {
+        return get("pivotY");
+    }
+
+    function set_pivotY(value:Float) {
+        set("pivotY", value);
+        return value;
+    }
+
+
     public function getMirrorX(x: Float): Float {
-        return x - (x-pivot.x)*2;
+        return x - (x-pivotX)*2;
     }
 
     public function new(?opts: DrawingModeOptions) {
