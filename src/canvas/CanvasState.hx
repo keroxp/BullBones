@@ -21,7 +21,7 @@ class CanvasState {
         this.eventState = CanvasEventState.Dragging;
         this.draggingFigure = dragging;
     }
-    public function Drawing(drawing, ShapeFigure, ?mirror: ShapeFigure) {
+    public function Drawing(drawing: ShapeFigure, ?mirror: ShapeFigure) {
         this.eventState = CanvasEventState.Drawing;
         this.drawingFigure = drawing;
         this.mirrorFigure = mirror;

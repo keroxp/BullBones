@@ -753,7 +753,7 @@ implements SearchResultListener {
                         m.color = Main.App.model.brush.color;
                         mCanvasState.Drawing(f,m);
                     } else {
-                        mCanvasState.Drawing(f,null);
+                        mCanvasState.Drawing(f);
                     }
                     drawBrushCircle();
                 }
