@@ -4,6 +4,7 @@ class CursorUtil {
     public static var NONE = "none";
     public static var MOVE = "move";
     public static var POINTER = "pointer";
+    public static var CROSSHAIR = "crosshair";
     public static var RESIZE_LT = "nw-resize";
     public static var RESIZE_RT = "ne-resize";
     public static var RESIZE_LB = "sw-resize";

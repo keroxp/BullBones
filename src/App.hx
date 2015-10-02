@@ -16,7 +16,7 @@ import view.ModalView;
 import model.BaseModel;
 import ajax.Loader;
 import model.BrushEditor;
-import view.MainCanvas;
+import canvas.MainCanvas;
 import view.ViewModel;
 import backbone.haxe.BackboneEvents;
 import view.ImageEditorView;

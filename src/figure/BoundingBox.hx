@@ -2,13 +2,9 @@ package figure;
 import util.CursorUtil;
 import geometry.Scalar;
 import createjs.easeljs.Rectangle;
-import geometry.Point;
-import event.MouseEventCapture;
 import createjs.easeljs.DisplayObject;
-import createjs.easeljs.MouseEvent;
 import createjs.easeljs.Container;
 import createjs.easeljs.Shape;
-using util.RectangleUtil;
 
 typedef Corner = {
     isLeft: Bool,

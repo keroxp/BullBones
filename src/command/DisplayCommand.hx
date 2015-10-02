@@ -1,5 +1,5 @@
 package command;
-import view.MainCanvas;
+import canvas.MainCanvas;
 import createjs.easeljs.DisplayObject;
 import figure.ShapeFigure;
 import createjs.easeljs.Matrix2D;

@@ -1,4 +1,5 @@
 package view;
+import canvas.MainCanvas;
 import cv.AspectPolicy;
 import cv.Images;
 import figure.FigureType;

@@ -1,6 +1,6 @@
 package command;
 
-import view.MainCanvas;
+import canvas.MainCanvas;
 import createjs.easeljs.DisplayObject;
 class FigureCommand {
     public var target(default, null): DisplayObject;

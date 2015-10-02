@@ -1,6 +1,6 @@
 package view;
 import figure.FigureType;
-import view.MainCanvas;
+import canvas.MainCanvas;
 import createjs.easeljs.DisplayObject;
 import util.Log;
 import util.BrowserUtil;
