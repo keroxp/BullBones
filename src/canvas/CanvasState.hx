@@ -31,7 +31,7 @@ class CanvasState {
         this.scalingCorner = scaling;
     }
     public function Grabbing() {
-        this.eventState = CanvasEventState.Dragging;
+        this.eventState = CanvasEventState.Grabbing;
     }
     public function new () {}
     public var drawingFigure(default,null): ShapeFigure;
