@@ -8,5 +8,4 @@ public/font/*
 !.gitkeep
 bower_components
 *.log
-Makefile
 tests/*.js

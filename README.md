@@ -7,3 +7,14 @@ Research on computer-supported sketch drawing systems.
 # App
 
 [https://bullbones.herokuapp.com](https://bullbones.herokuapp.com)
+
+# Build
+
+```
+haxelib install createjs
+haxelib install jQueryExtern
+bower instlal
+npm install
+grunt build
+make debug
+```
