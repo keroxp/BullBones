@@ -1,4 +1,5 @@
 package canvas;
+import geometry.Vector2D;
 import view.PopupMenu;
 import canvas.CanvasState.CanvasEventState;
 import performance.GeneralObjectPool;
@@ -854,16 +855,41 @@ implements SearchResultListener {
                     switch(mCanvasState.eventState) {
                         case Drawing: {
                             var b = Main.App.model.brush;
-                            mCanvasState.drawingFigure.addPoint(p_local_main.x,p_local_main.y);
+                            var drawPoint = sPointPool.take().copy(p_local_main);
+                            var drawPointPrev = sPointPool.take().copy(p_local_main_prev);
+                            var drawing = mCanvasState.drawingFigure;
+                            if (modifiedByShift()) {
+                                drawPointPrev = mMainContainer.globalToLocal(e.startX,e.startY,sPointPool.take());
+                                drawing.isAlignedToXAxis = Math.abs(e.totalDeltaX) > Math.abs(e.totalDeltaY);
+                                if (drawing.isAlignedToXAxis) {
+                                    drawPoint.y  = drawPointPrev.y;
+                                } else {
+                                    drawPoint.x  = drawPointPrev.x;
+                                }
+                                mBufferShape.graphics.clear();
+                                if (!drawing.isLine) {
+                                    drawing.isLine = true;
+                                    if (mirroringInfo.enabled) {
+                                        mCanvasState.mirrorFigure.isLine = true;
+                                    }
+                                    extendDirtyRect(0,0,mCanvas.width,mCanvas.height);
+                                }
+                                var p_g_drawing = mMainContainer.localToGlobal(drawPoint.x,drawPoint.y,sPointPool.take());
+                                extendDirtyRect(e.startX,e.startY);
+                                extendDirtyRect(p_g_drawing.x,p_g_drawing.y);
+                                var pad = b.width.toFloat()*.5;
+                                mDirtyRect.pad(pad,pad,pad,pad);
+                            } else if (drawing.isLine) {
+                                drawing.isLine = false;
+                            }
+                            mBufferShape.graphics.setStrokeStyle(b.width,"round", "round");
                             if (mirroringInfo.enabled) {
-                                var mx = mirroringInfo.getMirrorX(p_local_main.x);
-                                var my = p_local_main.y;
+                                var mx = mirroringInfo.getMirrorX(drawPoint.x);
+                                var my = drawPoint.y;
                                 mCanvasState.mirrorFigure.addPoint(mx,my);
-                                var p_local_main_prev = mMainContainer.globalToLocal(e.prevX,e.prevY, sPointPool.take());
-                                var mpx = mirroringInfo.getMirrorX(p_local_main_prev.x);
-                                var mpy = p_local_main_prev.y;
+                                var mpx = mirroringInfo.getMirrorX(drawPointPrev.x);
+                                var mpy = drawPointPrev.y;
                                 mBufferShape.graphics
-                                .setStrokeStyle(b.width,"round", "round")
                                 .beginStroke(b.color)
                                 .moveTo(mpx,mpy)
                                 .lineTo(mx,my)
@@ -872,12 +898,12 @@ implements SearchResultListener {
                                 extendDirtyRect(gm.x,gm.y);
                             }
                             mBufferShape.graphics
-                            .setStrokeStyle(b.width,"round", "round")
                             .beginStroke(b.color)
-                            .moveTo(p_local_main_prev.x,p_local_main_prev.y)
-                            .lineTo(p_local_main.x,p_local_main.y)
+                            .moveTo(drawPointPrev.x,drawPointPrev.y)
+                            .lineTo(drawPoint.x,drawPoint.y)
                             .endStroke();
                             extendDirtyRect(e.x,e.y);
+                            drawing.addPoint(drawPoint.x,drawPoint.y);
                         }
                         case Dragging: {
                             mCanvasState.draggingFigure.x += e.deltaX;
