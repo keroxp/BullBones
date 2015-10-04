@@ -29,13 +29,12 @@ class RectangleUtil {
         return r.x <= x && x <= r.right() && r.y <= y && y <= r.bottom();
     }
     public static function scale (r: Rectangle, scaleX: Float, scaleY: Float): Rectangle {
-        var ret = r.clone();
-        ret.width *= scaleX;
-        ret.height *= scaleY;
-        return ret;
+        r.width *= scaleX;
+        r.height *= scaleY;
+        return r;
     }
-    public static function reset(r: Rectangle) {
-        r.x = r.y = r.width = r.height = 0;
+    public static function reset(r: Rectangle): Rectangle {
+        return r.setValues(0,0,0,0);
     }
     private inline static function call(o: Dynamic, method: String, args: Array<Dynamic>): Dynamic {
         return Reflect.callMethod(o, Reflect.field(o, method), args);

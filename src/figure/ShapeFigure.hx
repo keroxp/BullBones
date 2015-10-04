@@ -264,6 +264,8 @@ class ShapeFigure extends Shape {
                 graphics.drawCircle(xx(p.x),yy(p.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
+            graphics.setStrokeStyle(Scalar.valueOf(2)).beginFill("green")
+            .drawCircle(0,0,Scalar.valueOf(5)).endFill();
         }
         // Only first rendering, adjust x and y axis with local bounds.
         // it is nesessary because just calling drawXX mehthod does not define actual bounds.
@@ -278,7 +280,7 @@ class ShapeFigure extends Shape {
             mBounds.width+pad*2,
             mBounds.height+pad*2
         );
-        updateCache();
+        setBounds(0,0,mBounds.width+pad,mBounds.height+pad);
         return this;
     }
 

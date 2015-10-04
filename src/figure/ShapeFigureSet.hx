@@ -9,6 +9,11 @@ import createjs.easeljs.Container;
 using figure.Figures;
 using util.RectangleUtil;
 class ShapeFigureSet extends Container  {
+    private static var sTempRect = new Rectangle();
+    public var leftShape(default,null): ShapeFigure;
+    public var topShape(default,null): ShapeFigure;
+    public var rightShape(default,null): ShapeFigure;
+    public var bottomShape(default,null): ShapeFigure;
     public function new() {
         super();
     }
@@ -35,6 +40,14 @@ class ShapeFigureSet extends Container  {
         var hasNoChild = getNumChildren() == 0;
         var ex: Float = 0;
         var ey: Float = 0;
+        if (hasNoChild) {
+            leftShape = rightShape = topShape = bottomShape = shape;
+        } else {
+            if (shape.x < x) { leftShape = shape; }
+            if (getTransformedBounds().right() < shape.x) { rightShape = shape; }
+            if (shape.y < y) { topShape = shape; }
+            if (getTransformedBounds().bottom() < shape.y) { bottomShape = shape; }
+        }
         if (shape.x < x || hasNoChild) {
             var diff = x - shape.x;
             x = shape.x;
@@ -87,10 +100,15 @@ class ShapeFigureSet extends Container  {
                 shape.render();
             });
         }
-        var pad = 10;
-        var padded = getTransformedBounds().clone().pad(pad,pad,pad,pad);
-        cache(-pad,-pad,padded.width,padded.height);
-        updateCache();
+        var bounds = sTempRect.copy(getBounds());
+        bounds.pad(
+            leftShape.width.toFloat(),
+            topShape.width.toFloat(),
+            rightShape.width.toFloat(),
+            bottomShape.width.toFloat()
+        );
+        cache(bounds.x,bounds.y,bounds.width,bounds.height);
+//        setBounds(0,0,bounds.width,bounds.height);
         return this;
     }
 
