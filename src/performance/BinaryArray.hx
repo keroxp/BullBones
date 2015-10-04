@@ -1,4 +1,4 @@
-package cv;
+package performance;
 import js.Error;
 import js.html.Uint32Array;
 class BinaryArray implements ArrayAccess<Bool> {

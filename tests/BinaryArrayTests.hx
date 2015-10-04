@@ -1,7 +1,5 @@
 package ;
-import js.Error;
-import haxe.PosInfos;
-import cv.BinaryArray;
+import performance.BinaryArray;
 class BinaryArrayTests extends haxe.unit.TestCase {
     public function new() {
         super();
