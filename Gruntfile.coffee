@@ -1,6 +1,7 @@
 path = require "path"
 
 LIVERELOAD_PORT = 35729
+LIVERELOAD_TEST_PORT = 35730
 
 module.exports = (grunt) ->
   grunt.initConfig
@@ -41,6 +42,12 @@ module.exports = (grunt) ->
           "public/js/main.js"
           "public/css/main.css"
           "public/index.html"
+        ]
+      livereloadTest:
+        options:
+          livereload: LIVERELOAD_TEST_PORT
+        files: [
+          "tests/test.js"
         ]
     haxe:
       build:
@@ -101,4 +108,4 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks "grunt-bower-concat"
   grunt.registerTask "build", ["bower_concat", "stylus", "copy"]
   grunt.registerTask "dest", ["build", "uglify", "cssmin"]
-  grunt.registerTask "default", ["haxe", "build", "watch:haxe"]
+  grunt.registerTask "default", ["haxe", "build", "watch"]
