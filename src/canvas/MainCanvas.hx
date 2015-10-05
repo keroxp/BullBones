@@ -945,7 +945,7 @@ implements SearchResultListener {
                             mPopupMenu.dismiss(200);
                         }
                         case Scaling: {
-                            activeFigure.getTransformedBounds().copy(sTempRect);
+                            sTempRect.copy(activeFigure.getTransformedBounds());
                             inline function doScaleX (width: Float) {
                                 var sx = width/sTempRect.width;
                                 if (0 < sx) {
