@@ -362,7 +362,21 @@ implements SearchResultListener {
             );
             mBoundingBox.shape.x = p.x;
             mBoundingBox.shape.y = p.y;
-            var bounds = activeFigure.getTransformedBounds().scale(scale,scale);
+            var bounds = sTempRect.copy(activeFigure.getTransformedBounds());
+            var xOffset = 0.0;
+            var yOffset = 0.0;
+            if (activeFigure.type() == FigureType.Shape) {
+                var shape = cast(activeFigure, ShapeFigure);
+                xOffset = shape.width.toFloat()*.5;
+                yOffset = shape.width.toFloat()*.5;
+            } else if (activeFigure.type() == FigureType.ShapeSet) {
+                var shape = cast(activeFigure, ShapeFigureSet);
+                xOffset = shape.leftShape.width.toFloat()*.5;
+                yOffset = shape.topShape.width.toFloat()*.5;
+            }
+            mBoundingBox.shape.x -= xOffset*scale;
+            mBoundingBox.shape.y -= yOffset*scale;
+            bounds.scale(scale,scale);
             mBoundingBox.render(bounds);
             var g = mMainContainer.localToGlobal(bounds.x,bounds.y,sPointPool.take());
             extendDirtyRect(g.x,g.y,bounds.width,bounds.height);
@@ -683,7 +697,7 @@ implements SearchResultListener {
             p.x /= d;
             p.y /= d;
             var margin = 20;
-            var b = activeFigure.getTransformedBounds().scale(scale,scale).scale(1/d,1/d);
+            var b = sTempRect.copy(activeFigure.getTransformedBounds()).scale(scale,scale).scale(1/d,1/d);
             var w = mPopupMenu.jq.outerWidth();
             var h = mPopupMenu.jq.outerHeight();
             var x = p.x+(b.width-w)*0.5;
