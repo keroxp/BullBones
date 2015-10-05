@@ -1,4 +1,5 @@
 package canvas;
+import js.html.UIEvent;
 import geometry.Vector2D;
 import view.PopupMenu;
 import canvas.CanvasState.CanvasEventState;
@@ -137,9 +138,12 @@ implements SearchResultListener {
     public function new(jq: JQuery) {
         super(jq);
         var cap = new MouseEventCapture();
-        cap.onDown(el,onMouseDown);
-        cap.onMove(el,onMouseMove);
-        cap.onUp(el,onMouseUp);
+        var isThis = function (e: UIEvent) {
+            return cast(e.target, Element).id == el.id;
+        }
+        cap.onDown(window,onMouseDown,isThis);
+        cap.onMove(window,onMouseMove);
+        cap.onUp(window,onMouseUp);
         mCapture = cap;
         jq.on("mousewheel", onMouseWheel);
         window.addEventListener("keyup", onKeyUp);

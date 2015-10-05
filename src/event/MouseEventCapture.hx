@@ -1,4 +1,6 @@
 package event;
+import js.html.EventTarget;
+import js.html.MouseEvent;
 import js.html.TouchEvent;
 import util.BrowserUtil;
 import js.html.Element;
@@ -77,22 +79,25 @@ class MouseEventCapture {
         return this;
     }
 
-    public function onDown (el: Element,  callback: MouseEventCaptureCallback) {
+    public function onDown (el: EventTarget,  callback: MouseEventCaptureCallback, ?filter: UIEvent -> Bool) {
         var ev = BrowserUtil.isBrowser ? "mousedown" : "touchstart";
         el.addEventListener(ev, function (e: UIEvent) {
+            if (filter != null && !filter (e)) return;
             callback(down(e));
         }, false);
     }
-    public function onMove(el: Element, callback: MouseEventCaptureCallback) {
+    public function onMove(el: EventTarget, callback: MouseEventCaptureCallback, ?filter: UIEvent -> Bool) {
         var ev = BrowserUtil.isBrowser ? "mousemove" : "touchmove";
         el.addEventListener(ev, function (e: UIEvent) {
+            if (filter != null && !filter (e)) return;
             callback(move(e));
         }, false);
     }
 
-    public function onUp(el: Element, callback: MouseEventCaptureCallback) {
+    public function onUp(el: EventTarget, callback: MouseEventCaptureCallback, ?filter: UIEvent -> Bool) {
         var ev = BrowserUtil.isBrowser ? "mouseup" : "touchend";
         el.addEventListener(ev, function (e: UIEvent) {
+            if (filter != null && !filter (e)) return;
             callback(up(e));
         }, false);
     }
