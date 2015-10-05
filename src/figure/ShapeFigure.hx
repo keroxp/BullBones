@@ -1,7 +1,5 @@
 package figure;
 
-import createjs.easeljs.Matrix2D;
-import geometry.Geometries;
 import geometry.Geometries;
 import performance.ObjectPool;
 import geometry.Scalar;
@@ -17,17 +15,30 @@ using util.ArrayUtil;
 class ShapeFigure extends Shape {
     public static var DEFAULT_COLOR = "#000000";
     public static var DEFAULT_WIDTH = Scalar.valueOf(2);
-    private static var LINE_LENGTH_THRESH: Float = 150*150;
-    private static var LINE_RECOGNIZE_THRESH = 20;
     private static var CLOSE_THRESH: Float = 20*20;
-    private static var sPointPool: ObjectPool<Point> = new ObjectPool<Point>([new Point()]);
-    private static var sVectorPool: ObjectPool<Vector2D> = new ObjectPool<Vector2D>([new Vector2D(), new Vector2D()]);
+    private static var sTempRect = new Rectangle();
+    private static var sPointPool: ObjectPool<Point>
+        = new ObjectPool<Point>(5, function() { return new Point(); });
+    private static var sVectorPool: ObjectPool<Vector2D>
+        = new ObjectPool<Vector2D>(5, function() { return new Vector2D(); });
     // non-scaled points
     public var points(default, null): Array<FuzzyPoint> = new Array<FuzzyPoint>();
     // scaled-points
     public var transformedPoints(default, null) : Array<FuzzyPoint> = new Array<FuzzyPoint>();
     public var vertexes(default, null): Array<Vertex> = new Array<Vertex>();
     public var supplementLength = 5;
+    @:isVar public var isLine(default, set) = false;
+    function set_isLine(value) {
+        if (!isLine && value) {
+            points[1] = points.last();
+            transformedPoints[1] = transformedPoints.last();
+            points.splice(2,points.length-2);
+            transformedPoints.splice(2,transformedPoints.length-2);
+            mBounds.setValues(points[0].x,points[0].y,0,0);
+            calcBounds(points.last().x,points.last().y);
+        }
+        return this.isLine = value;
+    }
     private var mBounds: Rectangle;
     // local scale
     public var shapeScaleX(default,null): Float = 1.0;
@@ -52,6 +63,10 @@ class ShapeFigure extends Shape {
         setTransform();
         uncache();
         setBounds(0,0,0,0);
+    }
+
+    public function getGlobalBounds(?rect: Rectangle): Rectangle {
+        return rect == null ? mBounds.clone() : rect.copy(mBounds);
     }
 
     override public function clone(): ShapeFigure {
@@ -128,19 +143,26 @@ class ShapeFigure extends Shape {
         }
     }
     public function addPoint (x: Float, y: Float) {
-        calcBounds(x,y);
         if (points.length == 0) {
-            var fp = new FuzzyPoint(x,y);
+            var fp = new FuzzyPoint(~~(x+.5),~~(y+.5));
             points.push(fp);
             transformedPoints.push(fp);
         } else {
-            var fp = new FuzzyPoint(x,y,points[points.length-1]);
+            var fp = new FuzzyPoint(~~(x+.5),~~(y+.5),points.last());
             // don't apend point that is very close to last
             if (fp.rawDistance(points[points.length-1]) > 0) {
-                points.push(fp);
-                transformedPoints.push(fp);
+                if (isLine) {
+                    // In the Line mode, we always put new point as the last.
+                    points[1] = fp;
+                    transformedPoints[1] = fp;
+                    mBounds.setValues(points[0].x,points[0].y);
+                } else {
+                    points.push(fp);
+                    transformedPoints.push(fp);
+                }
             }
         }
+        calcBounds(x,y);
     }
     private function calcBounds (x: Float, y: Float) {
         if (mBounds == null) {
@@ -149,6 +171,7 @@ class ShapeFigure extends Shape {
         if (x < mBounds.x) {
             mBounds.width += mBounds.x-x;
             mBounds.x = x;
+            this.x = x;
         }
         if (mBounds.right() < x){
             mBounds.width = x-mBounds.x;
@@ -156,12 +179,14 @@ class ShapeFigure extends Shape {
         if (y < mBounds.y) {
             mBounds.height += mBounds.y - y;
             mBounds.y = y;
+            this.y = y;
         }
         if (mBounds.bottom() < y) {
             mBounds.height = y-mBounds.y;
         }
         setBounds(0,0,mBounds.width,mBounds.height);
     }
+
     private function resetBounds () {
         var l = points[0].x;
         var t = points[0].y;
@@ -195,8 +220,8 @@ class ShapeFigure extends Shape {
         return this;
     }
 
-    private inline function xx(x: Float): Float return x-mBounds.x;
-    private inline function yy(y: Float): Float return y-mBounds.y;
+    private inline function xx(x: Float): Float return ~~(x-mBounds.x);
+    private inline function yy(y: Float): Float return ~~(y-mBounds.y);
     private var isFirstRendering = true;
     public function render (): ShapeFigure {
         if (points.length < 2) return this;
@@ -264,6 +289,8 @@ class ShapeFigure extends Shape {
                 graphics.drawCircle(xx(p.x),yy(p.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
+            graphics.setStrokeStyle(Scalar.valueOf(2)).beginFill("green")
+            .drawCircle(0,0,Scalar.valueOf(5)).endFill();
         }
         // Only first rendering, adjust x and y axis with local bounds.
         // it is nesessary because just calling drawXX mehthod does not define actual bounds.
@@ -278,8 +305,7 @@ class ShapeFigure extends Shape {
             mBounds.width+pad*2,
             mBounds.height+pad*2
         );
-        updateCache();
+        setBounds(0,0,mBounds.width+pad,mBounds.height+pad);
         return this;
     }
-
 }

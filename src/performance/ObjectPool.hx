@@ -1,21 +1,8 @@
 package performance;
-class ObjectPool <T : Poolable> {
-    public var objects(default, null): Array<T>;
-    public var index(default, null): Int = -1;
-    function nextIndex():Int {
-        return index == objects.length-1 ? index = 0 : ++index;
-    }
-
-    public function new(objects: Array<T>) {
-        this.objects = objects;
-        for (o in objects) {
+class ObjectPool <T : Poolable> extends GeneralObjectPool <T> {
+    public function new(size: Int, ctorFunc: Void -> T) {
+        super(size, ctorFunc, function (o: T) {
             o.recycle();
-        }
-    }
-
-    public function take(): T {
-        var o = objects[nextIndex()];
-        o.recycle();
-        return o;
+        });
     }
 }

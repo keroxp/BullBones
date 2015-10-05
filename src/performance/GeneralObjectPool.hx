@@ -1,27 +1,38 @@
 package performance;
+import util.Log;
 class GeneralObjectPool <T> {
-    public var recycleFunc: T -> Void;
-    public var objects: Array<T>;
-    var index: Int = -1;
-    public static function create<U>(size: Int, ctorFunc: Void -> U, recycleFunc: U -> Void): GeneralObjectPool<U> {
-        var arr = [];
-        for (i in 0...size) {
-            arr[i] = ctorFunc();
-        }
-        return new GeneralObjectPool<U>(arr, recycleFunc);
-    }
-    public function new(arr: Array<T>, recycleFunc: T -> Void) {
+    public var objects(default, null): Array<T> = new Array<T>();
+    public var index(default, null): Int = -1;
+    public var initialSize(default,null): Int;
+    public var markedIndex(default, null): Int = -1;
+    private var markedTag: String;
+    private var ctorFunc: Void -> T;
+    private var recycleFunc: T -> Void;
+
+    public function new(size: Int, ctorFunc: Void -> T, recycleFunc: T -> Void) {
+        this.initialSize = size;
+        this.ctorFunc = ctorFunc;
         this.recycleFunc = recycleFunc;
-        this.objects = arr;
-        for (i in 0...objects.length) {
-            recycleFunc(objects[i]);
+        for (i in 0...size) {
+            this.objects[i] = ctorFunc();
         }
     }
-    function nextIndex():Int {
-        return index == objects.length-1 ? index = 0 : ++index;
+
+    public function mark(tag: String = "") {
+        markedIndex = index;
+        markedTag = tag;
     }
+
+    public function unmark() {
+        markedIndex = -1;
+    }
+
     public function take(): T {
-        var o = objects[nextIndex()];
+        var i = index == objects.length-1 ? index = 0 : ++index;
+        if (i == markedIndex) {
+            return ctorFunc();
+        }
+        var o = objects[i];
         recycleFunc(o);
         return o;
     }
