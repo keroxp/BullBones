@@ -87,7 +87,7 @@ typedef CopyEvent = {
 class MainCanvas extends ViewModel
 implements SearchResultListener {
     private static var sTempRect = new Rectangle();
-    private static var sPointPool = GeneralObjectPool.create(
+    private static var sPointPool = new GeneralObjectPool<Point>(
         10,
         function () { return new Point(); },
         function (p: Point) { p.x = p.y = 0;}
@@ -402,21 +402,22 @@ implements SearchResultListener {
             mDirtyRect.extend(gx,gy,width,height);
         }
     }
-    public function extendDirtyRectWithRect(r: Rectangle) {
-       extendDirtyRect(r.x,r.y,r.width,r.height);
+    public function extendDirtyRectWithRect(r: Rectangle, ?localContainer: Container) {
+        if (localContainer != null) {
+            var lt = localContainer.localToGlobal(r.x,r.y,sPointPool.take());
+            var rb = localContainer.localToGlobal(r.right(),r.bottom(),sPointPool.take());
+            extendDirtyRect(lt.x,lt.y);
+            extendDirtyRect(rb.x,rb.y);
+        } else {
+            extendDirtyRect(r.x,r.y,r.width,r.height);
+        }
     }
     public function extendDirtyRectWithDisplayObject(o: DisplayObject, ?prevBounds: Rectangle) {
-        var b = o.getTransformedBounds();
-        var g = o.parent.localToGlobal(b.x,b.y, sPointPool.take());
-        sTempRect.setValues(g.x,g.y,b.width,b.height);
+        var b = sTempRect.copy(o.getTransformedBounds());
         if (prevBounds != null) {
-            var pg = o.parent.localToGlobal(prevBounds.x,prevBounds.y, sPointPool.take());
-            sTempRect.extend(pg.x,pg.y,prevBounds.width,prevBounds.height);
+            b.extend(prevBounds.x,prevBounds.y,prevBounds.width,prevBounds.height);
         }
-        extendDirtyRect(
-            sTempRect.x,sTempRect.y,
-            sTempRect.width*scale,sTempRect.height*scale
-        );
+        extendDirtyRectWithRect(b, o.parent);
     }
     public function insertFigure (f: DisplayObject, silent: Bool = false, ?index: Int) {
         if (f == null) {
@@ -829,6 +830,7 @@ implements SearchResultListener {
         extendDirtyRectWithDisplayObject(mBrushCircle,pb);
     }
     function onMouseMove (e: MouseEventCapture) {
+        sPointPool.mark("onMouseMove");
         var toDraw = false;
         if (!BrowserUtil.isBrowser) {
             e.srcEvent.preventDefault();
@@ -854,10 +856,12 @@ implements SearchResultListener {
                         var c = mBoundingBox.hitsCorner(p_local_main.x,p_local_main.y);
                         if (c != null) {
                             nextCursor = BoundingBox.getPointerCSS(c);
-                        } else if (mCurrentPointerCSS != CursorUtil.MOVE && activeFigure.getTransformedBounds().containsPoint(p_local_main.x,p_local_main.y)){
-                            nextCursor = CursorUtil.MOVE;
-                        } else if (mCurrentPointerCSS != CursorUtil.grabCursor()) {
-                            nextCursor = CursorUtil.grabCursor();
+                        } else {
+                            if (activeFigure.getTransformedBounds().containsPoint(p_local_main.x,p_local_main.y)){
+                                nextCursor = CursorUtil.MOVE;
+                            } else {
+                                nextCursor = CursorUtil.grabCursor();
+                            }
                         }
                     }
                 }
@@ -874,8 +878,8 @@ implements SearchResultListener {
                             var drawing = mCanvasState.drawingFigure;
                             if (modifiedByShift()) {
                                 drawPointPrev = mMainContainer.globalToLocal(e.startX,e.startY,sPointPool.take());
-                                drawing.isAlignedToXAxis = Math.abs(e.totalDeltaX) > Math.abs(e.totalDeltaY);
-                                if (drawing.isAlignedToXAxis) {
+                                var isAlignedToXAxis = Math.abs(e.totalDeltaX) > Math.abs(e.totalDeltaY);
+                                if (isAlignedToXAxis) {
                                     drawPoint.y  = drawPointPrev.y;
                                 } else {
                                     drawPoint.x  = drawPointPrev.x;
@@ -886,7 +890,7 @@ implements SearchResultListener {
                                     if (mirroringInfo.enabled) {
                                         mCanvasState.mirrorFigure.isLine = true;
                                     }
-                                    extendDirtyRect(0,0,mCanvas.width,mCanvas.height);
+                                    extendDirtyRectWithRect(drawing.getTransformedBounds());
                                 }
                                 var p_g_drawing = mMainContainer.localToGlobal(drawPoint.x,drawPoint.y,sPointPool.take());
                                 extendDirtyRect(e.startX,e.startY);
@@ -1035,6 +1039,7 @@ implements SearchResultListener {
         }
         requestDraw(TAG_ON_MOUSE_MOVE, draw);
         trigger(ON_CANVAS_MOUSEMOVE_EVENT);
+        sPointPool.unmark();
     }
     private static var TAG_ON_MOUSE_MOVE = "onMouseMove";
     function onMouseUp (e: MouseEventCapture) {

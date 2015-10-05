@@ -27,7 +27,7 @@ class CursorUtil {
     }
     public static function grabbingCursor(): String {
         if (BrowserUtil.isFireFox) return GRABBING_MOZ;
-        if (BrowserUtil.isWebKit) return GRAB_WEBKIT;
+        if (BrowserUtil.isWebKit) return GRABBING_WEBKIT;
         return POINTER;
     }
 }

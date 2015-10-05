@@ -1,7 +1,5 @@
 package figure;
 
-import createjs.easeljs.Matrix2D;
-import geometry.Geometries;
 import geometry.Geometries;
 import performance.ObjectPool;
 import geometry.Scalar;
@@ -19,8 +17,10 @@ class ShapeFigure extends Shape {
     public static var DEFAULT_WIDTH = Scalar.valueOf(2);
     private static var CLOSE_THRESH: Float = 20*20;
     private static var sTempRect = new Rectangle();
-    private static var sPointPool: ObjectPool<Point> = new ObjectPool<Point>([new Point()]);
-    private static var sVectorPool: ObjectPool<Vector2D> = new ObjectPool<Vector2D>([new Vector2D(), new Vector2D()]);
+    private static var sPointPool: ObjectPool<Point>
+        = new ObjectPool<Point>(5, function() { return new Point(); });
+    private static var sVectorPool: ObjectPool<Vector2D>
+        = new ObjectPool<Vector2D>(5, function() { return new Vector2D(); });
     // non-scaled points
     public var points(default, null): Array<FuzzyPoint> = new Array<FuzzyPoint>();
     // scaled-points
@@ -39,8 +39,6 @@ class ShapeFigure extends Shape {
         }
         return this.isLine = value;
     }
-    public var isAlignedToXAxis = true;
-
     private var mBounds: Rectangle;
     // local scale
     public var shapeScaleX(default,null): Float = 1.0;
@@ -65,6 +63,10 @@ class ShapeFigure extends Shape {
         setTransform();
         uncache();
         setBounds(0,0,0,0);
+    }
+
+    public function getGlobalBounds(?rect: Rectangle): Rectangle {
+        return rect == null ? mBounds.clone() : rect.copy(mBounds);
     }
 
     override public function clone(): ShapeFigure {
@@ -142,11 +144,11 @@ class ShapeFigure extends Shape {
     }
     public function addPoint (x: Float, y: Float) {
         if (points.length == 0) {
-            var fp = new FuzzyPoint(x,y);
+            var fp = new FuzzyPoint(~~(x+.5),~~(y+.5));
             points.push(fp);
             transformedPoints.push(fp);
         } else {
-            var fp = new FuzzyPoint(x,y,points[points.length-1]);
+            var fp = new FuzzyPoint(~~(x+.5),~~(y+.5),points.last());
             // don't apend point that is very close to last
             if (fp.rawDistance(points[points.length-1]) > 0) {
                 if (isLine) {
@@ -169,6 +171,7 @@ class ShapeFigure extends Shape {
         if (x < mBounds.x) {
             mBounds.width += mBounds.x-x;
             mBounds.x = x;
+            this.x = x;
         }
         if (mBounds.right() < x){
             mBounds.width = x-mBounds.x;
@@ -176,6 +179,7 @@ class ShapeFigure extends Shape {
         if (y < mBounds.y) {
             mBounds.height += mBounds.y - y;
             mBounds.y = y;
+            this.y = y;
         }
         if (mBounds.bottom() < y) {
             mBounds.height = y-mBounds.y;
@@ -216,8 +220,8 @@ class ShapeFigure extends Shape {
         return this;
     }
 
-    private inline function xx(x: Float): Float return x-mBounds.x;
-    private inline function yy(y: Float): Float return y-mBounds.y;
+    private inline function xx(x: Float): Float return ~~(x-mBounds.x);
+    private inline function yy(y: Float): Float return ~~(y-mBounds.y);
     private var isFirstRendering = true;
     public function render (): ShapeFigure {
         if (points.length < 2) return this;
@@ -304,5 +308,4 @@ class ShapeFigure extends Shape {
         setBounds(0,0,mBounds.width+pad,mBounds.height+pad);
         return this;
     }
-
 }

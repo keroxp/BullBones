@@ -84,6 +84,7 @@ class ShapeFigureSet extends Container  {
         } else {
             b.extend(ex,ey,cb.width,cb.height);
         }
+        setBounds(0,0,~~b.width,~~b.height);
     }
 
     override public function toString():String {
@@ -100,15 +101,6 @@ class ShapeFigureSet extends Container  {
                 shape.render();
             });
         }
-        var bounds = sTempRect.copy(getBounds());
-        bounds.pad(
-            leftShape.width.toFloat(),
-            topShape.width.toFloat(),
-            rightShape.width.toFloat(),
-            bottomShape.width.toFloat()
-        );
-        cache(bounds.x,bounds.y,bounds.width,bounds.height);
-//        setBounds(0,0,bounds.width,bounds.height);
         return this;
     }
 
