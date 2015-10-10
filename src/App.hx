@@ -154,9 +154,21 @@ class App extends BackboneEvents implements BrushEditorListener {
                 mainCanvas.mirroringInfo.pivotEnabled = !mainCanvas.mirroringInfo.pivotEnabled;
                 jLineSymmetryPivotButton.toggleClass("editing", mainCanvas.mirroringInfo.pivotEnabled);
             });
+            var jDrawingBrushButton: JQuery = new JQuery("#drawingBrushButton");
+            var jSmoothBrushButton: JQuery = new JQuery("#smoothBrushButton");
+            jDrawingBrushButton.on(click, function(e: MouseEvent) {
+                mainCanvas.toolType = Brush;
+                jSmoothBrushButton.toggleClass("editing", mainCanvas.toolType == Smooth);
+                jDrawingBrushButton.toggleClass("editing", mainCanvas.toolType == Brush);
+            });
+            jSmoothBrushButton.on(click, function(e: MouseEvent) {
+                mainCanvas.toolType = Smooth;
+                jDrawingBrushButton.toggleClass("editing", mainCanvas.toolType == Brush);
+                jSmoothBrushButton.toggleClass("editing", mainCanvas.toolType == Smooth);
+            });
             // Layer
             jLayerButton = new JQuery("#layerButton").on(click, function(e: MouseEvent) {
-               layerView.jq.toggle();
+                layerView.jq.toggle();
                 jLayerButton.toggleClass("editing");
             });
             listenTo(model, "change:undoStackSize", function (m,val:Int) {

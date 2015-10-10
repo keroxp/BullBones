@@ -1,8 +1,11 @@
 package canvas;
+import canvas.tools.SmoothTool;
+import canvas.tools.BrushTool;
+import canvas.CanvasToolType;
+import canvas.CanvasState;
 import js.html.UIEvent;
 import geometry.Vector2D;
 import view.PopupMenu;
-import canvas.CanvasState.CanvasEventState;
 import performance.GeneralObjectPool;
 import util.CursorUtil;
 import js.html.Performance;
@@ -41,10 +44,8 @@ import model.ImageEditor;
 import view.SearchView.SearchResultListener;
 import view.ViewModel;
 import ajax.BingSearch.BingSearchResult;
-import event.MouseEventCapture;
 import js.html.Element;
 import createjs.easeljs.Container;
-import geometry.FuzzyPoint;
 import figure.BoundingBox;
 import js.html.CanvasElement;
 import js.html.KeyboardEvent;
@@ -85,14 +86,9 @@ typedef CopyEvent = {
     GridShape               - グリッド
     BackgroundShape         - 背景
  */
+@:allow(canvas.tools)
 class MainCanvas extends ViewModel
 implements SearchResultListener {
-    private static var sTempRect = new Rectangle();
-    private static var sPointPool = new GeneralObjectPool<Point>(
-        10,
-        function () { return new Point(); },
-        function (p: Point) { p.x = p.y = 0;}
-    );
     var mStage: Stage;
     var mFgContainer: Container = new Container();
     var mBgContainer: Container = new Container();
@@ -118,10 +114,12 @@ implements SearchResultListener {
     var mHasDirtyRect = false;
     var mDirtyRect: Rectangle = new Rectangle();
     var mPrevDirtyRect: Rectangle = new Rectangle();
-    var mCapture: MouseEventCapture;
+    var mCapture: CanvasMouseEvent;
     var window = BrowserUtil.window;
     var mPopupMenu: PopupMenu;
-    var mCanvasState = new CanvasState();
+    var mCanvasState: CanvasState = Idle;
+    var mTool: CanvasTool;
+
     public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null)
     = "me.keroxp.app.BullBones:canvas.MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
     public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null)
@@ -135,9 +133,16 @@ implements SearchResultListener {
     public static var ON_DELETE_EVENT(default,null)
     = "me.keroxp.app.BullBones:canvas.MainCanvas:ON_DELETE_EVENT";
 
+    public var mirroringInfo(default, null): MirroringInfo = new MirroringInfo();
+
     public function new(jq: JQuery) {
-        super(jq);
-        var cap = new MouseEventCapture();
+        super(jq, {
+            activeFigure: null,
+            toolType: Brush,
+            isEditing: false,
+            isExporting: false
+        });
+        var cap = new CanvasMouseEvent();
         var isThis = function (e: UIEvent) {
             return cast(e.target, Element).id == el.id;
         }
@@ -175,7 +180,7 @@ implements SearchResultListener {
         mStage.addChild(mFgContainer);
         mStage.addChild(mStageDebugShape);
         // UI
-        mPopupMenu = new PopupMenu(Main.App.jq);
+        mPopupMenu = new PopupMenu(Main.App.jUILayer);
         // reset drawing
         resizeCanvas();
         invalidate();
@@ -203,12 +208,10 @@ implements SearchResultListener {
         });
         var piv = mFgContainer.globalToLocal(
             mCanvas.width*0.5,
-            mCanvas.height*0.5,
-            sPointPool.take()
+            mCanvas.height*0.5
         );
         mirroringInfo.pivotX = piv.x;
         mirroringInfo.pivotY = piv.y;
-        on("change:isEditing", onChangeEditing);
     }
 
     @:isVar public var activeFigure(get,set):DisplayObject;
@@ -216,36 +219,54 @@ implements SearchResultListener {
         return get("activeFigure");
     }
     function set_activeFigure(value:DisplayObject) {
+        trace("set_activeFigure", value);
+        if (activeFigure == value) return value;
         if (value == null && mPopupMenu.isShown) {
             mPopupMenu.dismiss(200);
         }
+        drawBoundingBox(value);
+        extendDirtyRectWithDisplayObject(value != null ? value : activeFigure);
+        requestDraw("setActiveFigure", draw);
         set("activeFigure", value);
-        if (value != null) {
-            extendDirtyRectWithDisplayObject(value);
-            drawBoundingBox();
-            requestDraw("setActiveFigure", draw);
-        }
         return value;
     }
 
-    @:isVar public var isEditing(get,set): Bool = false;
+    @:isVar public var toolType(get, set):CanvasToolType;
+    function get_toolType():CanvasToolType {
+        return get("toolType");
+    }
+    function set_toolType(value:CanvasToolType) {
+        set("toolType", value);
+        return value;
+    }
+
+    @:isVar public var isEditing(get,set): Bool;
     function get_isEditing(): Bool {
         return get("isEditing");
     }
     function set_isEditing(value:Bool) {
+        trace("set_isEditing", value);
+        if (value == isEditing) return value;
         jq.attr("data-editing", value+"");
         mBackground.visible = value;
         mGrid.visible = value;
         mBrushCircle.visible = !value;
         jq.css("cursor","");
         set("isEditing", value);
+        if (value) {
+            activeFigure = mFigureContainer.children.findLast(function(e: DisplayObject) {
+                return e.visible;
+            });
+        } else {
+            activeFigure = null;
+        }
         invalidate();
         return value;
     }
 
-    @:isVar public var isExporting(get, set): Bool = false;
+    @:isVar public var isExporting(get, set): Bool;
     function get_isExporting(): Bool {
-        return get("isExporting") || false;
+        return get("isExporting");
     }
     function set_isExporting(value:Bool) {
         set("isExporting",value);
@@ -259,16 +280,6 @@ implements SearchResultListener {
         invalidate();
         return value;
     }
-    
-    public var mirroringInfo(default, null): MirroringInfo = new MirroringInfo();
-
-    function onChangeEditing (m, value: Bool) {
-        if (value) {
-            activeFigure = mFigureContainer.children.findLast(function(e: DisplayObject) { return e.visible; });
-        } else {
-            activeFigure = null;
-        }
-    }
 
     var scale(get,never): Float;
     inline function get_scale():Float return Main.App.model.zoom.scale;
@@ -277,7 +288,7 @@ implements SearchResultListener {
         drawBackground();
         drawGrid();
         drawBrushCircle();
-        drawBoundingBox();
+        drawBoundingBox(activeFigure);
         showPopupMenu();
         requestDraw("invalidate", draw, [true]);
     }
@@ -355,26 +366,25 @@ implements SearchResultListener {
         mGrid.updateCache();
         extendDirtyRect(0,0,mCanvas.width,mCanvas.height);
     }
-    function drawBoundingBox () {
+    function drawBoundingBox (target: DisplayObject) {
         mBoundingBox.clear();
-        if (activeFigure != null) {
+        if (target != null) {
             var p = mMainContainer.localToLocal(
-                activeFigure.x,
-                activeFigure.y,
-                mFgContainer,
-                sPointPool.take()
+                target.x,
+                target.y,
+                mFgContainer
             );
             mBoundingBox.shape.x = p.x;
             mBoundingBox.shape.y = p.y;
-            var bounds = sTempRect.copy(activeFigure.getTransformedBounds());
+            var bounds = target.getTransformedBounds().clone();
             var xOffset = 0.0;
             var yOffset = 0.0;
-            if (activeFigure.type() == FigureType.Shape) {
-                var shape = cast(activeFigure, ShapeFigure);
+            if (target.type() == FigureType.Shape) {
+                var shape = cast(target, ShapeFigure);
                 xOffset = shape.width.toFloat()*.5;
                 yOffset = shape.width.toFloat()*.5;
-            } else if (activeFigure.type() == FigureType.ShapeSet) {
-                var shape = cast(activeFigure, ShapeFigureSet);
+            } else if (target.type() == FigureType.ShapeSet) {
+                var shape = cast(target, ShapeFigureSet);
                 xOffset = shape.leftShape.width.toFloat()*.5;
                 yOffset = shape.topShape.width.toFloat()*.5;
             }
@@ -382,7 +392,7 @@ implements SearchResultListener {
             mBoundingBox.shape.y -= yOffset*scale;
             bounds.scale(scale,scale);
             mBoundingBox.render(bounds);
-            var g = mMainContainer.localToGlobal(bounds.x,bounds.y,sPointPool.take());
+            var g = mMainContainer.localToGlobal(bounds.x,bounds.y);
             extendDirtyRect(g.x,g.y,bounds.width,bounds.height);
         }
     }
@@ -408,8 +418,8 @@ implements SearchResultListener {
     }
     public function extendDirtyRectWithRect(r: Rectangle, ?localContainer: Container) {
         if (localContainer != null) {
-            var lt = localContainer.localToGlobal(r.x,r.y,sPointPool.take());
-            var rb = localContainer.localToGlobal(r.right(),r.bottom(),sPointPool.take());
+            var lt = localContainer.localToGlobal(r.x,r.y);
+            var rb = localContainer.localToGlobal(r.right(),r.bottom());
             extendDirtyRect(lt.x,lt.y);
             extendDirtyRect(rb.x,rb.y);
         } else {
@@ -417,7 +427,7 @@ implements SearchResultListener {
         }
     }
     public function extendDirtyRectWithDisplayObject(o: DisplayObject, ?prevBounds: Rectangle) {
-        var b = sTempRect.copy(o.getTransformedBounds());
+        var b = o.getTransformedBounds().clone();
         if (prevBounds != null) {
             b.extend(prevBounds.x,prevBounds.y,prevBounds.width,prevBounds.height);
         }
@@ -534,9 +544,8 @@ implements SearchResultListener {
             Reflect.callMethod(cmd, Reflect.field(cmd,"undo"),[]);
             if (isEditing) {
                 activeFigure = af;
-            } else {
-                invalidate();
             }
+            invalidate();
             Main.App.model.undoStackSize -= 1;
             Main.App.model.redoStackSize += 1;
         }
@@ -560,9 +569,8 @@ implements SearchResultListener {
             }
             if (isEditing) {
                 activeFigure = af;
-            } else {
-                invalidate();
             }
+            invalidate();
             Main.App.model.undoStackSize += 1;
             Main.App.model.redoStackSize -= 1;
         }
@@ -586,7 +594,7 @@ implements SearchResultListener {
 
     function insertImageFiguew(iw: ImageWrap) {
         var im = new ImageFigure(iw);
-        var p =  mMainContainer.globalToLocal(0,0,sPointPool.take());
+        var p =  mMainContainer.globalToLocal(0,0);
         im.x = p.x;
         im.y = p.y;
         insertFigure(im);
@@ -663,7 +671,7 @@ implements SearchResultListener {
             var pivY = mCanvas.height/2;
             if (activeFigure != null) {
                 var c = activeFigure.getTransformedBounds().center();
-                var p = mMainContainer.localToGlobal(c.x,c.y,sPointPool.take());
+                var p = mMainContainer.localToGlobal(c.x,c.y);
                 pivX = p.x;
                 pivY = p.y;
             }
@@ -682,7 +690,7 @@ implements SearchResultListener {
     }
 
     private function applyScaleToLayer(container: Container, scale: Float, g_pivX: Float, g_pivY: Float) {
-        var piv = container.globalToLocal(g_pivX,g_pivY,sPointPool.take());
+        var piv = container.globalToLocal(g_pivX,g_pivY);
         container.scaleX = scale;
         container.scaleY = scale;
         container.regX = piv.x;
@@ -696,19 +704,18 @@ implements SearchResultListener {
             var d = BrowserUtil.window.devicePixelRatio;
             var p = mMainContainer.localToGlobal(
                 activeFigure.x,
-                activeFigure.y,
-                sPointPool.take()
+                activeFigure.y
             );
             p.x /= d;
             p.y /= d;
             var margin = 20;
-            var b = sTempRect.copy(activeFigure.getTransformedBounds()).scale(scale,scale).scale(1/d,1/d);
+            var b = activeFigure.getTransformedBounds().clone().scale(scale/d,scale/d);
             var w = mPopupMenu.jq.outerWidth();
             var h = mPopupMenu.jq.outerHeight();
             var x = p.x+(b.width-w)*0.5;
             var y = p.y-h-margin;
             var dir = "bottom";
-            var o = mMainContainer.globalToLocal(0,0,sPointPool.take());
+            var o = mMainContainer.globalToLocal(0,0);
             if (p.y < h && jq.outerHeight()-h < p.y+b.height) {
                 dir = "top";
                 y = p.y+b.height*0.5;
@@ -746,10 +753,10 @@ implements SearchResultListener {
     }
 
     var mDisplayCommand: DisplayCommand;
-    function onMouseDown (e: MouseEventCapture) {
+    function onMouseDown (e: CanvasMouseEvent) {
         mPressed = true;
-        var p_main_local = mMainContainer.globalToLocal(e.x,e.y,sPointPool.take());
-        var p_fg_local = mFgContainer.globalToLocal(e.x,e.y,sPointPool.take());
+        var p_main_local = e.getLocal(mMainContainer);
+        var p_fg_local = e.getLocal(mFgContainer);
         if (!isExporting) {
             var hitted: DisplayObject = null;
             if (!isEditing) {
@@ -760,20 +767,16 @@ implements SearchResultListener {
                 }
                 if (mirroringInfo.pivotEnabled && mSymmetryPivotShape.hitTest(p_fg_local.x,p_fg_local.y)) {
                     hitted = mSymmetryPivotShape;
-                    mCanvasState.Dragging(hitted);
+                    mCanvasState = Dragging(hitted);
                 } else {
-                    var f =  new ShapeFigure();
-                    f.addPoint(p_main_local.x,p_main_local.y);
-                    f.width = Main.App.model.brush.width;
-                    f.color = Main.App.model.brush.color;
-                    if (mirroringInfo.enabled) {
-                        var m = new ShapeFigure();
-                        m.addPoint(mirroringInfo.getMirrorX(p_main_local.x), p_main_local.y);
-                        m.width = Main.App.model.brush.width;
-                        m.color = Main.App.model.brush.color;
-                        mCanvasState.Drawing(f,m);
-                    } else {
-                        mCanvasState.Drawing(f);
+                    // using tools
+                    switch (toolType) {
+                        case Brush: {
+                            mCanvasState = Drawing(new BrushTool());
+                        }
+                        case Smooth: {
+                            mCanvasState = Drawing(new SmoothTool());
+                        }
                     }
                     drawBrushCircle();
                 }
@@ -783,38 +786,43 @@ implements SearchResultListener {
                     return d.visible && d.getTransformedBounds().containsPoint(p_main_local.x,p_main_local.y);
                 });
                 if (hitted != null) {
-                    mCanvasState.Dragging(hitted);
+                    mCanvasState = Dragging(hitted);
                 } else {
-                    mCanvasState.Grabbing();
+                    mCanvasState = Grabbing;
                 }
             }
             if (activeFigure != null) {
                 var corner = mBoundingBox.hitsCorner(p_fg_local.x,p_fg_local.y);
                 if (corner != null) {
-                    mCanvasState.Scaling(corner);
+                    mCanvasState = Scaling(corner);
                 }
             }
             if (hitted != null) {
                 mBoundingBox.shape.x = hitted.x;
                 mBoundingBox.shape.y = hitted.y;
             }
-            switch (mCanvasState.eventState) {
-                case CanvasEventState.Dragging: {
-                    mDisplayCommand = new DisplayCommand(mCanvasState.draggingFigure, this);
+            switch (mCanvasState) {
+                case Drawing(tool): {
+                    tool.onMouseDown(this,e);
+                }
+                case Dragging(dragging): {
+                    mDisplayCommand = new DisplayCommand(dragging, this);
                     if (isEditing) {
                         activeFigure = hitted;
                     }
                     jq.css("cursor", mCurrentPointerCSS = "move");
                 }
-                case CanvasEventState.Grabbing: {
+                case Grabbing: {
                     jq.css("cursor",mCurrentPointerCSS = CursorUtil.grabbingCursor());
                 }
-                case CanvasEventState.Scaling: {
+                case Scaling(corner): {
                     mDisplayCommand = new DisplayCommand(activeFigure, this);
                 }
                 default: {}
             }
-            drawBoundingBox();
+            if (isEditing) {
+                drawBoundingBox(activeFigure);
+            }
             mBrushCircle.visible = !isEditing;
         } else {
             // during export
@@ -824,202 +832,167 @@ implements SearchResultListener {
     }
     private var mCurrentPointerCSS: String;
     private static var MOVED_THRESH = 2*2;
-    function updateBrushCircle(e: MouseEventCapture) {
+
+    function updateBrushCircle(e: CanvasMouseEvent) {
         mBrushCircle.visible = true;
-        var fp = mFgContainer.globalToLocal(e.x,e.y,sPointPool.take());
-        var pb = mBrushCircle.getTransformedBounds();
-        var bw = Main.App.model.brush.width.toFloat()*scale/2;
+        var fp = e.getLocal(mFgContainer);
+        var pb = mBrushCircle.getTransformedBounds().clone();
+        var bw = Main.App.model.brush.width.toFloat()*scale*.5;
         mBrushCircle.x = ~~(fp.x+0.5-bw);
         mBrushCircle.y = ~~(fp.y+0.5-bw);
         extendDirtyRectWithDisplayObject(mBrushCircle,pb);
     }
-    function onMouseMove (e: MouseEventCapture) {
-        sPointPool.mark("onMouseMove");
-        var toDraw = false;
+
+    function handleFreeCursorMove(e: CanvasMouseEvent) {
+        var nextCursor = mCurrentPointerCSS;
+        if (!isEditing) {
+            if (mCurrentPointerCSS != CursorUtil.CROSSHAIR) {
+                nextCursor = CursorUtil.CROSSHAIR;
+            }
+            if (mirroringInfo.pivotEnabled) {
+                var lpfg = e.getLocal(mFgContainer);
+                if (mSymmetryPivotShape.hitTest(lpfg.x,lpfg.y)) {
+                    nextCursor = CursorUtil.MOVE;
+                }
+            }
+            updateBrushCircle(e);
+        } else {
+            if (activeFigure != null) {
+                var lpmn = e.getLocal(mMainContainer);
+                var c = mBoundingBox.hitsCorner(lpmn.x,lpmn.y);
+                if (c != null) {
+                    nextCursor = BoundingBox.getPointerCSS(c);
+                } else {
+                    if (activeFigure.getTransformedBounds().containsPoint(lpmn.x,lpmn.y)){
+                        nextCursor = CursorUtil.MOVE;
+                    } else {
+                        nextCursor = CursorUtil.grabCursor();
+                    }
+                }
+            }
+        }
+        if (mCurrentPointerCSS != nextCursor) {
+            jq.css("cursor", mCurrentPointerCSS = nextCursor);
+        }
+    }
+
+    function handleSmooth(e: CanvasMouseEvent, tool: SmoothTool) {
+
+    }
+    function handleDragging(e: CanvasMouseEvent, dragging: DisplayObject) {
+        if (!isEditing) {
+            dragging.x += e.deltaX;
+            dragging.y += e.deltaY;
+            if (dragging == mSymmetryPivotShape) {
+                var w = mSymmetryPivotShape.totalRadius.toFloat();
+                var piv = mFgContainer.localToLocal(
+                    mSymmetryPivotShape.x+w,
+                    mSymmetryPivotShape.y+w,
+                    mFigureContainer
+                );
+                mirroringInfo.pivotX = piv.x;
+                mirroringInfo.pivotY = piv.y;
+                extendDirtyRectWithDisplayObject(mSymmetryPivotShape);
+            }
+        } else {
+            var pb = activeFigure.getTransformedBounds().clone();
+            dragging.x += e.deltaX/scale;
+            dragging.y += e.deltaY/scale;
+            mBoundingBox.shape.x += e.deltaX;
+            mBoundingBox.shape.y += e.deltaY;
+            extendDirtyRectWithDisplayObject(dragging,pb);
+            mPopupMenu.dismiss(200);
+        }
+    }
+    function handleGrabbing(e: CanvasMouseEvent) {
+        mMainContainer.x += e.deltaX;
+        mMainContainer.y += e.deltaY;
+        mFgContainer.x += e.deltaX;
+        mFgContainer.y += e.deltaY;
+        extendDirtyRect(0,0,mCanvas.width,mCanvas.height);
+        drawGrid(e.deltaX,e.deltaY);
+        mPopupMenu.dismiss(200);
+    }
+    function handleScaling(e: CanvasMouseEvent, corner: Corner) {
+        var tb = activeFigure.getTransformedBounds().clone();
+        var lpmn = e.getLocal(mMainContainer);
+        var lpmnprev = e.getLocalPrev(mMainContainer);
+        inline function doScaleX (width: Float) {
+            var sx = width/tb.width;
+            if (0 < sx) {
+                activeFigure.scaleX *= sx;
+            }
+        }
+        inline function doScaleY (height: Float) {
+            var sy = height/tb.height;
+            if (0 < sy) {
+                activeFigure.scaleY *= sy;
+            }
+        }
+        inline function constrainScaleX () {
+            if (lpmn.x < tb.right()) {
+                if (tb.right() < lpmnprev.x) {
+                    doScaleX(tb.right()-e.x);
+                } else {
+                    doScaleX(tb.width-e.deltaX/scale);
+                }
+                activeFigure.x = lpmn.x;
+            }
+        }
+        inline function constrainScaleY () {
+            if (lpmn.y < tb.bottom()) {
+                if (tb.bottom() < lpmnprev.y) {
+                    doScaleY(tb.bottom()-lpmn.y);
+                } else {
+                    doScaleY(tb.height-e.deltaY/scale);
+                }
+                activeFigure.y = lpmn.y;
+            }
+        }
+        corner.isLeft? constrainScaleX() : doScaleX(tb.width+e.deltaX/scale);
+        corner.isTop? constrainScaleY() : doScaleY(tb.height+e.deltaY/scale);
+        if (modifiedByShift()) {
+            var d = activeFigure;
+            var s = (d.scaleX+d.scaleY)*0.5;
+            var oBounds = d.getBounds();
+            d.scaleX = d.scaleY = s;
+            var w = oBounds.width*s;
+            var h = oBounds.height*s;
+            if (corner.isLeft) {
+                d.x = tb.right()-w;
+            }
+            if (corner.isTop) {
+                d.y = tb.bottom()-h;
+            }
+        }
+        extendDirtyRectWithDisplayObject(activeFigure,tb);
+        drawBoundingBox(activeFigure);
+    }
+    function onMouseMove (e: CanvasMouseEvent) {
         if (!BrowserUtil.isBrowser) {
             e.srcEvent.preventDefault();
         }
-        var p_local_main = mMainContainer.globalToLocal(e.x,e.y, sPointPool.take());
-        var p_local_main_prev = mMainContainer.globalToLocal(e.prevX,e.prevY, sPointPool.take());
         if (!isExporting) {
             if (!mPressed) {
-                var nextCursor = mCurrentPointerCSS;
-                if (!isEditing) {
-                    if (mCurrentPointerCSS != CursorUtil.CROSSHAIR) {
-                        nextCursor = CursorUtil.CROSSHAIR;
-                    }
-                    if (mirroringInfo.pivotEnabled) {
-                        var p_local_fg = mFgContainer.globalToLocal(e.x,e.y, sPointPool.take());
-                        if (mSymmetryPivotShape.hitTest(p_local_fg.x,p_local_fg.y)) {
-                            nextCursor = CursorUtil.MOVE;
-                        }
-                    }
-                    updateBrushCircle(e);
-                } else {
-                    if (activeFigure != null) {
-                        var c = mBoundingBox.hitsCorner(p_local_main.x,p_local_main.y);
-                        if (c != null) {
-                            nextCursor = BoundingBox.getPointerCSS(c);
-                        } else {
-                            if (activeFigure.getTransformedBounds().containsPoint(p_local_main.x,p_local_main.y)){
-                                nextCursor = CursorUtil.MOVE;
-                            } else {
-                                nextCursor = CursorUtil.grabCursor();
-                            }
-                        }
-                    }
-                }
-                if (mCurrentPointerCSS != nextCursor) {
-                    jq.css("cursor", mCurrentPointerCSS = nextCursor);
-                }
+                handleFreeCursorMove(e);
             } else {
                 if (!isEditing) {
-                    switch(mCanvasState.eventState) {
-                        case Drawing: {
-                            var b = Main.App.model.brush;
-                            var drawPoint = sPointPool.take().copy(p_local_main);
-                            var drawPointPrev = sPointPool.take().copy(p_local_main_prev);
-                            var drawing = mCanvasState.drawingFigure;
-                            if (modifiedByShift()) {
-                                drawPointPrev = mMainContainer.globalToLocal(e.startX,e.startY,sPointPool.take());
-                                var isAlignedToXAxis = Math.abs(e.totalDeltaX) > Math.abs(e.totalDeltaY);
-                                if (isAlignedToXAxis) {
-                                    drawPoint.y  = drawPointPrev.y;
-                                } else {
-                                    drawPoint.x  = drawPointPrev.x;
-                                }
-                                mBufferShape.graphics.clear();
-                                if (!drawing.isLine) {
-                                    drawing.isLine = true;
-                                    if (mirroringInfo.enabled) {
-                                        mCanvasState.mirrorFigure.isLine = true;
-                                    }
-                                    extendDirtyRectWithRect(drawing.getTransformedBounds());
-                                }
-                                var p_g_drawing = mMainContainer.localToGlobal(drawPoint.x,drawPoint.y,sPointPool.take());
-                                extendDirtyRect(e.startX,e.startY);
-                                extendDirtyRect(p_g_drawing.x,p_g_drawing.y);
-                                var pad = b.width.toFloat()*.5;
-                                mDirtyRect.pad(pad,pad,pad,pad);
-                            } else if (drawing.isLine) {
-                                drawing.isLine = false;
-                            }
-                            mBufferShape.graphics.setStrokeStyle(b.width,"round", "round");
-                            if (mirroringInfo.enabled) {
-                                var mx = mirroringInfo.getMirrorX(drawPoint.x);
-                                var my = drawPoint.y;
-                                mCanvasState.mirrorFigure.addPoint(mx,my);
-                                var mpx = mirroringInfo.getMirrorX(drawPointPrev.x);
-                                var mpy = drawPointPrev.y;
-                                mBufferShape.graphics
-                                .beginStroke(b.color)
-                                .moveTo(mpx,mpy)
-                                .lineTo(mx,my)
-                                .endStroke();
-                                var gm = mMainContainer.localToGlobal(mx,my, sPointPool.take());
-                                extendDirtyRect(gm.x,gm.y);
-                            }
-                            mBufferShape.graphics
-                            .beginStroke(b.color)
-                            .moveTo(drawPointPrev.x,drawPointPrev.y)
-                            .lineTo(drawPoint.x,drawPoint.y)
-                            .endStroke();
-                            extendDirtyRect(e.x,e.y);
-                            drawing.addPoint(drawPoint.x,drawPoint.y);
-                        }
-                        case Dragging: {
-                            mCanvasState.draggingFigure.x += e.deltaX;
-                            mCanvasState.draggingFigure.y += e.deltaY;
-                            if (mCanvasState.draggingFigure == mSymmetryPivotShape) {
-                                var w = mSymmetryPivotShape.totalRadius.toFloat();
-                                var piv = mFgContainer.localToLocal(
-                                    mSymmetryPivotShape.x+w,
-                                    mSymmetryPivotShape.y+w,
-                                    mFigureContainer,
-                                    sPointPool.take()
-                                );
-                                mirroringInfo.pivotX = piv.x;
-                                mirroringInfo.pivotY = piv.y;
-                                extendDirtyRectWithDisplayObject(mSymmetryPivotShape);
-                            }
-                        }
-                        default: {}
+                    switch(mCanvasState) {
+                    case Drawing(tool):
+                        tool.onMouseMove(this, e);
+                    case Dragging(dragging):
+                        handleDragging(e,dragging);
+                    default: {}
                     }
                     updateBrushCircle(e);
                 } else {
-                    switch (mCanvasState.eventState) {
-                        case Dragging: {
-                            var pb = activeFigure.getTransformedBounds().clone();
-                            mCanvasState.draggingFigure.x += e.deltaX/scale;
-                            mCanvasState.draggingFigure.y += e.deltaY/scale;
-                            mBoundingBox.shape.x += e.deltaX;
-                            mBoundingBox.shape.y += e.deltaY;
-                            extendDirtyRectWithDisplayObject(mCanvasState.draggingFigure,pb);
-                            mPopupMenu.dismiss(200);
-                        }
-                        case Grabbing: {
-                            mMainContainer.x += e.deltaX;
-                            mMainContainer.y += e.deltaY;
-                            mFgContainer.x += e.deltaX;
-                            mFgContainer.y += e.deltaY;
-                            extendDirtyRect(0,0,mCanvas.width,mCanvas.height);
-                            drawGrid(e.deltaX,e.deltaY);
-                            mPopupMenu.dismiss(200);
-                        }
-                        case Scaling: {
-                            sTempRect.copy(activeFigure.getTransformedBounds());
-                            inline function doScaleX (width: Float) {
-                                var sx = width/sTempRect.width;
-                                if (0 < sx) {
-                                    activeFigure.scaleX *= sx;
-                                }
-                            }
-                            inline function doScaleY (height: Float) {
-                                var sy = height/sTempRect.height;
-                                if (0 < sy) {
-                                    activeFigure.scaleY *= sy;
-                                }
-                            }
-                            inline function constrainScaleX () {
-                                if (p_local_main.x < sTempRect.right()) {
-                                    if (sTempRect.right() < p_local_main_prev.x) {
-                                        doScaleX(sTempRect.right()-e.x);
-                                    } else {
-                                        doScaleX(sTempRect.width-e.deltaX/scale);
-                                    }
-                                    activeFigure.x = p_local_main.x;
-                                }
-                            }
-                            inline function constrainScaleY () {
-                                if (p_local_main.y < sTempRect.bottom()) {
-                                    if (sTempRect.bottom() < p_local_main_prev.y) {
-                                        doScaleY(sTempRect.bottom()-p_local_main.y);
-                                    } else {
-                                        doScaleY(sTempRect.height-e.deltaY/scale);
-                                    }
-                                    activeFigure.y = p_local_main.y;
-                                }
-                            }
-                            var corner = mCanvasState.scalingCorner;
-                            corner.isLeft? constrainScaleX() : doScaleX(sTempRect.width+e.deltaX/scale);
-                            corner.isTop? constrainScaleY() : doScaleY(sTempRect.height+e.deltaY/scale);
-                            if (modifiedByShift()) {
-                                var d = activeFigure;
-                                var s = (d.scaleX+d.scaleY)*0.5;
-                                var oBounds = d.getBounds();
-                                d.scaleX = d.scaleY = s;
-                                var w = oBounds.width*s;
-                                var h = oBounds.height*s;
-                                if (corner.isLeft) {
-                                    d.x = sTempRect.right()-w;
-                                }
-                                if (corner.isTop) {
-                                    d.y = sTempRect.bottom()-h;
-                                }
-                            }
-                            extendDirtyRectWithDisplayObject(activeFigure,sTempRect);
-                            drawBoundingBox();
-                        }
+                    switch (mCanvasState) {
+                        case Dragging(dragging):
+                            handleDragging(e,dragging);
+                        case Grabbing:
+                            handleGrabbing(e);
+                        case Scaling(corner):
+                            handleScaling(e, corner);
                         default: {}
                     }
                 }
@@ -1031,7 +1004,7 @@ implements SearchResultListener {
                 var y = e.totalDeltaY < 0 ? e.startY+e.totalDeltaY : e.startY;
                 var w = e.totalDeltaX < 0 ? -e.totalDeltaX : e.totalDeltaX;
                 var h = e.totalDeltaY < 0 ? -e.totalDeltaY : e.totalDeltaY;
-                var p = mFgContainer.globalToLocal(x,y,sPointPool.take());
+                var p = mFgContainer.globalToLocal(x,y);
                 mExportShape.alpha = 0.4;
                 mExportShape.graphics
                 .clear()
@@ -1043,59 +1016,37 @@ implements SearchResultListener {
         }
         requestDraw(TAG_ON_MOUSE_MOVE, draw);
         trigger(ON_CANVAS_MOUSEMOVE_EVENT);
-        sPointPool.unmark();
     }
     private static var TAG_ON_MOUSE_MOVE = "onMouseMove";
-    function onMouseUp (e: MouseEventCapture) {
-        var toDraw = false;
+    function onMouseUp (e: CanvasMouseEvent) {
         if (!isExporting) {
             if (!isEditing) {
-                switch (mCanvasState.eventState) {
-                    case CanvasEventState.Drawing: {
-                        var drawing = mCanvasState.drawingFigure;
-                        var mirror = mCanvasState.mirrorFigure;
-                        if (drawing.points.length > 1) {
-                            if (mirroringInfo.enabled) {
-                                var first = drawing.render();
-                                var second = mirror.render();
-                                var set = ShapeFigureSet.createWithShapes([first,second]);
-                                insertFigure(set.render());
-                                extendDirtyRectWithDisplayObject(set, set.getTransformedBounds());
-                            } else {
-                                drawing.calcVertexes();
-                                insertFigure(drawing.render());
-                                extendDirtyRectWithDisplayObject(drawing,mBufferShape.getTransformedBounds());
-                            }
-                        }
-                    }
-                    default: {}
+                switch (mCanvasState) {
+                case Drawing(tool):
+                    tool.onMouseUp(this, e);
+                default: {}
                 }
-                toDraw = true;
             } else {
-                switch (mCanvasState.eventState) {
-                    case CanvasEventState.Dragging: {
-                        drawBoundingBox();
-                        toDraw = true;
+                switch (mCanvasState) {
+                case Dragging(dragging): {
+                    drawBoundingBox(dragging);
+                }
+                case Grabbing: {
+                    if (activeFigure != null) {
+                        activeFigure = null;
                     }
-                    case CanvasEventState.Grabbing: {
-                        if (activeFigure != null) {
-                            activeFigure = null;
-                            mBoundingBox.clear();
-                            drawBoundingBox();
-                        }
-                        jq.css("cursor", CursorUtil.grabCursor());
-                    }
-                    case CanvasEventState.Scaling: {
-                        activeFigure.asShapeFigure(function(shape: ShapeFigure) {
-                            var sx = shape.shapeScaleX*shape.scaleX;
-                            var sy = shape.shapeScaleY*shape.scaleY;
-                            shape.applyScale(sx,sy).render();
-                        });
-                        drawBoundingBox();
-                        Main.App.layerView.invalidate(activeFigure);
-                        toDraw = true;
-                    }
-                    default: {}
+                    jq.css("cursor", CursorUtil.grabCursor());
+                }
+                case Scaling(corner): {
+                    activeFigure.asShapeFigure(function(shape: ShapeFigure) {
+                        var sx = shape.shapeScaleX*shape.scaleX;
+                        var sy = shape.shapeScaleY*shape.scaleY;
+                        shape.applyScale(sx,sy).render();
+                    });
+                    drawBoundingBox(activeFigure);
+                    Main.App.layerView.invalidate(activeFigure);
+                }
+                default: {}
                 }
                 if (activeFigure != null) {
                     showPopupMenu();
@@ -1109,8 +1060,7 @@ implements SearchResultListener {
             var z = Main.App.model.zoom;
             var lp = mMainContainer.globalToLocal(
                 e.totalDeltaX < 0 ? e.startX+e.totalDeltaX : e.startX,
-                e.totalDeltaY < 0 ? e.startY+e.totalDeltaY : e.startY,
-                sPointPool.take()
+                e.totalDeltaY < 0 ? e.startY+e.totalDeltaY : e.startY
             );
             var w = Math.abs(e.totalDeltaX/z.scale);
             var h = Math.abs(e.totalDeltaY/z.scale);
@@ -1120,11 +1070,11 @@ implements SearchResultListener {
         mDisplayCommand = null;
         mBufferShape.graphics.clear();
         mPressed = false;
-        mCanvasState.Idle();
+        mCanvasState = Idle;
         mBrushCircle.visible = BrowserUtil.isBrowser && !isEditing;
         drawBrushCircle();
         trigger(ON_CANVAS_MOUSEUP_EVENT);
-        if (toDraw) requestDraw("onMouseUp", draw);
+        requestDraw("onMouseUp", draw);
     }
     private function onMouseWheel (e: WheelEvent) {
         var zoom = Main.App.model.zoom;

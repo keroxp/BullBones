@@ -9,8 +9,8 @@ class ViewModel extends Model {
         return cast this.jq.get()[0];
     }
 
-    public function new(jq: JQuery) {
-        super();
+    public function new(jq: JQuery, ?attrs: Dynamic, ?opts: Dynamic) {
+        super(attrs, opts);
         this.jq = jq;
     }
     public function init() {

@@ -26,16 +26,7 @@ class LayerView extends ViewModel {
     }
 
     override public function init() {
-        listenTo(Main.App.mainCanvas, "change:activeFigure", function(canvas: MainCanvas, fig: DisplayObject) {
-            if (fig != null) {
-                var ls: LayerItemView = layerItems.findFirst(function(li: LayerItemView) {
-                    return li.display.id == fig.id;
-                });
-                ls.select();
-            } else {
-                deselectAll();
-            }
-        });
+        listenTo(Main.App.mainCanvas, "change:activeFigure", onChangeActiveFigure);
         listenTo(Main.App.mainCanvas, MainCanvas.ON_INSERT_EVENT, add);
         listenTo(Main.App.mainCanvas, MainCanvas.ON_DELETE_EVENT, remove);
         listenTo(Main.App.mainCanvas, MainCanvas.ON_COPY_EVENT, copy);
@@ -44,6 +35,18 @@ class LayerView extends ViewModel {
     public function deselectAll() {
         selectedItems.clear();
         jq.find(".layerItem.selected").removeClass("selected");
+    }
+
+    function onChangeActiveFigure(canvas: MainCanvas, fig: DisplayObject, opts: Dynamic) {
+        if (opts.changer == this) return;
+        if (fig != null) {
+            var ls: LayerItemView = layerItems.findFirst(function(li: LayerItemView) {
+                return li.display.id == fig.id;
+            });
+            ls.select();
+        } else {
+            deselectAll();
+        }
     }
     function add(e: InsertEvent) {
         var li = new LayerItemView(e.target,this);
@@ -186,7 +189,9 @@ private class LayerItemView extends ViewModel {
         mLayerView.deselectAll();
         jq.addClass("selected");
         mLayerView.selectedItems.push(this);
-        Main.App.mainCanvas.isEditing = true;
+        if (!Main.App.mainCanvas.isEditing) {
+            Main.App.mainCanvas.isEditing = true;
+        }
         Main.App.mainCanvas.activeFigure = display;
     }
     public function render(): LayerItemView {

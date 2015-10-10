@@ -1,14 +1,15 @@
 package util;
+import createjs.easeljs.Point;
 import util.RectangleUtil;
 import createjs.easeljs.Rectangle;
-import geometry.Point;
 using util.RectangleUtil;
 class RectangleUtil {
     public static function center (rect: Rectangle, ?pt: Point): Point {
         if (pt == null) {
             pt = new Point();
         }
-        pt.set(rect.x+rect.width/2,rect.y+rect.height/2);
+        pt.x = rect.x+rect.width/2;
+        pt.y = rect.y+rect.height/2;
         return pt;
     }
     public static function intersects (r1: Rectangle, r2: Rectangle): Bool {

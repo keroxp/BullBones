@@ -1,9 +1,9 @@
 package figure;
 
-import geometry.Geometries;
+import performance.GeneralObjectPool;
+import createjs.easeljs.Point;
 import performance.ObjectPool;
 import geometry.Scalar;
-import geometry.Point;
 import geometry.Vertex;
 import createjs.easeljs.Rectangle;
 import geometry.Vector2D;
@@ -11,14 +11,15 @@ import geometry.FuzzyPoint;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;
 using util.ArrayUtil;
+using geometry.Points;
 
 class ShapeFigure extends Shape {
     public static var DEFAULT_COLOR = "#000000";
     public static var DEFAULT_WIDTH = Scalar.valueOf(2);
     private static var CLOSE_THRESH: Float = 20*20;
     private static var sTempRect = new Rectangle();
-    private static var sPointPool: ObjectPool<Point>
-        = new ObjectPool<Point>(5, function() { return new Point(); });
+    private static var sPointPool: GeneralObjectPool<Point>
+        = new GeneralObjectPool<Point>(5, function() { return new Point(); }, function(p) { p.x = p.y = 0; });
     private static var sVectorPool: ObjectPool<Vector2D>
         = new ObjectPool<Vector2D>(5, function() { return new Vector2D(); });
     // non-scaled points
@@ -106,6 +107,8 @@ class ShapeFigure extends Shape {
         return false;
     }
     // find points that is like vertex
+    private var PI_4_5 = Math.PI*4/5;
+    private var PI_1_5 = Math.PI/5;
     public function calcVertexes () {
         var pts = transformedPoints;
         vertexes = [];
@@ -127,7 +130,7 @@ class ShapeFigure extends Shape {
                 );
                 var cos = a.dot(b)/(a.power()*b.power());
                 var rad = Math.acos(cos);
-                if (Geometries.PI_4_5 < rad && rad < Geometries.PI_1_5) {
+                if (PI_4_5 < rad && rad < PI_1_5) {
                     var vtx = new Vertex(cur,rad);
                     var THRESH = 10*10;
                     var isFirst = vertexes.length == 0;
@@ -152,7 +155,7 @@ class ShapeFigure extends Shape {
             // don't apend point that is very close to last
             if (fp.rawDistance(points[points.length-1]) > 0) {
                 if (isLine) {
-                    // In the Line mode, we always put new point as the last.
+                    // On Line mode, we always put new point as the last.
                     points[1] = fp;
                     transformedPoints[1] = fp;
                     mBounds.setValues(points[0].x,points[0].y);

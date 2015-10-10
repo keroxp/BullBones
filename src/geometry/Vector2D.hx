@@ -1,4 +1,5 @@
 package geometry;
+import createjs.easeljs.Point;
 import performance.Poolable;
 class Vector2D implements Poolable {
     public var dx: Float;

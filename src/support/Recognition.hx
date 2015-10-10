@@ -1,6 +1,6 @@
 package support;
+import createjs.easeljs.Point;
 import geometry.Vector2D;
-import geometry.Point;
 class Recognition {
     public static function line (points: Array<Point>): Float {
         var s = points[0];
@@ -32,7 +32,6 @@ class Recognition {
                 leftMax = w;
             }
         }
-//        trace("rmax: "+rightMax+" lmax: "+leftMax);
         return rightMax+leftMax;
     }
 }
