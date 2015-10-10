@@ -21,7 +21,9 @@ class PopupMenu extends ViewModel {
         for(item in items) {
             var li = BrowserUtil.document.createElement("li");
             li.innerHTML = item.title;
-            li.onclick = item.onclick;
+            li.addEventListener("click", function (e) {
+                item.onclick(item);
+            }, false);
             frag.appendChild(li);
         }
         jq.find("ul").get()[0].appendChild(frag);
@@ -34,7 +36,7 @@ class PopupMenu extends ViewModel {
         this.isShown = true;
         return this;
     }
-    public function dismiss(?duration: Int = 0): PopupMenu {
+    public function dismiss(duration: Int = 0): PopupMenu {
         jq.fadeOut(duration, function(){
             jq.hide();
         });

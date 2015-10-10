@@ -4,20 +4,14 @@ import canvas.tools.BrushTool;
 import canvas.CanvasToolType;
 import canvas.CanvasState;
 import js.html.UIEvent;
-import geometry.Vector2D;
 import view.PopupMenu;
-import performance.GeneralObjectPool;
 import util.CursorUtil;
-import js.html.Performance;
 import geometry.Scalar;
 import figure.PivotShape;
 import figure.FigureType;
 import figure.ShapeFigureSet;
 import model.MirroringInfo.MirroringType;
 import model.MirroringInfo;
-import backbone.haxe.BackboneCollection;
-import model.BaseModel;
-import backbone.Collection;
 import js.html.Window;
 import rollbar.Rollbar;
 import ajax.Uploader;
@@ -119,7 +113,6 @@ implements SearchResultListener {
     var mPopupMenu: PopupMenu;
     var mCanvasState: CanvasState = Idle;
     var mTool: CanvasTool;
-
     public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null)
     = "me.keroxp.app.BullBones:canvas.MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
     public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null)
@@ -143,12 +136,13 @@ implements SearchResultListener {
             isExporting: false
         });
         var cap = new CanvasMouseEvent();
-        var isThis = function (e: UIEvent) {
+        cap.onDown(window,onMouseDown, function(e: UIEvent) {
             return cast(e.target, Element).id == el.id;
-        }
-        cap.onDown(window,onMouseDown,isThis);
+        });
         cap.onMove(window,onMouseMove);
-        cap.onUp(window,onMouseUp);
+        cap.onUp(window,onMouseUp, function (e: UIEvent) {
+            return mPressed;
+        });
         mCapture = cap;
         jq.on("mousewheel", onMouseWheel);
         window.addEventListener("keyup", onKeyUp);
@@ -225,6 +219,9 @@ implements SearchResultListener {
             mPopupMenu.dismiss(200);
         }
         drawBoundingBox(value);
+        if (isEditing) {
+            showPopupMenu(value);
+        }
         extendDirtyRectWithDisplayObject(value != null ? value : activeFigure);
         requestDraw("setActiveFigure", draw);
         set("activeFigure", value);
@@ -289,7 +286,7 @@ implements SearchResultListener {
         drawGrid();
         drawBrushCircle();
         drawBoundingBox(activeFigure);
-        showPopupMenu();
+        showPopupMenu(activeFigure);
         requestDraw("invalidate", draw, [true]);
     }
     private function requestDraw(tag: String, func: Dynamic, ?args: Array<Dynamic>) {
@@ -699,17 +696,17 @@ implements SearchResultListener {
         container.y = g_pivY;
     }
 
-    function showPopupMenu () {
-        if (!isExporting && activeFigure != null) {
+    function showPopupMenu (target: DisplayObject) {
+        if (!isExporting && target != null) {
             var d = BrowserUtil.window.devicePixelRatio;
             var p = mMainContainer.localToGlobal(
-                activeFigure.x,
-                activeFigure.y
+                target.x,
+                target.y
             );
             p.x /= d;
             p.y /= d;
             var margin = 20;
-            var b = activeFigure.getTransformedBounds().clone().scale(scale/d,scale/d);
+            var b = target.getTransformedBounds().clone().scale(scale/d,scale/d);
             var w = mPopupMenu.jq.outerWidth();
             var h = mPopupMenu.jq.outerHeight();
             var x = p.x+(b.width-w)*0.5;
@@ -725,7 +722,7 @@ implements SearchResultListener {
                     y = p.y+b.height+margin;
                 }
             }
-            mPopupMenu.render(getPopupItmes(activeFigure)).showAt(x,y,dir,300);
+            mPopupMenu.render(getPopupItmes(target)).showAt(x,y,dir,300);
         } else {
             mPopupMenu.dismiss(200);
         }
@@ -1048,9 +1045,7 @@ implements SearchResultListener {
                 }
                 default: {}
                 }
-                if (activeFigure != null) {
-                    showPopupMenu();
-                }
+                showPopupMenu(activeFigure);
             }
             if (mDisplayCommand != null) {
                 pushCommand(mDisplayCommand.exec(null));

@@ -45,106 +45,113 @@ html(lang='ja')
       #modalView.modal.modal-fixed-footer.scrollable
       // App View
       #appView
-        #layerView.z-depth-1(style="display:none")
-          ul#layerListView
-            li#layerItemDummy.layerItem(style="")                          
-        #floatingThumbnailView
-        #searchView.bb-panel.z-depth-1(style='display:none')
-          .input-field.col.s12
-            i.mdi-action-search.prefix
-            input#searchInput.validate(type='text', autocomplete='off')
-            label(for='searchInput') 描きたいモチーフを検索
-          #searchResultsWrapper.scrollable
-            #searchingIndicator.hidden
-              img(src='img/loading-dot.svg', width='50', height='50')
-            #searchResults.clearfix.hidden
-        #buttonsview
-          ul
-            li
-              a#searchButton.btn-floating.wave-effect.bb-btn.btn-large.red(title='検索')
-                i.large.material-icons search
-            li
-              a#brushButton.bb-btn.btn-floating.wave-effect.btn-large.blue(title='ブラシ')
-                i.large.material-icons palette
-            li
-              a#imageEditorButton.bb-btn.btn-floating.wave-effect.btn-large.orange(style='display:none', title='画像を編集')
-                i.large.material-icons image
-            li
-              a#exportButton.bb-btn.btn-floating.wave-effect.btn-large.amber(title="画像を書き出し")
-                i.large.material-icons input
-            li
-            if app_env == "development"
-              a#debugButton.bb-btn.btn-floating.wave-effect.btn-large.white
-                i.large.mdi-action-bug-report(style='color: black')
-          #brushWrapper.bb-panel.panel.z-depth-1(style='display:none;')
-            #brushView
-              canvas#brushPreviewCanvas(width='220', height='100', style="width:220px;height:100px")
-              #brushForm
-                form(action='#')
-                  p
-                    input#supplementInput.filled-in(type='checkbox', checked='')
-                    label(for='supplementInput') 手ぶれ補正
-                  p.range-field
-                    label(for='brushWidthInput') 太さ
-                    input#brushWidthInput(type='range', min='1', max='20', value='3')
-                  p.range-field
-                    label(for='brushAlphaInput') 透明度
-                    input#brushAlphaInput(type='range', min='0', max='100', value='100')
-                  p.range-field
-                    label(for='brushThickInput') 濃度
-                    input#brushThickInput(type='range', min='0', max='255', value='255')
-        #imageEditorView.bb-panel.panel.z-depth-1(style='display:none')
-          #imageEditorPreview
-            canvas#imageEditorPreviewCanvas(width='220', height='100')
-          #imageEditorForm
-            form(action='#')
-              p
-                input#grayInput.filled-in(type='checkbox')
-                label(for='grayInput') モノクロ
-              p
-                input#lineExtractInput.filled-in(type='checkbox')
-                label(for='lineExtractInput') 線画の抽出
-              #lineExtractInputWrapper.switch(style='display:none;')
-                label
-                  | くっきり Off
-                  input#lineExtractSwitchInput(type='checkbox')
-                  span.lever
-                  | On
-              p.range-field
-                label(for='imageAlpha') 透明度
-                input#imageAlpha(type='range', min='0', max='100', value='100')
-        #belowbar
-          .inputGroup
-            .inner.z-depth-1
-              a#layerButton(title="レイヤーを表示", data-enabled="true")
-                i.small.material-icons layers
-          .inputGroup
-            .inner.z-depth-1
-              a(href="/about",target="_blank",title="BullBonesについて")
-                i.small.material-icons info_outline
-          #zoomInputGroup.inputGroup
-            .inner.z-depth-1
-              a#zoomOutButton(title="ズームアウト",data-enabled="true")
-                i.small.material-icons zoom_out
-              span#zoomValue 100%
-              a#zoomInButton(title="ズームイン",data-enabled="true")
-                i.small.material-icons zoom_in
-          #undoInputGroup.inputGroup
-            .inner.z-depth-1
-              a#undoButton(title="元に戻す",data-enabled="false")
-                i.small.material-icons undo
-              a#redoButton(title="やり直す",data-enabled="false")
-                i.small.material-icons redo
-          .inputGroup
-            .inner.z-depth-1
-              a#lineSymmetryButton(title="線対称モード",data-enabled="true")
-                i.small.material-icons flip
-              a#lineSymmetryPivotButton(title="ピボット", data-enabled="true")
-                i.small.material-icons filter_center_focus
-          .inputGroup
-            .inner.z-depth-1
-              a#editModeButton(title="編集モードへ",data-enabled="true")              
-                i.small.material-icons mode_edit
+        #uiLayer
+          #layerView.z-depth-1(style="display:none")
+            ul#layerListView
+              li#layerItemDummy.layerItem(style="")
+          #floatingThumbnailView
+          #searchView.bb-panel.z-depth-1(style='display:none')
+            .input-field.col.s12
+              i.mdi-action-search.prefix
+              input#searchInput.validate(type='text', autocomplete='off')
+              label(for='searchInput') 描きたいモチーフを検索
+            #searchResultsWrapper.scrollable
+              #searchingIndicator.hidden
+                img(src='img/loading-dot.svg', width='50', height='50')
+              #searchResults.clearfix.hidden
+          #buttonsview
+            ul
+              li
+                a#searchButton.btn-floating.wave-effect.bb-btn.btn-large.red(title='検索')
+                  i.large.material-icons search
+              li
+                a#brushButton.bb-btn.btn-floating.wave-effect.btn-large.blue(title='ブラシ')
+                  i.large.material-icons palette
+              li
+                a#imageEditorButton.bb-btn.btn-floating.wave-effect.btn-large.orange(style='display:none', title='画像を編集')
+                  i.large.material-icons image
+              li
+                a#exportButton.bb-btn.btn-floating.wave-effect.btn-large.amber(title="画像を書き出し")
+                  i.large.material-icons input
+              li
+              if app_env == "development"
+                a#debugButton.bb-btn.btn-floating.wave-effect.btn-large.white
+                  i.large.mdi-action-bug-report(style='color: black')
+            #brushWrapper.bb-panel.panel.z-depth-1(style='display:none;')
+              #brushView
+                canvas#brushPreviewCanvas(width='220', height='100', style="width:220px;height:100px")
+                #brushForm
+                  form(action='#')
+                    p
+                      input#supplementInput.filled-in(type='checkbox', checked='')
+                      label(for='supplementInput') 手ぶれ補正
+                    p.range-field
+                      label(for='brushWidthInput') 太さ
+                      input#brushWidthInput(type='range', min='1', max='20', value='3')
+                    p.range-field
+                      label(for='brushAlphaInput') 透明度
+                      input#brushAlphaInput(type='range', min='0', max='100', value='100')
+                    p.range-field
+                      label(for='brushThickInput') 濃度
+                      input#brushThickInput(type='range', min='0', max='255', value='255')
+          #imageEditorView.bb-panel.panel.z-depth-1(style='display:none')
+            #imageEditorPreview
+              canvas#imageEditorPreviewCanvas(width='220', height='100')
+            #imageEditorForm
+              form(action='#')
+                p
+                  input#grayInput.filled-in(type='checkbox')
+                  label(for='grayInput') モノクロ
+                p
+                  input#lineExtractInput.filled-in(type='checkbox')
+                  label(for='lineExtractInput') 線画の抽出
+                #lineExtractInputWrapper.switch(style='display:none;')
+                  label
+                    | くっきり Off
+                    input#lineExtractSwitchInput(type='checkbox')
+                    span.lever
+                    | On
+                p.range-field
+                  label(for='imageAlpha') 透明度
+                  input#imageAlpha(type='range', min='0', max='100', value='100')
+          #belowbar
+            .inputGroup
+              .inner.z-depth-1
+                a#layerButton(title="レイヤーを表示", data-enabled="true")
+                  i.small.material-icons layers
+            .inputGroup
+              .inner.z-depth-1
+                a(href="/about",target="_blank",title="BullBonesについて")
+                  i.small.material-icons info_outline
+            #zoomInputGroup.inputGroup
+              .inner.z-depth-1
+                a#zoomOutButton(title="ズームアウト",data-enabled="true")
+                  i.small.material-icons zoom_out
+                span#zoomValue 100%
+                a#zoomInButton(title="ズームイン",data-enabled="true")
+                  i.small.material-icons zoom_in
+            #undoInputGroup.inputGroup
+              .inner.z-depth-1
+                a#undoButton(title="元に戻す",data-enabled="false")
+                  i.small.material-icons undo
+                a#redoButton(title="やり直す",data-enabled="false")
+                  i.small.material-icons redo
+            .inputGroup
+              .inner.z-depth-1
+                a#lineSymmetryButton(title="線対称モード",data-enabled="true")
+                  i.small.material-icons flip
+                a#lineSymmetryPivotButton(title="ピボット", data-enabled="true")
+                  i.small.material-icons filter_center_focus
+            .inputGroup
+              .inner.z-depth-1
+                a#smoothBrushButton(title="スムースブラシ", data-enabled="true")
+                  i.small.material-icons gesture
+                a#drawingBrushButton.editing(title="ペイントブラシ", data-enabled="true")
+                  i.small.material-icons brush
+            .inputGroup
+              .inner.z-depth-1
+                a#editModeButton(title="編集モードへ",data-enabled="true")
+                  i.small.material-icons mode_edit
         #canvasWrapper
           canvas#mainCanvas(data-editing='false')
     if app_env == "development"

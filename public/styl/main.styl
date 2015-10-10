@@ -68,14 +68,15 @@ body
   position absolute
   .arrow_box
     position relative
-    background #4db6ac
-    border-radius 6px
     height 44px
     ul
       width 100%
       height 100%
       margin 0
       display table
+      background #4db6ac
+      border-radius 6px
+      overflow hidden
     li
       cursor pointer
       padding 5px 15px
@@ -87,6 +88,9 @@ body
       color white
       &:last-child
         border-right none
+      &:active
+        color #4db6ac
+        background white
   .arrow_box:after
     border solid transparent
     content " "
