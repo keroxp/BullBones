@@ -257,11 +257,11 @@ class ShapeFigure extends Shape {
                     var n = transformedPoints[i+1];
                     var c = (p.x+n.x)*.5;
                     var d = (p.y+n.y)*.5;
-                    graphics.lineTo(
+                    graphics.quadraticCurveTo(
                         xx(p.x),
-                        yy(p.y)//,
-//                        xx(c),
-//                        yy(d)
+                        yy(p.y),
+                        xx(c),
+                        yy(d)
                     );
                     i = i+1|0;
                 }
@@ -300,10 +300,6 @@ class ShapeFigure extends Shape {
         }
         // Only first rendering, adjust x and y axis with local bounds.
         // it is nesessary because just calling drawXX mehthod does not define actual bounds.
-        resetBounds();
-        for (p in transformedPoints) {
-            calcBounds(p.x,p.y);
-        }
         if (isFirstRendering) {
             x = mBounds.x;
             y = mBounds.y;
