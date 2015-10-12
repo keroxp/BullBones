@@ -1,4 +1,6 @@
 package canvas;
+import canvas.tools.SelectTool;
+import canvas.CanvasToolType;
 import figure.Figure;
 import command.MirroringPivotMoveCommand;
 import canvas.tools.SmoothTool;
@@ -768,14 +770,11 @@ implements SearchResultListener {
                     mCanvasState = Dragging(hitted);
                 } else {
                     // using tools
-                    switch (toolType) {
-                        case Brush: {
-                            mCanvasState = Drawing(new BrushTool());
-                        }
-                        case Smooth: {
-                            mCanvasState = Drawing(new SmoothTool());
-                        }
-                    }
+                    mCanvasState = UsingTool(switch (toolType) {
+                        case CanvasToolType.Brush: new BrushTool();
+                        case CanvasToolType.Smooth: new SmoothTool();
+                        case CanvasToolType.Select: new SelectTool();
+                    });
                     drawBrushCircle();
                 }
             } else {
@@ -800,7 +799,7 @@ implements SearchResultListener {
                 mBoundingBox.shape.y = hitted.y;
             }
             switch (mCanvasState) {
-                case Drawing(tool): {
+                case UsingTool(tool): {
                     tool.onMouseDown(this,e);
                 }
                 case Dragging(dragging): {
@@ -980,7 +979,7 @@ implements SearchResultListener {
             } else {
                 if (!isEditing) {
                     switch(mCanvasState) {
-                    case Drawing(tool):
+                    case UsingTool(tool):
                         tool.onMouseMove(this, e);
                     case Dragging(dragging):
                         handleDragging(e,dragging);
@@ -1024,7 +1023,7 @@ implements SearchResultListener {
         if (!isExporting) {
             if (!isEditing) {
                 switch (mCanvasState) {
-                case Drawing(tool):
+                case UsingTool(tool):
                     tool.onMouseUp(this, e);
                 default: {}
                 }

@@ -136,19 +136,21 @@ html(lang='ja')
                   i.small.material-icons undo
                 a#redoButton(title="やり直す",data-enabled="false")
                   i.small.material-icons redo
-            .inputGroup
+            .inputGroup#mirrorPallete
               .inner.z-depth-1
-                a#lineSymmetryButton(title="対称モード",data-enabled="true")
+                a#lineSymmetryButton.radioParts(title="対称モード",data-enabled="true", data-radio-index="0")
                   i.small.material-icons flip
-                a#pointSymmetryButton(title="点対称にする", data-enabled="true")
+                a#pointSymmetryButton.radioParts(title="点対称にする", data-enabled="true", data-radio-index="1")
                   i.small.material-icons strikethrough_s
-                a#lineSymmetryPivotButton(title="ピボット", data-enabled="true")
+                a#lineSymmetryPivotButton.radioParts(title="ピボット", data-enabled="true", data-radio-index="2")
                   i.small.material-icons filter_center_focus
-            .inputGroup
+            .inputGroup#toolPallete
               .inner.z-depth-1
-                a#smoothBrushButton(title="スムースブラシ", data-enabled="true")
+                a#smoothBrushButton.radioParts(title="選択ツール", data-enabled="true", data-radio-index="2")
+                  i.small.material-icons select_all
+                a#smoothBrushButton.radioParts(title="スムースブラシ", data-enabled="true", data-radio-index="1")
                   i.small.material-icons gesture
-                a#drawingBrushButton.editing(title="ペイントブラシ", data-enabled="true")
+                a#drawingBrushButton.radioParts(title="ペイントブラシ", data-enabled="true", data-radio-index="0")
                   i.small.material-icons brush
             .inputGroup
               .inner.z-depth-1

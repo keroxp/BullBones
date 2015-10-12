@@ -1,5 +1,7 @@
 package ;
 
+import canvas.CanvasToolType;
+import view.RadioBox;
 import js.Error;
 import figure.FigureType;
 import model.MirroringInfo;
@@ -144,33 +146,24 @@ class App extends BackboneEvents implements BrushEditorListener {
             var jRedoButton: JQuery = new JQuery("#redoButton").on(click, function(e: MouseEvent) {
                 mainCanvas.redo();
             });
-            var jLineSymmetryButton: JQuery = new JQuery("#lineSymmetryButton");
-            jLineSymmetryButton.on(click, function(e: MouseEvent) {
-                mainCanvas.mirroringInfo.enabled = !mainCanvas.mirroringInfo.enabled;
-                jLineSymmetryButton.toggleClass("editing", mainCanvas.mirroringInfo.enabled);
+
+            var mirrorPallet = new RadioBox(new JQuery("#mirrorPallete"), function (i: Int) {
+                switch (i) {
+                    case 0:mainCanvas.mirroringInfo.enabled = !mainCanvas.mirroringInfo.enabled;
+                    case 1:mainCanvas.mirroringInfo.mirrorByPoint = !mainCanvas.mirroringInfo.mirrorByPoint;
+                    case 2:mainCanvas.mirroringInfo.pivotEnabled = !mainCanvas.mirroringInfo.pivotEnabled;
+                }
             });
-            var jPointSymmetryButton: JQuery = new JQuery("#pointSymmetryButton");
-            jPointSymmetryButton.on(click, function(e: MouseEvent){
-                mainCanvas.mirroringInfo.mirrorByPoint = !mainCanvas.mirroringInfo.mirrorByPoint;
-                jPointSymmetryButton.toggleClass("editing", mainCanvas.mirroringInfo.mirrorByPoint);
+            mirrorPallet.multiSelectable = true;
+            var toolPallet = new RadioBox(new JQuery("#toolPallete"), function (i: Int) {
+                  mainCanvas.toolType = switch (i) {
+                      case 0: CanvasToolType.Brush;
+                      case 1: CanvasToolType.Smooth;
+                      case 2: CanvasToolType.Select;
+                      default: null;
+                  }
             });
-            var jLineSymmetryPivotButton: JQuery = new JQuery("#lineSymmetryPivotButton");
-            jLineSymmetryPivotButton.on(click, function(e: MouseEvent) {
-                mainCanvas.mirroringInfo.pivotEnabled = !mainCanvas.mirroringInfo.pivotEnabled;
-                jLineSymmetryPivotButton.toggleClass("editing", mainCanvas.mirroringInfo.pivotEnabled);
-            });
-            var jDrawingBrushButton: JQuery = new JQuery("#drawingBrushButton");
-            var jSmoothBrushButton: JQuery = new JQuery("#smoothBrushButton");
-            jDrawingBrushButton.on(click, function(e: MouseEvent) {
-                mainCanvas.toolType = Brush;
-                jSmoothBrushButton.toggleClass("editing", mainCanvas.toolType == Smooth);
-                jDrawingBrushButton.toggleClass("editing", mainCanvas.toolType == Brush);
-            });
-            jSmoothBrushButton.on(click, function(e: MouseEvent) {
-                mainCanvas.toolType = Smooth;
-                jDrawingBrushButton.toggleClass("editing", mainCanvas.toolType == Brush);
-                jSmoothBrushButton.toggleClass("editing", mainCanvas.toolType == Smooth);
-            });
+            toolPallet.select(0);
             // Layer
             jLayerButton = new JQuery("#layerButton").on(click, function(e: MouseEvent) {
                 layerView.jq.toggle();
