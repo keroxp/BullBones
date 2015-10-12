@@ -1,7 +1,5 @@
 package figure;
 import geometry.Scalar;
-import geometry.Scalar;
-import geometry.Scalar;
 import util.BrowserUtil;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;

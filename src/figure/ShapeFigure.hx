@@ -13,7 +13,7 @@ using util.RectangleUtil;
 using util.ArrayUtil;
 using geometry.Points;
 
-class ShapeFigure extends Shape {
+class ShapeFigure extends Shape implements Figure {
     public static var DEFAULT_COLOR = "#000000";
     public static var DEFAULT_WIDTH = Scalar.valueOf(2);
     private static var CLOSE_THRESH: Float = 20*20;

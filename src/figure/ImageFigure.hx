@@ -8,7 +8,7 @@ import cv.Images;
 import cv.Filter;
 import js.html.ImageData;
 import createjs.easeljs.Bitmap;
-class ImageFigure extends Bitmap {
+class ImageFigure extends Bitmap implements Figure {
     // non-filterd, non-scaled, original image,
     public var imageWrap(default,null): ImageWrap;
     public var editor: ImageEditor = new ImageEditor();
@@ -59,6 +59,10 @@ class ImageFigure extends Bitmap {
             pr.reject(e);
         });
         return pr;
+    }
+
+    public function render():Dynamic {
+        return this;
     }
 
 }

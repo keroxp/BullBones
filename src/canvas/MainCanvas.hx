@@ -1,4 +1,6 @@
 package canvas;
+import figure.Figure;
+import command.MirroringPivotMoveCommand;
 import canvas.tools.SmoothTool;
 import canvas.tools.BrushTool;
 import canvas.CanvasToolType;
@@ -10,7 +12,6 @@ import geometry.Scalar;
 import figure.PivotShape;
 import figure.FigureType;
 import figure.ShapeFigureSet;
-import model.MirroringInfo.MirroringType;
 import model.MirroringInfo;
 import js.html.Window;
 import rollbar.Rollbar;
@@ -187,9 +188,7 @@ implements SearchResultListener {
         listenTo(Main.App.model, "change:zoom", onChageZoomEditor);
         listenTo(Main.App.model, "change:isDebug", function () {
             for (f in mFigureContainer.children) {
-                f.asShapeFigure(function(shape: ShapeFigure) {
-                   shape.render();
-                });
+                cast(f, Figure).render();
             }
             invalidate();
         });
@@ -805,7 +804,11 @@ implements SearchResultListener {
                     tool.onMouseDown(this,e);
                 }
                 case Dragging(dragging): {
-                    mDisplayCommand = new DisplayCommand(dragging, this);
+                    if (dragging == mSymmetryPivotShape) {
+                        mDisplayCommand = new MirroringPivotMoveCommand(dragging, this);
+                    } else {
+                        mDisplayCommand = new DisplayCommand(dragging, this);
+                    }
                     if (isEditing) {
                         activeFigure = hitted;
                     }

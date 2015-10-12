@@ -1,14 +1,11 @@
 package figure;
-import performance.ObjectPool;
 import util.RectangleUtil;
 import createjs.easeljs.DisplayObject;
 import createjs.easeljs.Rectangle;
-import createjs.easeljs.Point;
-import createjs.easeljs.Shape;
 import createjs.easeljs.Container;
 using figure.Figures;
 using util.RectangleUtil;
-class ShapeFigureSet extends Container  {
+class ShapeFigureSet extends Container implements Figure {
     private static var sTempRect = new Rectangle();
     public var leftShape(default,null): ShapeFigure;
     public var topShape(default,null): ShapeFigure;
@@ -97,9 +94,7 @@ class ShapeFigureSet extends Container  {
 
     public function render():Dynamic {
         for (c in children) {
-            c.asShapeFigure(function(shape: ShapeFigure) {
-                shape.render();
-            });
+            cast(c, Figure).render();
         }
         return this;
     }

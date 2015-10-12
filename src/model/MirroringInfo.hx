@@ -13,15 +13,15 @@ class MirroringInfo extends BaseModel {
         return get("enabled");
     }
 
-    @:isVar public var mirroringType(get, set):MirroringType;
+    @:isVar public var mirrorByPoint(get, set):Bool;
 
-    function set_mirroringType(value:MirroringType) {
-        set("mirroringType", value);
-        return value;
+    function get_mirrorByPoint():Bool {
+        return get("mirrorByPoint");
     }
 
-    function get_mirroringType():MirroringType {
-        return get("mirroringType");
+    function set_mirrorByPoint(value:Bool) {
+        set("mirrorByPoint", value);
+        return value;
     }
 
     @:isVar public var pivotEnabled(get, set):Bool;
@@ -62,10 +62,14 @@ class MirroringInfo extends BaseModel {
         return x - (x-pivotX)*2;
     }
 
+    public function getMirrorY(y: Float): Float {
+        return mirrorByPoint ? y - (y-pivotY)*2 : y;
+    }
+
     public function new(?opts: DrawingModeOptions) {
         super (opts == null ? {
             enabled: false,
-            mirroingType: MirroringType.None,
+            mirrorByPoint: false,
             pivotEnabled: false,
             pivot: null
         } : opts);
@@ -74,13 +78,7 @@ class MirroringInfo extends BaseModel {
 
 typedef DrawingModeOptions = {
     enabled: Bool,
-    mirroringType: MirroringType,
     pivotEnabled: Bool,
+    mirrorByPoint: Bool,
     pivot: Point
-}
-
-enum MirroringType {
-    None;
-    Line;
-    Point;
 }

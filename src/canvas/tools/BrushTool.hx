@@ -22,7 +22,10 @@ class BrushTool implements CanvasTool {
         f.color = Main.App.model.brush.color;
         if (mainCanvas.mirroringInfo.enabled) {
             var m = new ShapeFigure();
-            m.addPoint(mainCanvas.mirroringInfo.getMirrorX(p.x), p.y);
+            m.addPoint(
+                mainCanvas.mirroringInfo.getMirrorX(p.x),
+                mainCanvas.mirroringInfo.getMirrorY(p.y)
+            );
             m.width = Main.App.model.brush.width;
             m.color = Main.App.model.brush.color;
             this.mirroringFigure = m;
@@ -63,10 +66,10 @@ class BrushTool implements CanvasTool {
         mainCanvas.mBufferShape.graphics.setStrokeStyle(b.width,"round", "round");
         if (mainCanvas.mirroringInfo.enabled) {
             var mx = mainCanvas.mirroringInfo.getMirrorX(drawPoint.x);
-            var my = drawPoint.y;
+            var my = mainCanvas.mirroringInfo.getMirrorY(drawPoint.y);
             mirroringFigure.addPoint(mx,my);
             var mpx = mainCanvas.mirroringInfo.getMirrorX(drawPointPrev.x);
-            var mpy = drawPointPrev.y;
+            var mpy = mainCanvas.mirroringInfo.getMirrorY(drawPointPrev.y);
             mainCanvas.mBufferShape.graphics
             .beginStroke(b.color)
             .moveTo(mpx,mpy)

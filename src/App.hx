@@ -144,12 +144,15 @@ class App extends BackboneEvents implements BrushEditorListener {
             var jRedoButton: JQuery = new JQuery("#redoButton").on(click, function(e: MouseEvent) {
                 mainCanvas.redo();
             });
-            // 線対称
             var jLineSymmetryButton: JQuery = new JQuery("#lineSymmetryButton");
             jLineSymmetryButton.on(click, function(e: MouseEvent) {
                 mainCanvas.mirroringInfo.enabled = !mainCanvas.mirroringInfo.enabled;
-                mainCanvas.mirroringInfo.mirroringType = MirroringType.Line;
                 jLineSymmetryButton.toggleClass("editing", mainCanvas.mirroringInfo.enabled);
+            });
+            var jPointSymmetryButton: JQuery = new JQuery("#pointSymmetryButton");
+            jPointSymmetryButton.on(click, function(e: MouseEvent){
+                mainCanvas.mirroringInfo.mirrorByPoint = !mainCanvas.mirroringInfo.mirrorByPoint;
+                jPointSymmetryButton.toggleClass("editing", mainCanvas.mirroringInfo.mirrorByPoint);
             });
             var jLineSymmetryPivotButton: JQuery = new JQuery("#lineSymmetryPivotButton");
             jLineSymmetryPivotButton.on(click, function(e: MouseEvent) {
