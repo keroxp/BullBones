@@ -394,16 +394,18 @@ implements SearchResultListener {
         }
     }
     function drawBrushCircle () {
-        var rad = Main.App.model.brush.width.toFloat()*scale*.5;
-        var w = Scalar.valueOf(1).toFloat();
-        mBrushCircle.graphics
-        .clear()
-        .setStrokeStyle(w,"round", "round")
-        .beginStroke(mPressed ? "#2196F3" : "#000")
-        .drawCircle(rad+w,rad+w,rad)
-        .endStroke();
-        mBrushCircle.cache(0,0,rad*2+w*2,rad*2+w*2);
-        updateBrushCircle(mCapture);
+        if (!isEditing) {
+            var rad = Main.App.model.brush.width.toFloat()*scale*.5;
+            var w = Scalar.valueOf(1).toFloat();
+            mBrushCircle.graphics
+            .clear()
+            .setStrokeStyle(w,"round", "round")
+            .beginStroke(mPressed ? "#2196F3" : "#000")
+            .drawCircle(rad+w,rad+w,rad)
+            .endStroke();
+            mBrushCircle.cache(0,0,rad*2+w*2,rad*2+w*2);
+            updateBrushCircle(mCapture);
+        }
     }
     public function extendDirtyRect(gx: Float, gy: Float, width: Float = 0, height: Float = 0) {
         if (!mHasDirtyRect) {
@@ -1023,6 +1025,7 @@ implements SearchResultListener {
                     tool.onMouseUp(this, e);
                 default: {}
                 }
+                drawBrushCircle();
             } else {
                 switch (mCanvasState) {
                 case Dragging(dragging): {
@@ -1067,7 +1070,6 @@ implements SearchResultListener {
         mPressed = false;
         mCanvasState = Idle;
         mBrushCircle.visible = BrowserUtil.isBrowser && !isEditing;
-        drawBrushCircle();
         trigger(ON_CANVAS_MOUSEUP_EVENT);
         requestDraw("onMouseUp", draw);
     }
