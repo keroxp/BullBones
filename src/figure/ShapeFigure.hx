@@ -97,7 +97,7 @@ class ShapeFigure extends Shape {
         var pts = transformedPoints;
         for (i in 0...2) {
             for (j in last-2...last) {
-                 if (pts[i].rawDistance(pts[j]) < CLOSE_THRESH) {
+                 if (pts[i].poweredDistance(pts[j]) < CLOSE_THRESH) {
                      dest.x = (pts[i].x+pts[j].x)*.5;
                      dest.y = (pts[i].y+pts[j].y)*.5;
                      return true;
@@ -134,9 +134,9 @@ class ShapeFigure extends Shape {
                     var vtx = new Vertex(cur,rad);
                     var THRESH = 10*10;
                     var isFirst = vertexes.length == 0;
-                    var isFarFromPrev = !isFirst && vertexes[vertexes.length-1].point.rawDistance(cur) > THRESH;
-                    var isFarFromStart= pts[0].rawDistance(cur) > THRESH;
-                    var isFarFromEnd = pts[pts.length-1].rawDistance(cur) > THRESH;
+                    var isFarFromPrev = !isFirst && vertexes[vertexes.length-1].point.poweredDistance(cur) > THRESH;
+                    var isFarFromStart= pts[0].poweredDistance(cur) > THRESH;
+                    var isFarFromEnd = pts[pts.length-1].poweredDistance(cur) > THRESH;
                     if (isFarFromStart && isFarFromEnd && (isFirst || isFarFromPrev)) {
                         vertexes.push(vtx);
                     }
@@ -152,8 +152,8 @@ class ShapeFigure extends Shape {
             transformedPoints.push(fp);
         } else {
             var fp = new FuzzyPoint(~~(x+.5),~~(y+.5),points.last());
-            // don't apend point that is very close to last
-            if (fp.rawDistance(points[points.length-1]) > 0) {
+            // don't apend point that is very close to the last
+            if (fp.poweredDistance(points[points.length-1]) > 0) {
                 if (isLine) {
                     // On Line mode, we always put new point as the last.
                     points[1] = fp;
@@ -257,11 +257,11 @@ class ShapeFigure extends Shape {
                     var n = transformedPoints[i+1];
                     var c = (p.x+n.x)*.5;
                     var d = (p.y+n.y)*.5;
-                    graphics.quadraticCurveTo(
+                    graphics.lineTo(
                         xx(p.x),
-                        yy(p.y),
-                        xx(c),
-                        yy(d)
+                        yy(p.y)//,
+//                        xx(c),
+//                        yy(d)
                     );
                     i = i+1|0;
                 }
@@ -286,6 +286,9 @@ class ShapeFigure extends Shape {
                 graphics.drawCircle(xx(vec.point.x),yy(vec.point.y),Scalar.valueOf(5));
                 graphics.endStroke();
             }
+            for (p in transformedPoints) {
+                graphics.beginFill("purple").drawCircle(xx(p.x),yy(p.y),Scalar.valueOf(2)).endFill();
+            }
             var p = sPointPool.take();
             if (getClosedPoint(p)) {
                 graphics.setStrokeStyle(Scalar.valueOf(3)).beginStroke("pink");
@@ -297,6 +300,10 @@ class ShapeFigure extends Shape {
         }
         // Only first rendering, adjust x and y axis with local bounds.
         // it is nesessary because just calling drawXX mehthod does not define actual bounds.
+        resetBounds();
+        for (p in transformedPoints) {
+            calcBounds(p.x,p.y);
+        }
         if (isFirstRendering) {
             x = mBounds.x;
             y = mBounds.y;

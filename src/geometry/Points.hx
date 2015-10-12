@@ -5,9 +5,9 @@ class Points {
         p.x = x; p.y = y; return p;
     }
     public static function distance (p: Point, s: Point): Float {
-        return Math.sqrt(rawDistance(p,s));
+        return Math.sqrt(poweredDistance(p,s));
     }
-    public static function rawDistance(p: Point, s: Point): Float {
+    public static function poweredDistance(p: Point, s: Point): Float {
         return Math.pow(s.x-p.x,2)+Math.pow(s.y-p.y,2);
     }
 }

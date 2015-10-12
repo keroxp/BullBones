@@ -314,7 +314,7 @@ implements SearchResultListener {
         if (Main.App.model.isDebug) {
             mStageDebugShape.graphics
             .beginStroke("red").setStrokeStyle(Scalar.valueOf(1))
-            .drawRect(mDirtyRect.x+2,mDirtyRect.y+2,mDirtyRect.width-2,mDirtyRect.height-2);
+            .drawRect(mDirtyRect.x,mDirtyRect.y,mDirtyRect.width,mDirtyRect.height);
         }
         Reflect.setField(mStage,"drawRect",mDirtyRect.union(mPrevDirtyRect).pad(5,5,5,5));
         mStage.update();
@@ -394,16 +394,16 @@ implements SearchResultListener {
         }
     }
     function drawBrushCircle () {
-        var w = Main.App.model.brush.width.toFloat()*scale;
+        var rad = Main.App.model.brush.width.toFloat()*scale*.5;
+        var w = Scalar.valueOf(1).toFloat();
         mBrushCircle.graphics
         .clear()
-        .setStrokeStyle(Scalar.valueOf(1),"round", "round")
+        .setStrokeStyle(w,"round", "round")
         .beginStroke(mPressed ? "#2196F3" : "#000")
-        .drawCircle(w/2+1,w/2+1,w/2)
+        .drawCircle(rad+w,rad+w,rad)
         .endStroke();
-        mBrushCircle.cache(0,0,w+2,w+2);
-        mBrushCircle.updateCache();
-        mBrushCircle.setBounds(0,0,w+2,w+2);
+        mBrushCircle.cache(0,0,rad*2+w*2,rad*2+w*2);
+        updateBrushCircle(mCapture);
     }
     public function extendDirtyRect(gx: Float, gy: Float, width: Float = 0, height: Float = 0) {
         if (!mHasDirtyRect) {
@@ -835,8 +835,8 @@ implements SearchResultListener {
         var fp = e.getLocal(mFgContainer);
         var pb = mBrushCircle.getTransformedBounds().clone();
         var bw = Main.App.model.brush.width.toFloat()*scale*.5;
-        mBrushCircle.x = ~~(fp.x+0.5-bw);
-        mBrushCircle.y = ~~(fp.y+0.5-bw);
+        mBrushCircle.x = fp.x-bw;
+        mBrushCircle.y = fp.y-bw;
         extendDirtyRectWithDisplayObject(mBrushCircle,pb);
     }
 

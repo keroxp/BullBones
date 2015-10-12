@@ -1,13 +1,14 @@
 package geometry;
 import protocol.Clonable;
-import performance.Poolable;
 import createjs.easeljs.Point;
 using geometry.Points;
-class FuzzyPoint extends Point implements Poolable implements Clonable {
+
+class FuzzyPoint extends Point implements Clonable {
     public var timestamp(default, null): Date;
     public var prev(default,null): FuzzyPoint;
-    public var velocity(default, null): Float = 0;
-    function get_velocity():Float {
+    // speed between the previous
+    @:isVar public var speed(default, null): Float = 0;
+    function get_speed():Float {
         if (prev != null) {
             var d = timestamp.getTime()-prev.timestamp.getTime();
             return this.distance(prev)*100/d; // ms
@@ -24,11 +25,4 @@ class FuzzyPoint extends Point implements Poolable implements Clonable {
         this.timestamp = Date.now();
         this.prev = prev;
     }
-
-    public function recycle():Void {
-        timestamp = null;
-        prev = null;
-        velocity = 0;
-    }
-
 }
