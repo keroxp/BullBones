@@ -1,5 +1,4 @@
 package performance;
-import util.Log;
 class GeneralObjectPool <T> {
     public var objects(default, null): Array<T> = new Array<T>();
     public var index(default, null): Int = -1;
@@ -9,7 +8,7 @@ class GeneralObjectPool <T> {
     private var ctorFunc: Void -> T;
     private var recycleFunc: T -> Void;
 
-    public function new(size: Int, ctorFunc: Void -> T, recycleFunc: T -> Void) {
+    public function new(size: Int, ctorFunc: Void -> T, ?recycleFunc: T -> Void) {
         this.initialSize = size;
         this.ctorFunc = ctorFunc;
         this.recycleFunc = recycleFunc;
@@ -33,7 +32,9 @@ class GeneralObjectPool <T> {
             return ctorFunc();
         }
         var o = objects[i];
-        recycleFunc(o);
+        if (recycleFunc != null) {
+            recycleFunc(o);
+        }
         return o;
     }
 }

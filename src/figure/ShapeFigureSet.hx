@@ -85,7 +85,7 @@ class ShapeFigureSet extends Container implements Figure {
     }
 
     override public function toString():String {
-        return "[ShapeFigureSet]";
+        return '[ShapeFigureSet id="$id"]';
     }
 
     public function getShape(index: Int): ShapeFigure {
@@ -97,6 +97,12 @@ class ShapeFigureSet extends Container implements Figure {
             cast(c, Figure).render();
         }
         return this;
+    }
+
+    public function setActive(bool:Bool):Void {
+        for (c in children) {
+            cast(c, Figure).setActive(bool);
+        }
     }
 
 }

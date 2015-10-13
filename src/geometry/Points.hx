@@ -1,4 +1,5 @@
 package geometry;
+import performance.GeneralObjectPool;
 import createjs.easeljs.Point;
 class Points {
     public static function setValues (p: Point, x: Float, y: Float): Point {
@@ -9,5 +10,10 @@ class Points {
     }
     public static function poweredDistance(p: Point, s: Point): Float {
         return Math.pow(s.x-p.x,2)+Math.pow(s.y-p.y,2);
+    }
+    public static function createPool(size: Int): GeneralObjectPool<Point> {
+        return new GeneralObjectPool(size, function () {
+            return new Point();
+        });
     }
 }

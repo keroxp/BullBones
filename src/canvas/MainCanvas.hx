@@ -5,7 +5,6 @@ import figure.Figure;
 import command.MirroringPivotMoveCommand;
 import canvas.tools.SmoothTool;
 import canvas.tools.BrushTool;
-import canvas.CanvasToolType;
 import canvas.CanvasState;
 import js.html.UIEvent;
 import view.PopupMenu;
@@ -67,21 +66,17 @@ typedef CopyEvent = {
 }
 
 /*
-レイヤー構造
+Layer Structure
 [Stage]
-  StageDebugShape       - ステージレイヤのデバッグ用
-  [Foreground Layer]    - 前面レイヤ
-    ExportShape             - 画像書き出しの際のマスク
-    SymmetryPivotShape      - 線対称のピボット
-    BrushCircleShape        - ブラシヘッド
-    BoudingBox              - バウンディングボックス
-  [Main Layer]          - メインレイヤ
-    MainDebugShape          - メインレイヤのデバッグ用
-    BufferShape             - 描画途中の図形
-    [FigureLayer]           - 図形レイヤ
-  [BackgroundLayer]     - 背景レイヤ
-    GridShape               - グリッド
-    BackgroundShape         - 背景
+  [Foreground Container]
+    SymmetryPivotShape
+    BrushCircleShape
+    BoudingBox
+  [Main Container]
+    [Figure Container]
+  [Background Container]
+    GridShape
+    BackgroundShape
  */
 @:allow(canvas.tools)
 class MainCanvas extends ViewModel
@@ -96,11 +91,7 @@ implements SearchResultListener {
     var mBackground: Shape = new Shape();
     var mGrid: Shape = new Shape();
     var mBrushCircle: Shape = new Shape();
-    var mBufferShape: Shape = new Shape();
-    var mExportShape: Shape = new Shape();
-    var mSymmetryPivotShape: PivotShape = new PivotShape();
-    var mStageDebugShape: Shape = new Shape();
-    var mMainDebugShape: Shape = new Shape();
+    var mMirrorPivotShape: PivotShape = new PivotShape();
     var mUndoStack: Array<FigureCommand> = new Array<FigureCommand>();
     var mRedoStack: Array<FigureCommand> = new Array<FigureCommand>();
     var mCanvas: CanvasElement;
@@ -116,18 +107,12 @@ implements SearchResultListener {
     var mPopupMenu: PopupMenu;
     var mCanvasState: CanvasState = Idle;
     var mTool: CanvasTool;
-    public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null)
-    = "me.keroxp.app.BullBones:canvas.MainCanvas:ON_CANVAS_MOUSEDOWN_EVENT";
-    public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null)
-    = "me.keroxp.app.BullBones:canvas.MainCanvas:ON_CANVAS_MOUSEMOVE_EVENT";
-    public static var ON_CANVAS_MOUSEUP_EVENT(default, null)
-    = "me.keroxp.app.BullBones:canvas.MainCanvas:ON_CANVAS_MOUSEUP_EVENT";
-    public static var ON_INSERT_EVENT(default,null)
-    = "me.keroxp.app.BullBones:canvas.MainCanvas:ON_INSERT_EVENT";
-    public static var ON_COPY_EVENT(default,null)
-    = "me.keroxp.app.BullBones:canvas.MainCanvas:ON_COPY_EVENT";
-    public static var ON_DELETE_EVENT(default,null)
-    = "me.keroxp.app.BullBones:canvas.MainCanvas:ON_DELETE_EVENT";
+    public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null) = "ON_CANVAS_MOUSEDOWN_EVENT";
+    public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null) = "ON_CANVAS_MOUSEMOVE_EVENT";
+    public static var ON_CANVAS_MOUSEUP_EVENT(default, null) = "ON_CANVAS_MOUSEUP_EVENT";
+    public static var ON_INSERT_EVENT(default,null) = "ON_INSERT_EVENT";
+    public static var ON_COPY_EVENT(default,null) = "ON_COPY_EVENT";
+    public static var ON_DELETE_EVENT(default,null) = "ON_DELETE_EVENT";
 
     public var mirroringInfo(default, null): MirroringInfo = new MirroringInfo();
 
@@ -163,19 +148,15 @@ implements SearchResultListener {
         mBrushCircle.visible = false;
         mFgContainer.addChild(mBrushCircle);
         mFgContainer.addChild(mFuzzySketchGraph);
-        mSymmetryPivotShape.render();
-        mSymmetryPivotShape.visible = false;
-        mFgContainer.addChild(mSymmetryPivotShape);
-        mFgContainer.addChild(mExportShape);
+        mMirrorPivotShape.render();
+        mMirrorPivotShape.visible = false;
+        mFgContainer.addChild(mMirrorPivotShape);
 
-        mMainContainer.addChild(mMainDebugShape);
         mMainContainer.addChild(mFigureContainer);
-        mMainContainer.addChild(mBufferShape);
 
         mStage.addChild(mBgContainer);
         mStage.addChild(mMainContainer);
         mStage.addChild(mFgContainer);
-        mStage.addChild(mStageDebugShape);
         // UI
         mPopupMenu = new PopupMenu(Main.App.jUILayer);
         // reset drawing
@@ -195,10 +176,10 @@ implements SearchResultListener {
             invalidate();
         });
         listenTo(mirroringInfo, "change:pivotEnabled", function(m: MirroringInfo, val: Bool) {
-            mSymmetryPivotShape.visible = val;
-            extendDirtyRectWithDisplayObject(mSymmetryPivotShape);
-            mSymmetryPivotShape.adjustPivot(m.pivotX,m.pivotY);
-            extendDirtyRectWithDisplayObject(mSymmetryPivotShape);
+            mMirrorPivotShape.visible = val;
+            extendDirtyRectWithDisplayObject(mMirrorPivotShape);
+            mMirrorPivotShape.adjustPivot(m.pivotX,m.pivotY);
+            extendDirtyRectWithDisplayObject(mMirrorPivotShape);
             requestDraw("change:pivotEnabled", draw);
         });
         var piv = mFgContainer.globalToLocal(
@@ -273,8 +254,9 @@ implements SearchResultListener {
         } else {
             jq.css("cursor","");
         }
-        mExportShape.visible = value;
-        mExportShape.graphics.clear();
+        var buf = getBufferShape(mFgContainer);
+        buf.visible = value;
+        buf.graphics.clear();
         invalidate();
         return value;
     }
@@ -311,9 +293,10 @@ implements SearchResultListener {
             mDirtyRect.setValues(0,0,mCanvas.width,mCanvas.height);
         }
         mDirtyRect.pad(pad,pad,pad,pad);
-        mStageDebugShape.graphics.clear();
+        var buf = getBufferShape(mStage);
+        buf.graphics.clear();
         if (Main.App.model.isDebug) {
-            mStageDebugShape.graphics
+            buf.graphics
             .beginStroke("red").setStrokeStyle(Scalar.valueOf(1))
             .drawRect(mDirtyRect.x,mDirtyRect.y,mDirtyRect.width,mDirtyRect.height);
         }
@@ -432,6 +415,16 @@ implements SearchResultListener {
             b.extend(prevBounds.x,prevBounds.y,prevBounds.width,prevBounds.height);
         }
         extendDirtyRectWithRect(b, o.parent);
+    }
+    private static var BUFFER_SHAPE_TAG = "BUFFER_SHAPE_TAG";
+    public function getBufferShape(container: Container): Shape {
+        var ret = container.getChildByName(BUFFER_SHAPE_TAG);
+        if (ret == null) {
+            ret = new Shape();
+            ret.name = BUFFER_SHAPE_TAG;
+            container.addChildAt(ret,0);
+        }
+        return cast ret;
     }
     public function insertFigure (f: DisplayObject, silent: Bool = false, ?index: Int) {
         if (f == null) {
@@ -683,8 +676,8 @@ implements SearchResultListener {
                 mirroringInfo.pivotY,
                 mFgContainer
             );
-            var w = mSymmetryPivotShape.getBounds().width*0.5;
-            mSymmetryPivotShape.adjustPivot(piv.x,piv.y);
+            var w = mMirrorPivotShape.getBounds().width*0.5;
+            mMirrorPivotShape.adjustPivot(piv.x,piv.y);
         }
         invalidate();
     }
@@ -765,8 +758,8 @@ implements SearchResultListener {
                     mirroringInfo.pivotX = p_main_local.x;
                     mirroringInfo.pivotY = p_main_local.y;
                 }
-                if (mirroringInfo.pivotEnabled && mSymmetryPivotShape.hitTest(p_fg_local.x,p_fg_local.y)) {
-                    hitted = mSymmetryPivotShape;
+                if (mirroringInfo.pivotEnabled && mMirrorPivotShape.hitTest(p_fg_local.x,p_fg_local.y)) {
+                    hitted = mMirrorPivotShape;
                     mCanvasState = Dragging(hitted);
                 } else {
                     // using tools
@@ -803,7 +796,7 @@ implements SearchResultListener {
                     tool.onMouseDown(this,e);
                 }
                 case Dragging(dragging): {
-                    if (dragging == mSymmetryPivotShape) {
+                    if (dragging == mMirrorPivotShape) {
                         mDisplayCommand = new MirroringPivotMoveCommand(dragging, this);
                     } else {
                         mDisplayCommand = new DisplayCommand(dragging, this);
@@ -852,7 +845,7 @@ implements SearchResultListener {
             }
             if (mirroringInfo.pivotEnabled) {
                 var lpfg = e.getLocal(mFgContainer);
-                if (mSymmetryPivotShape.hitTest(lpfg.x,lpfg.y)) {
+                if (mMirrorPivotShape.hitTest(lpfg.x,lpfg.y)) {
                     nextCursor = CursorUtil.MOVE;
                 }
             }
@@ -884,16 +877,16 @@ implements SearchResultListener {
         if (!isEditing) {
             dragging.x += e.deltaX;
             dragging.y += e.deltaY;
-            if (dragging == mSymmetryPivotShape) {
-                var w = mSymmetryPivotShape.totalRadius.toFloat();
+            if (dragging == mMirrorPivotShape) {
+                var w = mMirrorPivotShape.totalRadius.toFloat();
                 var piv = mFgContainer.localToLocal(
-                    mSymmetryPivotShape.x+w,
-                    mSymmetryPivotShape.y+w,
+                    mMirrorPivotShape.x+w,
+                    mMirrorPivotShape.y+w,
                     mFigureContainer
                 );
                 mirroringInfo.pivotX = piv.x;
                 mirroringInfo.pivotY = piv.y;
-                extendDirtyRectWithDisplayObject(mSymmetryPivotShape);
+                extendDirtyRectWithDisplayObject(mMirrorPivotShape);
             }
         } else {
             var pb = activeFigure.getTransformedBounds().clone();
@@ -1006,8 +999,9 @@ implements SearchResultListener {
                 var w = e.totalDeltaX < 0 ? -e.totalDeltaX : e.totalDeltaX;
                 var h = e.totalDeltaY < 0 ? -e.totalDeltaY : e.totalDeltaY;
                 var p = mFgContainer.globalToLocal(x,y);
-                mExportShape.alpha = 0.4;
-                mExportShape.graphics
+                var buf = getBufferShape(mFgContainer);
+                buf.alpha = 0.4;
+                buf.graphics
                 .clear()
                 .beginFill("#000")
                 .drawRoundRect(p.x,p.y,w,h,0)
@@ -1068,7 +1062,6 @@ implements SearchResultListener {
             isExporting = false;
         }
         mDisplayCommand = null;
-        mBufferShape.graphics.clear();
         mPressed = false;
         mCanvasState = Idle;
         mBrushCircle.visible = BrowserUtil.isBrowser && !isEditing;

@@ -38,6 +38,7 @@ class BrushTool implements CanvasTool {
         var b = Main.App.model.brush;
         var drawPoint = e.getLocal(mainCanvas.mMainContainer);
         var drawPointPrev = e.getLocalPrev(mainCanvas.mMainContainer);
+        var buf = mainCanvas.getBufferShape(mainCanvas.mMainContainer);
         if (mainCanvas.modifiedByShift()) {
             drawPointPrev = e.getLocalStart(mainCanvas.mMainContainer);
             var isAlignedToXAxis = Math.abs(e.totalDeltaX) > Math.abs(e.totalDeltaY);
@@ -46,7 +47,7 @@ class BrushTool implements CanvasTool {
             } else {
                 drawPoint.x  = drawPointPrev.x;
             }
-            mainCanvas.mBufferShape.graphics.clear();
+            buf.graphics.clear();
             if (!drawingFigure.isLine) {
                 drawingFigure.isLine = true;
                 if (mainCanvas.mirroringInfo.enabled) {
@@ -63,14 +64,14 @@ class BrushTool implements CanvasTool {
         } else if (drawingFigure.isLine) {
             drawingFigure.isLine = false;
         }
-        mainCanvas.mBufferShape.graphics.setStrokeStyle(b.width,"round", "round");
+        buf.graphics.setStrokeStyle(b.width,"round", "round");
         if (mainCanvas.mirroringInfo.enabled) {
             var mx = mainCanvas.mirroringInfo.getMirrorX(drawPoint.x);
             var my = mainCanvas.mirroringInfo.getMirrorY(drawPoint.y);
             mirroringFigure.addPoint(mx,my);
             var mpx = mainCanvas.mirroringInfo.getMirrorX(drawPointPrev.x);
             var mpy = mainCanvas.mirroringInfo.getMirrorY(drawPointPrev.y);
-            mainCanvas.mBufferShape.graphics
+            buf.graphics
             .beginStroke(b.color)
             .moveTo(mpx,mpy)
             .lineTo(mx,my)
@@ -78,7 +79,7 @@ class BrushTool implements CanvasTool {
             var gm = mainCanvas.mMainContainer.localToGlobal(mx,my,sPointPool.take());
             mainCanvas.extendDirtyRect(gm.x,gm.y);
         }
-        mainCanvas.mBufferShape.graphics
+        buf.graphics
         .beginStroke(b.color)
         .moveTo(drawPointPrev.x,drawPointPrev.y)
         .lineTo(drawPoint.x,drawPoint.y)
@@ -89,6 +90,7 @@ class BrushTool implements CanvasTool {
     }
 
     public function onMouseUp(mainCanvas:MainCanvas, e:CanvasMouseEvent):Void {
+        var buf = mainCanvas.getBufferShape(mainCanvas.mMainContainer);
         if (drawingFigure.points.length > 1) {
             if (mainCanvas.mirroringInfo.enabled) {
                 var first = drawingFigure.render();
@@ -99,10 +101,11 @@ class BrushTool implements CanvasTool {
             } else {
                 drawingFigure.calcVertexes();
                 mainCanvas.insertFigure(drawingFigure.render());
-                mainCanvas.extendDirtyRectWithDisplayObject(drawingFigure,mainCanvas.mBufferShape.getTransformedBounds());
+                mainCanvas.extendDirtyRectWithDisplayObject(drawingFigure,buf.getTransformedBounds());
             }
         }
         this.drawingFigure = null;
         this.mirroringFigure = null;
+        buf.graphics.clear();
     }
 }

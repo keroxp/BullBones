@@ -65,4 +65,8 @@ class ImageFigure extends Bitmap implements Figure {
         return this;
     }
 
+    public function setActive(bool:Bool):Void {
+        this.alpha = bool ? .5: 1;
+    }
+
 }

@@ -314,4 +314,12 @@ class ShapeFigure extends Shape implements Figure {
         setBounds(0,0,mBounds.width+pad,mBounds.height+pad);
         return this;
     }
+
+    public function setActive(bool:Bool):Void {
+        var c = color;
+        this.color = bool ? "red" : color;
+        render();
+        this.color = c;
+    }
+
 }
