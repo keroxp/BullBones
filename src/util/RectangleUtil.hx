@@ -43,4 +43,7 @@ class RectangleUtil {
     public static function setValues(r: Rectangle, x: Float = 0, y: Float = 0,width: Float = 0, height: Float = 0): Rectangle {
         return call(r,"setValues", [x,y,width,height]);
     }
+    public static function extendWithRect(r: Rectangle, s: Rectangle): Rectangle {
+        return r.extend(s.x,s.y,s.width,s.height);
+    }
 }
