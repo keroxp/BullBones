@@ -18,11 +18,9 @@ class ShapeFigureSet extends Container implements Figure {
     override public function clone():ShapeFigureSet {
         var ret = new ShapeFigureSet();
         for (s in children) {
-            s.asShapeFigure(function(shape: ShapeFigure) {
-               ret.addChild(shape.clone().render());
-            });
+            ret.addShape(cast(s, ShapeFigure).clone());
         }
-        return ret;
+        return ret.render();
     }
 
     public static function createWithShapes(shapes: Array<ShapeFigure>): ShapeFigureSet {
@@ -96,6 +94,7 @@ class ShapeFigureSet extends Container implements Figure {
         for (c in children) {
             cast(c, Figure).render();
         }
+        doCahce();
         return this;
     }
 
@@ -103,6 +102,16 @@ class ShapeFigureSet extends Container implements Figure {
         for (c in children) {
             cast(c, Figure).setActive(bool);
         }
+        doCahce();
+    }
+
+    public function doCahce() {
+        var bounds = getBounds();
+        var l = leftShape.width.toFloat()*.5;
+        var t = topShape.width.toFloat()*.5;
+        var r = rightShape.width.toFloat()*.5;
+        var b = bottomShape.width.toFloat()*.5;
+        cache(-l,-t,bounds.width+l+r,bounds.height+t+b);
     }
 
 }
