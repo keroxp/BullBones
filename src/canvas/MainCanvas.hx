@@ -422,8 +422,9 @@ implements SearchResultListener {
         if (ret == null) {
             ret = new Shape();
             ret.name = BUFFER_SHAPE_TAG;
-            container.addChildAt(ret,0);
+            container.addChild(ret);
         }
+        container.setChildIndex(ret,container.children.length);
         return cast ret;
     }
     public function insertFigure (f: DisplayObject, silent: Bool = false, ?index: Int) {
@@ -468,7 +469,7 @@ implements SearchResultListener {
     }
 
     public function copyFigure(f: DisplayObject, silent: Bool = false) {
-        var i = mFigureContainer.getChildIndex(f);
+        var i = mFigureContainer.getChildIndex(f)+1;
         var fun = function(a){
             var fig = f.clone();
             fig.x = f.x+20;
