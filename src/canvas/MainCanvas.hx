@@ -694,6 +694,7 @@ implements SearchResultListener {
 
     function showPopupMenu (target: DisplayObject) {
         if (!isExporting && target != null) {
+            mPopupMenu.render(getPopupItmes(target));
             var d = BrowserUtil.window.devicePixelRatio;
             var p = mMainContainer.localToGlobal(
                 target.x,
@@ -718,7 +719,7 @@ implements SearchResultListener {
                     y = p.y+b.height+margin;
                 }
             }
-            mPopupMenu.render(getPopupItmes(target)).showAt(x,y,dir,300);
+            mPopupMenu.showAt(x,y,dir,300);
         } else {
             mPopupMenu.dismiss(200);
         }
@@ -733,6 +734,14 @@ implements SearchResultListener {
                 activeFigure = null;
             });
             ret.push(hide);
+        }
+        if (fig.type() == FigureType.Shape && !cast(fig, ShapeFigure).isSimplified) {
+            var simplify = new PopupItem("頂点を検出", function(p){
+                cast(fig, ShapeFigure).simplify().render();
+                extendDirtyRectWithDisplayObject(fig);
+                requestDraw("simplify", draw);
+            });
+            ret.push(simplify);
         }
         var copy = new PopupItem("コピー", function (p) {
             copyFigure(fig);

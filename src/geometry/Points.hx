@@ -14,6 +14,8 @@ class Points {
     public static function createPool(size: Int): GeneralObjectPool<Point> {
         return new GeneralObjectPool(size, function () {
             return new Point();
+        }, function (p) {
+            p.x = p.y = 0;
         });
     }
 }

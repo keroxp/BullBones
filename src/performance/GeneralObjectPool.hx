@@ -8,7 +8,7 @@ class GeneralObjectPool <T> {
     private var ctorFunc: Void -> T;
     private var recycleFunc: T -> Void;
 
-    public function new(size: Int, ctorFunc: Void -> T, ?recycleFunc: T -> Void) {
+    public function new(size: Int, ctorFunc: Void -> T, recycleFunc: T -> Void) {
         this.initialSize = size;
         this.ctorFunc = ctorFunc;
         this.recycleFunc = recycleFunc;
@@ -32,9 +32,7 @@ class GeneralObjectPool <T> {
             return ctorFunc();
         }
         var o = objects[i];
-        if (recycleFunc != null) {
-            recycleFunc(o);
-        }
+        recycleFunc(o);
         return o;
     }
 }
