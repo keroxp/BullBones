@@ -1,8 +1,8 @@
 package view;
+import figure.Selection;
 import figure.FigureType;
 import canvas.MainCanvas;
 import createjs.easeljs.DisplayObject;
-import util.Log;
 import util.BrowserUtil;
 import js.html.DragEvent;
 import jQuery.JQuery;
@@ -40,10 +40,22 @@ class LayerView extends ViewModel {
     function onChangeActiveFigure(canvas: MainCanvas, fig: DisplayObject, opts: Dynamic) {
         if (opts.changer == this) return;
         if (fig != null) {
-            var ls: LayerItemView = layerItems.findFirst(function(li: LayerItemView) {
-                return li.display.id == fig.id;
-            });
-            ls.select();
+            if (fig.type() == FigureType.Selection) {
+                var sel = cast(fig, Selection);
+                for (item in layerItems) {
+                    for (s in sel.figures) {
+                        if (item.display.id == s.id) {
+                            item.select();
+                        }
+                    }
+                }
+            } else {
+                var ls: LayerItemView = layerItems.findFirst(function(li: LayerItemView) {
+                    return li.display.id == fig.id;
+                });
+                deselectAll();
+                ls.select();
+            }
         } else {
             deselectAll();
         }
@@ -88,6 +100,7 @@ class LayerView extends ViewModel {
             next += 1;
         }
         return next;
+        
     }
     function _add(li: LayerItemView, at: Int) {
         if (layerItems.length == 0) {
@@ -186,12 +199,11 @@ private class LayerItemView extends ViewModel {
         });
     }
     public function select() {
-        mLayerView.deselectAll();
         jq.addClass("selected");
         mLayerView.selectedItems.push(this);
-        if (!Main.App.mainCanvas.isEditing) {
-            Main.App.mainCanvas.isEditing = true;
-        }
+//        if (!Main.App.mainCanvas.isEditing) {
+//            Main.App.mainCanvas.isEditing = true;
+//        }
         Main.App.mainCanvas.activeFigure = display;
     }
     public function render(): LayerItemView {

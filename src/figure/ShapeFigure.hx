@@ -1,5 +1,7 @@
 package figure;
 
+import js.html.CanvasRenderingContext2D;
+import createjs.easeljs.Graphics;
 import performance.GeneralObjectPool;
 import createjs.easeljs.Point;
 import performance.ObjectPool;
@@ -13,7 +15,8 @@ using util.RectangleUtil;
 using util.ArrayUtil;
 using geometry.Points;
 
-class ShapeFigure extends Shape implements Figure {
+class ShapeFigure extends BaseFigure {
+    public var graphics: Graphics;
     public static var DEFAULT_COLOR = "#000000";
     public static var DEFAULT_WIDTH = Scalar.valueOf(2);
     private static var CLOSE_THRESH: Float = 20*20;
@@ -47,8 +50,9 @@ class ShapeFigure extends Shape implements Figure {
     public var color: String = DEFAULT_COLOR;
     public var width: Scalar = DEFAULT_WIDTH;
 
-    public function new() {
+    public function new(?graphics: Graphics) {
         super();
+        this.graphics = graphics != null ? graphics : new Graphics();
     }
 
     public function recycle() {
@@ -66,12 +70,15 @@ class ShapeFigure extends Shape implements Figure {
         setBounds(0,0,0,0);
     }
 
-    public function getGlobalBounds(?rect: Rectangle): Rectangle {
-        return rect == null ? mBounds.clone() : rect.copy(mBounds);
+    override public function draw(ctx:CanvasRenderingContext2D, ?ignoreCache:Bool):Bool {
+        if (super.draw(ctx,ignoreCache)) return true;
+        graphics.draw(ctx);
+        return true;
     }
 
     override public function clone(): ShapeFigure {
         var ret = new ShapeFigure();
+        ret.graphics = graphics.clone();
         ret.points = points.cloneArray();
         ret.transformedPoints = transformedPoints.cloneArray();
         ret.vertexes = vertexes.cloneArray();
@@ -226,7 +233,7 @@ class ShapeFigure extends Shape implements Figure {
     private inline function xx(x: Float): Float return ~~(x-mBounds.x);
     private inline function yy(y: Float): Float return ~~(y-mBounds.y);
     private var isFirstRendering = true;
-    public function render (): ShapeFigure {
+    override public function render (): ShapeFigure {
         if (points.length < 2) return this;
         var s = transformedPoints[0];
         var e = transformedPoints[transformedPoints.length-1];
@@ -315,11 +322,15 @@ class ShapeFigure extends Shape implements Figure {
         return this;
     }
 
-    public function setActive(bool:Bool):Void {
+    override public function setActive(bool:Bool):Void {
         var c = color;
         this.color = bool ? "red" : color;
         render();
         this.color = c;
+    }
+
+    override public function type():FigureType {
+        return FigureType.Shape;
     }
 
 }

@@ -1,9 +1,9 @@
 package figure;
+import createjs.easeljs.DisplayObject;
 import js.Error;
 import figure.FigureType;
 import figure.ImageFigure;
 import figure.ShapeFigure;
-import createjs.easeljs.DisplayObject;
 class Figures {
     public static function type(d: DisplayObject): FigureType {
         var s = d.toString();
@@ -15,6 +15,8 @@ class Figures {
             return FigureType.Image;
         } else if (s.indexOf("InternalShape") > 0) {
             return FigureType.Internal;
+        } else if (s.indexOf("Selection") > 0) {
+            return FigureType.Selection;
         }
         throw new Error("Invalid DisplayObject => "+d);
     }

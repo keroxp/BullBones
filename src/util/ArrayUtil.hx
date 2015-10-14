@@ -53,6 +53,19 @@ class ArrayUtil {
         }
         return null;
     }
+    public static function filterSelf<T>(arr: Array<T>, callback: T -> Bool): Array<T> {
+        var i = 0;
+        var len = arr.length;
+        while (i < len) {
+            if (!callback(arr[i])) {
+                arr.splice(i,1);
+                len -= 1;
+                continue;
+            }
+            i += 1;
+        }
+        return arr;
+    }
     public static function clear<T>(arr: Array<T>): Array<T> {
         return arr.splice(0,arr.length);
     }

@@ -1,4 +1,5 @@
 package canvas;
+import createjs.easeljs.DisplayObject;
 import canvas.tools.SelectTool;
 import canvas.CanvasToolType;
 import figure.Figure;
@@ -190,11 +191,11 @@ implements SearchResultListener {
         mirroringInfo.pivotY = piv.y;
     }
 
-    @:isVar public var activeFigure(get,set):DisplayObject;
+    @:isVar public var activeFigure(get,set): DisplayObject;
     function get_activeFigure(): DisplayObject {
         return get("activeFigure");
     }
-    function set_activeFigure(value:DisplayObject) {
+    function set_activeFigure(value: DisplayObject) {
         trace("set_activeFigure", value);
         if (activeFigure == value) return value;
         if (value == null && mPopupMenu.isShown) {
@@ -232,13 +233,13 @@ implements SearchResultListener {
         mBrushCircle.visible = !value;
         jq.css("cursor","");
         set("isEditing", value);
-        if (value) {
-            activeFigure = mFigureContainer.children.findLast(function(e: DisplayObject) {
-                return e.visible;
-            });
-        } else {
-            activeFigure = null;
-        }
+//        if (value) {
+//            activeFigure = mFigureContainer.children.findLast(function(e: DisplayObject) {
+//                return e.visible;
+//            });
+//        } else {
+//            activeFigure = null;
+//        }
         invalidate();
         return value;
     }
@@ -453,7 +454,7 @@ implements SearchResultListener {
             mFigureContainer.removeChild(f);
             f.asImageFigure(function(imf: ImageFigure) {
                 stopListening(imf.editor, "change", onImageEditorChange);
-                Main.App.floatingThumbnailView.remove(imf.imageWrap.id);
+                Main.App.floatingThumbnailView.remove(imf.image.id);
             });
             trigger(ON_DELETE_EVENT,{
                 target: f
@@ -503,9 +504,9 @@ implements SearchResultListener {
     function thumbnalzieImage(f: ImageFigure) {
         f.visible = false;
         var tv = Main.App.floatingThumbnailView;
-        tv.add(f.imageWrap, function () {
+        tv.add(f.image, function () {
             f.visible = true;
-            tv.remove(f.imageWrap.id);
+            tv.remove(f.image.id);
             extendDirtyRectWithDisplayObject(f);
             requestDraw("thumbnalzieImage:add", draw);
         });
@@ -573,7 +574,7 @@ implements SearchResultListener {
         if (activeFigure.type() == FigureType.Image) {
             var image: ImageFigure = cast activeFigure;
             image.setFilterAsync(editor.createFilter())
-            .done(function(img: ImageElement) {
+            .done(function(img: ImageWrap) {
                 image.alpha = editor.alpha;
                 Main.App.layerView.invalidate(image);
                 extendDirtyRectWithDisplayObject(image);
@@ -890,8 +891,7 @@ implements SearchResultListener {
             }
         } else {
             var pb = activeFigure.getTransformedBounds().clone();
-            dragging.x += e.deltaX/scale;
-            dragging.y += e.deltaY/scale;
+            cast(dragging, Figure).onMove(e.deltaX/scale,e.deltaY/scale);
             mBoundingBox.shape.x += e.deltaX;
             mBoundingBox.shape.y += e.deltaY;
             extendDirtyRectWithDisplayObject(dragging,pb);
@@ -914,13 +914,13 @@ implements SearchResultListener {
         inline function doScaleX (width: Float) {
             var sx = width/tb.width;
             if (0 < sx) {
-                activeFigure.scaleX *= sx;
+                cast(activeFigure, Figure).onScale(activeFigure.scaleX*sx, activeFigure.scaleY);
             }
         }
         inline function doScaleY (height: Float) {
             var sy = height/tb.height;
             if (0 < sy) {
-                activeFigure.scaleY *= sy;
+                cast(activeFigure, Figure).onScale(activeFigure.scaleX, activeFigure.scaleY*sy);
             }
         }
         inline function constrainScaleX () {
@@ -930,7 +930,7 @@ implements SearchResultListener {
                 } else {
                     doScaleX(tb.width-e.deltaX/scale);
                 }
-                activeFigure.x = lpmn.x;
+                cast(activeFigure, Figure).onMove(lpmn.x-activeFigure.x,0);
             }
         }
         inline function constrainScaleY () {
@@ -940,7 +940,7 @@ implements SearchResultListener {
                 } else {
                     doScaleY(tb.height-e.deltaY/scale);
                 }
-                activeFigure.y = lpmn.y;
+                cast(activeFigure, Figure).onMove(0,lpmn.y-activeFigure.y);
             }
         }
         corner.isLeft? constrainScaleX() : doScaleX(tb.width+e.deltaX/scale);

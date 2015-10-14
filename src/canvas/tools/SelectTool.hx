@@ -1,4 +1,5 @@
 package canvas.tools;
+import figure.Selection;
 import geometry.Points;
 import createjs.easeljs.Point;
 import figure.Figure;
@@ -12,11 +13,12 @@ class SelectTool implements CanvasTool {
     }
 
     private var mSelectedBouds = new Rectangle();
-    private var mSelectedFigures: Array<DisplayObject> = [];
+    private var mSelection = new Selection();
     private var sPointPool = Points.createPool(3);
 
     public function onMouseDown(mcanvas:MainCanvas, e:CanvasMouseEvent):Void {
         var p = e.getLocal(mcanvas.mMainContainer);
+        mSelection.clear();
         mSelectedBouds.setValues(p.x,p.y);
     }
 
@@ -35,7 +37,7 @@ class SelectTool implements CanvasTool {
         .setStrokeStyle(Scalar.valueOf(1))
         .beginStroke("black")
         .drawRoundRect(~~(fgp.x)+.5, ~~(fgp.y)+.5,w,h,0);
-        mSelectedFigures = mSelectedFigures.filter(function (d: DisplayObject) {
+        mSelection.figures.filterSelf(function (d: DisplayObject) {
            var ret = d.getTransformedBounds().intersects(mSelectedBouds);
             if (!ret) {
                 cast(d, Figure).setActive(false);
@@ -45,9 +47,9 @@ class SelectTool implements CanvasTool {
         });
         for (fig in mcanvas.mFigureContainer.children) {
             if (fig.getTransformedBounds().intersects(mSelectedBouds)
-                && mSelectedFigures.indexOf(fig) == -1)
+                && mSelection.figures.indexOf(fig) == -1)
             {
-                mSelectedFigures.push(fig);
+                mSelection.addFigure(fig);
                 mcanvas.extendDirtyRectWithDisplayObject(fig);
                 cast(fig, Figure).setActive(true);
             }
@@ -57,14 +59,14 @@ class SelectTool implements CanvasTool {
 
     public function onMouseUp(mcanvas:MainCanvas, e:CanvasMouseEvent):Void {
         var buf = mcanvas.getBufferShape(mcanvas.mFgContainer);
-        trace(mSelectedFigures);
-        for (fig in mSelectedFigures) {
+        for (fig in mSelection.figures) {
             cast(fig, Figure).setActive(false);
         }
-        for (fig in mSelectedFigures) {
+        for (fig in mSelection.figures) {
             mcanvas.extendDirtyRectWithDisplayObject(fig);
         }
-        mSelectedFigures.clear();
+        mcanvas.activeFigure = mSelection;
+        mcanvas.isEditing = true;
         buf.graphics.clear();
     }
 

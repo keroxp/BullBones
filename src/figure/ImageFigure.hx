@@ -1,4 +1,7 @@
 package figure;
+import js.Browser;
+import js.html.CanvasRenderingContext2D;
+import js.html.CanvasElement;
 import model.ImageEditor;
 import cv.ImageWrap;
 import deferred.Deferred;
@@ -7,24 +10,30 @@ import js.html.ImageElement;
 import cv.Images;
 import cv.Filter;
 import js.html.ImageData;
-import createjs.easeljs.Bitmap;
-class ImageFigure extends Bitmap implements Figure {
+class ImageFigure extends BaseFigure {
     // non-filterd, non-scaled, original image,
-    public var imageWrap(default,null): ImageWrap;
+    public var image(default,null): ImageWrap;
     public var editor: ImageEditor = new ImageEditor();
-
+    var drawCanvas: CanvasElement = cast Browser.document.createElement("canvas");
     public function new (img: ImageWrap) {
-        super(cast img.image.cloneNode(true));
-        imageWrap = img;
+        super();
+        image = img;
+        drawCanvas.width = image.width;
+        drawCanvas.height = image.height;
+        drawCanvas.getContext2d().drawImage(image.image,0,0);
         cache(0,0,image.width,image.height);
-        updateCache();
+    }
+
+    override public function draw(ctx:CanvasRenderingContext2D, ?ignoreCache:Bool):Bool {
+        if (super.draw(ctx,ignoreCache)) return true;
+        ctx.drawImage(drawCanvas,0,0);
+        return true;
     }
 
     override public function clone(): ImageFigure {
-        var ret = new ImageFigure(imageWrap.clone());
+        var ret = new ImageFigure(image.clone());
         var _clone = Reflect.field(this, "_cloneProps");
         ret = Reflect.callMethod(this,_clone,[ret]);
-        ret.image = cast image.cloneNode(true);
         if (filter != null) {
             ret.filter = filter.clone();
         }
@@ -37,35 +46,21 @@ class ImageFigure extends Bitmap implements Figure {
 
     public var filter(default, null):Filter;
 
-    public function setFilterAsync(filter: Filter): Promise<ImageElement,Dynamic,Float> {
+    public function setFilterAsync(filter: Filter): Promise<ImageWrap,Dynamic,Float> {
         this.filter = filter;
-        var pr = new Deferred<ImageElement,Dynamic,Float>();
-        var self = this;
-        filter.applyToImageData(Images.getImageData(imageWrap.image))
+        var pr = new Deferred<ImageWrap,Dynamic,Float>();
+        filter.applyToImageData(Images.getImageData(image.image))
         .done(function(filtered: ImageData){
-            self.image.onload = function (e) {
-                var w = self.image.width;
-                var h = self.image.height;
-                self.cache(0,0,w,h);
-                self.updateCache();
-                pr.resolve(self.image);
-            };
-            self.image.onerror = function (e) {
-                trace("hoge");
-                pr.reject(e);
-            };
-            self.image.src = Images.toDataUrl(filtered);
+            drawCanvas.getContext2d().putImageData(filtered,0,0);
+            cache(0,0,filtered.width,filtered.height);
+            pr.resolve(image);
         }).fail(function(e) {
             pr.reject(e);
         });
         return pr;
     }
 
-    public function render():Dynamic {
-        return this;
-    }
-
-    public function setActive(bool:Bool):Void {
+    override public function setActive(bool:Bool):Void {
         this.alpha = bool ? .5: 1;
     }
 

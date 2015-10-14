@@ -3,8 +3,8 @@ import createjs.easeljs.DisplayObject;
 import createjs.easeljs.Rectangle;
 using util.RectangleUtil;
 using util.ArrayUtil;
-class MultipleFigures extends DisplayObject {
-    public var figures: Array<DisplayObject> = [];
+class Selection extends DisplayObject implements Figure {
+    public var figures: Array<DisplayObject> = new Array<DisplayObject>();
     private var mBounds: Rectangle = new Rectangle();
     public function new() {
         super();
@@ -42,15 +42,41 @@ class MultipleFigures extends DisplayObject {
         mBounds.reset();
     }
 
-    public function type():FigureType {
-        return FigureType.Internal;
-    }
-
     public function setActive(bool:Bool):Void {
         for (fig in figures) {
-            fig.setActive(bool);
+            cast(fig, Figure).setActive(bool);
         }
     }
 
+    public function render():Dynamic {
+        return this;
+    }
 
+    public function onScale(sx:Float, sy:Float):Void {
+        var _sx = sx/scaleX;
+        var _sy = sy/scaleY;
+        for (fig in figures) {
+            fig.scaleX *= _sx;
+            fig.scaleY *= _sy;
+        }
+        scaleX = sx;
+        scaleY = sy;
+    }
+
+    public function type():FigureType {
+        return FigureType.Selection;
+    }
+
+    public function onMove(dx:Float, dy:Float):Void {
+        for (fig in figures) {
+            fig.x += dx;
+            fig.y += dy;
+        }
+        x += dx;
+        y += dy;
+    }
+
+    override public function toString():String {
+        return "[Selection]";
+    }
 }

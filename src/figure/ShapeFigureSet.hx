@@ -105,4 +105,18 @@ class ShapeFigureSet extends Container implements Figure {
         }
     }
 
+    public function type():FigureType {
+        return FigureType.ShapeSet;
+    }
+
+    public function onScale(sx:Float, sy:Float):Void {
+        scaleX = sx;
+        scaleY = sy;
+    }
+
+    public function onMove(dx:Float, dy:Float):Void {
+        x += dx;
+        y += dy;
+    }
+
 }
