@@ -56,9 +56,9 @@ class ImageEditor extends BaseModel {
         var f = new Filter();
         if (lineExtraction) {
             f.funcs = [
-                useLaplacian8 ? FilterFactory.edge1() : FilterFactory.edge2(),
-                FilterFactory.negaposi(),
-                FilterFactory.gray()
+                FilterFactory.gray(),
+                useLaplacian8 ? FilterFactory.edge1(true) : FilterFactory.edge2(true),
+                FilterFactory.negaposi()
             ];
         }
         if (!lineExtraction && gray) {

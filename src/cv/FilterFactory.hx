@@ -55,18 +55,18 @@ class FilterFactory {
         }
     }
     // エッジ検出（8近傍ラプラシアン）
-    public static function edge1():FilterFunc {
-        return sobel(5);
+    public static function edge1(grayed):FilterFunc {
+        return sobel(5,grayed);
     }
     // エッジ検出（4近傍ラプラシアン）
-    public static function edge2():FilterFunc {
-        return sobel(0);
+    public static function edge2(grayed):FilterFunc {
+        return sobel(0,grayed);
     }
     // ソーベル（第二引数に0を渡すと4近傍、5を渡すと8近傍ラプラシアン）
-    public static function sobel(course:Int): FilterFunc {
+    public static function sobel(course:Int, grayed: Bool = false): FilterFunc {
         return {
             name: "sobel",
-            args: [course]
+            args: [course, grayed]
         }
     }
 }

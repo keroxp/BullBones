@@ -25,10 +25,7 @@
                 for (var x = 0; x < w|0; x=(x+1)|0) {
                     var i = (y * w + x) * 4;
                     // グレースケールの定数
-                    var gray = 0;
-                    gray += 0.299 * inImg.data[i];
-                    gray += 0.587 * inImg.data[i + 1];
-                    gray += 0.114 * inImg.data[i + 2];
+                    var gray = (0.299 * inImg.data[i] + 0.587 * inImg.data[i + 1] + 0.114 * inImg.data[i + 2])|0;
                     outImg.data[i + 0] = gray;
                     outImg.data[i + 1] = gray;
                     outImg.data[i + 2] = gray;
@@ -168,12 +165,12 @@
         };
     }
     // エッジ検出（8近傍ラプラシアン）
-    function edge1() {
-        return sobel(5);
+    function edge1(grayed) {
+        return sobel(5,grayed);
     }
     // エッジ検出（4近傍ラプラシアン）
-    function edge2() {
-        return sobel(0);
+    function edge2(grayed) {
+        return sobel(0,grayed);
     }
     var SOBEL_MATRIXES = [
         [0, 1, 0, 1, -4, 1, 0, 1, 0], // 4近傍
@@ -188,24 +185,29 @@
         [0, 1, 2, -1, 0, 1, -2, -1, 0]
     ];
     // ソーベル（第二引数に0を渡すと4近傍、5を渡すと8近傍ラプラシアン）
-    function sobel(course) {
+    function sobel(course, grayed) {
         course = course || 0;
+        grayed = grayed || false;
         return function (inImg) {
             var w = inImg.width;
             var h = inImg.height;
             var S = SOBEL_MATRIXES[course];
             var outImg = createTmpImage(w, h);
             for (var y = 0; y < h|0; y=(y+1)|0) {
-                for (var x = 0; x < w|0; x=(x+1)|0) {
-                    for (var c = 0; c < 3|0; c=(c+1)|0) {
-                        var i = (y * w + x) * 4 + c;
-                        outImg.data[i] =
-                        S[0] * inImg.data[i - w * 4 - 4] + S[1] * inImg.data[i - w * 4] + S[2] * inImg.data[i - w * 4 + 4] +
-                        S[3] * inImg.data[i - 4] + S[4] * inImg.data[i] + S[5] * inImg.data[i + 4] +
-                        S[6] * inImg.data[i + w * 4 - 4] + S[7] * inImg.data[i + w * 4] + S[8] * inImg.data[i + w * 4 + 4];
-                    }
-                    outImg.data[(y * w + x) * 4 + 3] = inImg.data[(y * w + x) * 4 + 3]; // alpha
+            for (var x = 0; x < w|0; x=(x+1)|0) {
+            for (var c = 0; c < 3|0; c=(c+1)|0) {
+                var i = ((y * w + x) * 4 + c)|0;
+                outImg.data[i] =
+                (S[0] * inImg.data[i - w * 4 - 4] + S[1] * inImg.data[i - w * 4] + S[2] * inImg.data[i - w * 4 + 4] +
+                S[3] * inImg.data[i - 4] + S[4] * inImg.data[i] + S[5] * inImg.data[i + 4] +
+                S[6] * inImg.data[i + w * 4 - 4] + S[7] * inImg.data[i + w * 4] + S[8] * inImg.data[i + w * 4 + 4])|0;
+                if (grayed) {
+                    outImg.data[i+1] = outImg.data[i+2] = outImg.data[i];
+                    break;
                 }
+            }
+            outImg.data[(y * w + x) * 4 + 3] = inImg.data[(y * w + x) * 4 + 3]; // alpha
+            }
             }
             return outImg;
         };
