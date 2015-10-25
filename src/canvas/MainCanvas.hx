@@ -855,12 +855,12 @@ implements SearchResultListener {
             updateBrushCircle(e);
         } else {
             if (activeFigure != null) {
-                var lpmn = e.getLocal(mMainContainer);
-                var c = mBoundingBox.hitsCorner(lpmn.x,lpmn.y);
+                var lpfg = e.getLocal(mFgContainer);
+                var c = mBoundingBox.hitsCorner(lpfg.x,lpfg.y);
                 if (c != null) {
                     nextCursor = BoundingBox.getPointerCSS(c);
                 } else {
-                    if (activeFigure.getTransformedBounds().containsPoint(lpmn.x,lpmn.y)){
+                    if (activeFigure.getTransformedBounds().containsPoint(lpfg.x,lpfg.y)){
                         nextCursor = CursorUtil.MOVE;
                     } else {
                         nextCursor = CursorUtil.grabCursor();
