@@ -1,4 +1,5 @@
 package canvas.tools;
+import geometry.Points;
 import createjs.easeljs.Point;
 import performance.GeneralObjectPool;
 import figure.ShapeFigureSet;
@@ -6,11 +7,7 @@ import figure.ShapeFigure;
 class BrushTool implements CanvasTool {
     private var drawingFigure: ShapeFigure;
     private var mirroringFigure: ShapeFigure;
-    private static var sPointPool = new GeneralObjectPool<Point>(5, function() {
-        return new Point();
-    }, function (p: Point) {
-        p.x = p.y = 0;
-    });
+    private static var sPointPool = Points.createPool(5);
     public function new() {
     }
 
@@ -56,11 +53,8 @@ class BrushTool implements CanvasTool {
                 }
                 mainCanvas.extendDirtyRectWithRect(drawingFigure.getTransformedBounds());
             }
-            var p_g_drawing = mainCanvas.mMainContainer.localToGlobal(drawPoint.x,drawPoint.y,sPointPool.take());
-            mainCanvas.extendDirtyRect(e.startX,e.startY);
-            mainCanvas.extendDirtyRect(p_g_drawing.x,p_g_drawing.y);
-            var pad = b.width.toFloat()*.5;
-            mainCanvas.mDirtyRect.pad(pad,pad,pad,pad);
+            mainCanvas.extendDirtyRectWithRadius(e.startX,e.startY,b.width.toFloat());
+            mainCanvas.extendDirtyRectWithRadius(drawPoint.x,drawPoint.y,b.width.toFloat(),mainCanvas.mMainContainer);
         } else if (drawingFigure.isLine) {
             drawingFigure.isLine = false;
         }
@@ -76,15 +70,14 @@ class BrushTool implements CanvasTool {
             .moveTo(mpx,mpy)
             .lineTo(mx,my)
             .endStroke();
-            var gm = mainCanvas.mMainContainer.localToGlobal(mx,my,sPointPool.take());
-            mainCanvas.extendDirtyRect(gm.x,gm.y);
+            mainCanvas.extendDirtyRectWithRadius(mx,my,b.width.toFloat(),mainCanvas.mMainContainer);
         }
         buf.graphics
         .beginStroke(b.color)
         .moveTo(drawPointPrev.x,drawPointPrev.y)
         .lineTo(drawPoint.x,drawPoint.y)
         .endStroke();
-        mainCanvas.extendDirtyRect(e.x,e.y);
+        mainCanvas.extendDirtyRectWithRadius(e.x,e.y,b.width.toFloat());
         drawingFigure.addPoint(drawPoint.x,drawPoint.y);
         sPointPool.unmark();
     }
@@ -97,11 +90,11 @@ class BrushTool implements CanvasTool {
                 var second = mirroringFigure.render();
                 var set = ShapeFigureSet.createWithShapes([first,second]);
                 mainCanvas.insertFigure(set.render());
-                mainCanvas.extendDirtyRectWithDisplayObject(set, set.getTransformedBounds());
+                mainCanvas.extendDirtyRectWithDisplayObject(set);
             } else {
                 drawingFigure.calcVertexes();
                 mainCanvas.insertFigure(drawingFigure.render());
-                mainCanvas.extendDirtyRectWithDisplayObject(drawingFigure,buf.getTransformedBounds());
+                mainCanvas.extendDirtyRectWithDisplayObject(drawingFigure);
             }
         }
         this.drawingFigure = null;

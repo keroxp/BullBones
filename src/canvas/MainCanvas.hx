@@ -144,7 +144,7 @@ implements SearchResultListener {
         mGrid.visible = false;
         mBgContainer.addChild(mGrid);
 
-        mFgContainer.addChild(mBoundingBox.shape);
+        mFgContainer.addChild(mBoundingBox);
         mBrushCircle.visible = false;
         mFgContainer.addChild(mBrushCircle);
         mFgContainer.addChild(mFuzzySketchGraph);
@@ -288,11 +288,9 @@ implements SearchResultListener {
     }
     public function draw (clearAll: Bool = false) {
         if (!clearAll && !mHasDirtyRect) return;
-        var pad = Main.App.model.brush.width.addf(10);
         if (clearAll) {
             mDirtyRect.setValues(0,0,mCanvas.width,mCanvas.height);
         }
-        mDirtyRect.pad(pad,pad,pad,pad);
         var buf = getBufferShape(mStage);
         buf.graphics.clear();
         if (Main.App.model.isDebug) {
@@ -300,7 +298,7 @@ implements SearchResultListener {
             .beginStroke("red").setStrokeStyle(Scalar.valueOf(1))
             .drawRect(mDirtyRect.x,mDirtyRect.y,mDirtyRect.width,mDirtyRect.height);
         }
-        Reflect.setField(mStage,"drawRect",mDirtyRect.union(mPrevDirtyRect).pad(5,5,5,5));
+        Reflect.setField(mStage,"drawRect",mDirtyRect.union(mPrevDirtyRect).padAll(Scalar.valueOf(5).toFloat()));
         mStage.update();
         mPrevDirtyRect.copy(mDirtyRect);
         mDirtyRect.reset();
@@ -355,26 +353,14 @@ implements SearchResultListener {
                 target.y,
                 mFgContainer
             );
-            mBoundingBox.shape.x = p.x;
-            mBoundingBox.shape.y = p.y;
+            mBoundingBox.x = p.x;
+            mBoundingBox.y = p.y;
             var bounds = target.getTransformedBounds().clone();
-            var xOffset = 0.0;
-            var yOffset = 0.0;
-            if (target.type() == FigureType.Shape) {
-                var shape = cast(target, ShapeFigure);
-                xOffset = shape.width.toFloat()*.5;
-                yOffset = shape.width.toFloat()*.5;
-            } else if (target.type() == FigureType.ShapeSet) {
-                var shape = cast(target, ShapeFigureSet);
-                xOffset = shape.leftShape.width.toFloat()*.5;
-                yOffset = shape.topShape.width.toFloat()*.5;
-            }
-            mBoundingBox.shape.x -= xOffset*scale;
-            mBoundingBox.shape.y -= yOffset*scale;
             bounds.scale(scale,scale);
             mBoundingBox.render(bounds);
             var g = mMainContainer.localToGlobal(bounds.x,bounds.y);
-            extendDirtyRect(g.x,g.y,bounds.width,bounds.height);
+            var pad = mBoundingBox.cornerRadius.toFloat();
+            extendDirtyRect(g.x-pad,g.y-pad,bounds.width+pad*2,bounds.height+pad*2);
         }
     }
     function drawBrushCircle () {
@@ -390,6 +376,14 @@ implements SearchResultListener {
             mBrushCircle.cache(0,0,rad*2+w*2,rad*2+w*2);
             updateBrushCircle(mCapture);
         }
+    }
+    public function extendDirtyRectWithRadius(x: Float, y: Float, rad: Float = 0, ?container: Container) {
+        if (container != null) {
+            var p = container.localToGlobal(x,y);
+            x = p.x;
+            y = p.y;
+        }
+        extendDirtyRect(x-rad,y-rad,rad*2,rad*2);
     }
     public function extendDirtyRect(gx: Float, gy: Float, width: Float = 0, height: Float = 0) {
         if (!mHasDirtyRect) {
@@ -800,10 +794,6 @@ implements SearchResultListener {
                     mCanvasState = Scaling(corner);
                 }
             }
-            if (hitted != null) {
-                mBoundingBox.shape.x = hitted.x;
-                mBoundingBox.shape.y = hitted.y;
-            }
             switch (mCanvasState) {
                 case UsingTool(tool): {
                     tool.onMouseDown(this,e);
@@ -843,11 +833,11 @@ implements SearchResultListener {
     function updateBrushCircle(e: CanvasMouseEvent) {
         mBrushCircle.visible = true;
         var fp = e.getLocal(mFgContainer);
-        var pb = mBrushCircle.getTransformedBounds().clone();
+        extendDirtyRectWithDisplayObject(mBrushCircle);
         var bw = Main.App.model.brush.width.toFloat()*scale*.5;
         mBrushCircle.x = fp.x-bw;
         mBrushCircle.y = fp.y-bw;
-        extendDirtyRectWithDisplayObject(mBrushCircle,pb);
+        extendDirtyRectWithDisplayObject(mBrushCircle);
     }
 
     function handleFreeCursorMove(e: CanvasMouseEvent) {
@@ -902,12 +892,13 @@ implements SearchResultListener {
                 extendDirtyRectWithDisplayObject(mMirrorPivotShape);
             }
         } else {
-            var pb = activeFigure.getTransformedBounds().clone();
+            extendDirtyRectWithDisplayObject(activeFigure);
             dragging.x += e.deltaX/scale;
             dragging.y += e.deltaY/scale;
-            mBoundingBox.shape.x += e.deltaX;
-            mBoundingBox.shape.y += e.deltaY;
-            extendDirtyRectWithDisplayObject(dragging,pb);
+            mBoundingBox.x += e.deltaX;
+            mBoundingBox.y += e.deltaY;
+            extendDirtyRectWithDisplayObject(dragging);
+            mDirtyRect.padAll(mBoundingBox.cornerRadius.toFloat()*2);
             mPopupMenu.dismiss(200);
         }
     }
@@ -956,6 +947,7 @@ implements SearchResultListener {
                 activeFigure.y = lpmn.y;
             }
         }
+        extendDirtyRectWithDisplayObject(activeFigure);
         corner.isLeft? constrainScaleX() : doScaleX(tb.width+e.deltaX/scale);
         corner.isTop? constrainScaleY() : doScaleY(tb.height+e.deltaY/scale);
         if (modifiedByShift()) {
@@ -972,7 +964,7 @@ implements SearchResultListener {
                 d.y = tb.bottom()-h;
             }
         }
-        extendDirtyRectWithDisplayObject(activeFigure,tb);
+        extendDirtyRectWithDisplayObject(activeFigure);
         drawBoundingBox(activeFigure);
     }
     function onMouseMove (e: CanvasMouseEvent) {

@@ -213,8 +213,8 @@ class ShapeFigure extends Shape implements Figure {
         return this;
     }
 
-    private inline function xx(x: Float): Float return ~~(x-mBounds.x);
-    private inline function yy(y: Float): Float return ~~(y-mBounds.y);
+    private inline function xx(x: Float): Float return (x-mBounds.x+width.toFloat()*.5);
+    private inline function yy(y: Float): Float return (y-mBounds.y+width.toFloat()*.5);
     private var isFirstRendering = true;
     public function render (): ShapeFigure {
         if (points.length < 2) return this;
@@ -297,8 +297,8 @@ class ShapeFigure extends Shape implements Figure {
         // Only first rendering, adjust x and y axis with local bounds.
         // it is nesessary because just calling drawXX mehthod does not define actual bounds.
         if (isFirstRendering) {
-            x = mBounds.x;
-            y = mBounds.y;
+            x = mBounds.x-width.toFloat()*.5;
+            y = mBounds.y-width.toFloat()*.5;
             isFirstRendering = false;
         }
         var pad = width.toFloat();

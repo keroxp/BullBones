@@ -37,6 +37,9 @@ class RectangleUtil {
     public static function reset(r: Rectangle): Rectangle {
         return r.setValues(0,0,0,0);
     }
+    public static function padAll(r: Rectangle, pad: Float): Rectangle {
+        return r.pad(pad,pad,pad,pad);
+    }
     private inline static function call(o: Dynamic, method: String, args: Array<Dynamic>): Dynamic {
         return Reflect.callMethod(o, Reflect.field(o, method), args);
     }

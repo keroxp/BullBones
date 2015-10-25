@@ -1,74 +1,54 @@
 package figure;
+import createjs.easeljs.DisplayObject;
 import util.CursorUtil;
 import geometry.Scalar;
 import createjs.easeljs.Rectangle;
-import createjs.easeljs.DisplayObject;
-import createjs.easeljs.Container;
 import createjs.easeljs.Shape;
 
 typedef Corner = {
     isLeft: Bool,
     isTop: Bool
 }
-class BoundingBox {
+class BoundingBox extends Shape {
     private static var CORNER_LT = {isLeft: true, isTop: true};
     private static var CORNER_RT = {isLeft: false, isTop: true};
     private static var CORNER_LB = {isLeft: true, isTop: false};
     private static var CORNER_RB = {isLeft: false, isTop: false};
-    public var shape(default, null): Container;
-    var mLTCorner: Shape;
-    var mRTCorner: Shape;
-    var mLBCorner: Shape;
-    var mRBCorner: Shape;
-    var mBox: Shape;
     public var cornerRadius = Scalar.valueOf(5.0);
     public var color = "#000";
     public var cornerFillColor = "#fff";
     public function new() {
-        shape = new Container();
-        mRTCorner = new Shape();
-        mRBCorner = new Shape();
-        mLTCorner = new Shape();
-        mLBCorner = new Shape();
-        mBox = new Shape();
-        shape.addChild(mBox);
-        shape.addChild(mRTCorner);
-        shape.addChild(mRBCorner);
-        shape.addChild(mLTCorner);
-        shape.addChild(mLBCorner);
+        super();
     }
     public function render (bounds: Rectangle): BoundingBox {
-        mBox.graphics
+        graphics
+        .clear()
         .setStrokeStyle(Scalar.valueOf(1))
         .beginStroke(color)
         .drawRoundRect(0.5,0.5,bounds.width,bounds.height,0)
         .endStroke();
         var cr = cornerRadius.toFloat();
-        drawCorner(mLTCorner,-cr,-cr);
-        drawCorner(mRTCorner,bounds.width-cr,-cr);
-        drawCorner(mLBCorner,-cr,bounds.height-cr);
-        drawCorner(mRBCorner,bounds.width-cr,bounds.height-cr);
-        shape.setBounds(0,0,bounds.width,bounds.height);
+        drawCorner(-cr,-cr);
+        drawCorner(bounds.width-cr,-cr);
+        drawCorner(-cr,bounds.height-cr);
+        drawCorner(bounds.width-cr,bounds.height-cr);
+        setBounds(0,0,bounds.width+cornerRadius.toFloat()*2,bounds.height+cornerRadius.toFloat()*2);
         return this;
     }
-    function drawCorner(s: Shape, x: Float, y: Float) {
-        s.graphics
+    function drawCorner(x: Float, y: Float) {
+        graphics
         .setStrokeStyle(1)
         .beginStroke(color)
         .beginFill(cornerFillColor)
         .drawRoundRect(x+0.5,y+0.5,cornerRadius.toFloat()*2,cornerRadius.toFloat()*2,0);
     }
     public function clear() {
-        mBox.graphics.clear();
-        mRBCorner.graphics.clear();
-        mRTCorner.graphics.clear();
-        mLTCorner.graphics.clear();
-        mLBCorner.graphics.clear();
+        graphics.clear();
     }
 
     public function hitsCorner(x: Float, y: Float): Corner {
         var hw = cornerRadius.toFloat()*2;
-        var bounds = shape.getTransformedBounds();
+        var bounds = getTransformedBounds();
         inline function isLeft (_x: Float): Bool {
             return bounds.x-hw <= _x && _x <= bounds.x+hw;
         }
