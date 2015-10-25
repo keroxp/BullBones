@@ -11,23 +11,21 @@ import createjs.easeljs.Bitmap;
 class ImageFigure extends Bitmap implements Figure {
     // non-filterd, non-scaled, original image,
     public var imageWrap(default,null): ImageWrap;
-    public var editor: ImageEditor = new ImageEditor();
+    public var editor(default,null): ImageEditor = new ImageEditor();
 
     public function new (img: ImageWrap) {
         super(cast img.image.cloneNode(true));
         imageWrap = img;
         cache(0,0,image.width,image.height);
-        updateCache();
     }
 
     override public function clone(): ImageFigure {
         var ret = new ImageFigure(imageWrap.clone());
         var _clone = Reflect.field(this, "_cloneProps");
         ret = Reflect.callMethod(this,_clone,[ret]);
+        ret.editor = editor.clone();
         ret.image = cast image.cloneNode(true);
-        if (filter != null) {
-            ret.filter = filter.clone();
-        }
+        ret.cache(0,0,image.width,image.height);
         return ret;
     }
 
@@ -35,10 +33,7 @@ class ImageFigure extends Bitmap implements Figure {
         return '[ImageFigure id="${id}"]';
     }
 
-    public var filter(default, null):Filter;
-
     public function setFilterAsync(filter: Filter): Promise<ImageElement,Dynamic,Float> {
-        this.filter = filter;
         var pr = new Deferred<ImageElement,Dynamic,Float>();
         var self = this;
         filter.applyToImageData(Images.getImageData(imageWrap.image))

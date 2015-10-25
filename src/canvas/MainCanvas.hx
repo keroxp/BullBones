@@ -471,11 +471,14 @@ implements SearchResultListener {
     public function copyFigure(f: DisplayObject, silent: Bool = false) {
         var i = mFigureContainer.getChildIndex(f)+1;
         var fun = function(a){
-            var fig = f.clone();
-            fig.x = f.x+20;
-            fig.y = f.y+20;
-            mFigureContainer.addChildAt(fig, i);
-            return fig;
+            var cop = f.clone();
+            cop.x = f.x+20;
+            cop.y = f.y+20;
+            mFigureContainer.addChildAt(cop, i);
+            cop.asImageFigure(function (imf: ImageFigure) {
+                listenTo(imf.editor, "change", onImageEditorChange);
+            });
+            return cop;
         };
         var copied: DisplayObject;
         if (silent) {

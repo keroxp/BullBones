@@ -76,10 +76,6 @@ class ImageEditorView extends ViewModel {
 
     public function hide() {
         jq.hide();
-        mImage = null;
-        mThumbData = null;
-        var ctx = mCanvas.getContext2d();
-        ctx.clearRect(0,0,220,100);
     }
 
     private function reRenderThumb() {

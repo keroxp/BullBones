@@ -1,7 +1,8 @@
 package model;
+import protocol.Clonable;
 import cv.Filter;
 import cv.FilterFactory;
-class ImageEditor extends BaseModel {
+class ImageEditor extends BaseModel implements Clonable {
     function get_lineExtraction():Bool {
         return get("lineExtraction");
     }
@@ -43,13 +44,17 @@ class ImageEditor extends BaseModel {
     @:isVar public var useLaplacian8(get, set):Bool;
     @:isVar public var alpha(get, set):Float;
 
-    public function new () {
-        super({
+    public function new (?attr: Dynamic) {
+        super(attr == null ? {
             lineExtraction: false,
             useLaplacian8: false,
             gray: false,
             alpha: 1
-        });
+        } : attr);
+    }
+
+    override public function clone():Dynamic {
+        return new ImageEditor(attributes);
     }
 
     public function createFilter (includeAlpha: Bool = false): Filter {
