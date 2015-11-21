@@ -1,0 +1,18 @@
+html(lang='ja')
+  head
+    title BullBones / Images
+    include ./include/head.jade
+  body
+    header.blue-grey.darken-3
+      div.logo(style="text-align:center")
+        a(href="/about")
+          img(src="/img/logo.png",style="width:100px;height:auto")
+    main
+      .container
+        .row
+          each image in images          
+            .col.s12.m4
+              .card
+                .card-image
+                  a(href="/images/#{image.displayId}")
+                    img(src='http://#{image.host}/#{image.name}')

@@ -28,4 +28,5 @@ MongoClient.connect mongo_url, (err,db) ->
   app.get '/export/signed_url', require("./routes/signed_url")()
   app.get '/test', (req,res) -> res.send("sessionId: #{req.sessionID}, session: #{req.session.toString()}")
   app.get '/images/:id:ext(.jpg|.png)?', require("./routes/images")(db)
+  app.get '/images', require("./routes/images_index")(db)
   app.listen process.env.PORT || 8000
