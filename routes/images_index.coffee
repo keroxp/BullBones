@@ -4,7 +4,7 @@ module.exports = (db) ->
     debug err
     res.status(500).json(err).end()
   return (req,res,next) ->
-    db.collection("Images").find {}, {limit: 10}, (err, cursor) ->
+    db.collection("Images").find {}, {limit: 10, sort: {createdAt: -1}}, (err, cursor) ->
       return onError(res,err) if err
       cursor.toArray (err,images) ->
         return onError(res,err) if  err
