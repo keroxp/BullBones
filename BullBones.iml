@@ -12,35 +12,35 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/lib" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/app/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/app/lib" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/app/tests" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jQueryExtern 2,0,4" level="project" />
-    <orderEntry type="module-library">
-      <library name="haxelib|src">
-        <CLASSES>
-          <root url="file://src" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://src" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="haxelib|lib">
-        <CLASSES>
-          <root url="file://lib" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://lib" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="createjs 1,5,8" level="project" />
+    <orderEntry type="module-library">
+      <library name="haxelib|app/src">
+        <CLASSES>
+          <root url="file://app/src" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://app/src" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="haxelib|app/lib">
+        <CLASSES>
+          <root url="file://app/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://app/lib" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

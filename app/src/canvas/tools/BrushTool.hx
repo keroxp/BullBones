@@ -1,4 +1,10 @@
 package canvas.tools;
+import js.Error;
+import util.Log;
+import jQuery.JQuery;
+import js.Browser;
+import ajax.CoherentLineSuggestion;
+import ajax.Uploader;
 import geometry.Points;
 import createjs.easeljs.Point;
 import performance.GeneralObjectPool;
@@ -93,7 +99,29 @@ class BrushTool implements CanvasTool {
                 mainCanvas.extendDirtyRectWithDisplayObject(set);
             } else {
                 drawingFigure.calcVertexes();
-                mainCanvas.insertFigure(drawingFigure.render());
+                var fig = drawingFigure.render();
+                CoherentLineSuggestion.postSuggest(fig.getCacheDataURL()).done(function(res) {
+                    var jList: JQuery = new JQuery("#similarLinesList");
+                    jList.children().remove();
+                    for (r in res) {
+                        CoherentLineSuggestion.getCoherentLine(r)
+                        .done(function(iw) {
+                            var li = new JQuery("<div></div>");
+                            li.css({
+                                width: '${iw.width}px',
+                                hegiht: '${iw.height}px'
+                            });
+                            li.addClass("similarLinesListItem");
+                            li.append(iw.image);
+                            jList.append(li);
+                        }).fail(function(e: Error){
+                            trace(e.message);
+                        });
+                    }
+                }).fail(function(e){
+
+                });
+                mainCanvas.insertFigure(fig);
                 mainCanvas.extendDirtyRectWithDisplayObject(drawingFigure);
             }
         }

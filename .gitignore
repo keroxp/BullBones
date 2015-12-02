@@ -9,3 +9,5 @@ public/font/*
 bower_components
 *.log
 tests/*.js
+cohlines
+tmp

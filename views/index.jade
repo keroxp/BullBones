@@ -46,6 +46,8 @@ html(lang='ja')
       // App View
       #appView
         #uiLayer
+          #similarLinesView.z-depth-1(style="display:none")
+            #similarLinesList.clearfix
           #layerView.z-depth-1(style="display:none")
             ul#layerListView
               li#layerItemDummy.layerItem(style="")
@@ -119,6 +121,10 @@ html(lang='ja')
               .inner.z-depth-1
                 a#layerButton(title="レイヤーを表示", data-enabled="true")
                   i.small.material-icons layers
+            .inputGroup
+              .inner.z-depth-1
+                a#ghostButton(title="ゴースト予測モード", data-enabled="true")
+                  i.small.material-icons grain
             .inputGroup
               .inner.z-depth-1
                 a(href="/about",target="_blank",title="BullBonesについて")

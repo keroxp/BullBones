@@ -11,15 +11,15 @@ module.exports = (grunt) ->
         livereload: true
       haxe:
         files: [
-          "src/**/*.hx"
-          "lib/**/*.hx"
+          "app/src/**/*.hx"
+          "app/lib/**/*.hx"
         ]
         tasks: [
           "haxe:build"
         ]
       haxeTest:
         files: [
-          "tests/**/*.hx"
+          "app/tests/**/*.hx"
         ]
         tasks: [
           "haxe:test"
@@ -47,7 +47,7 @@ module.exports = (grunt) ->
         options:
           livereload: LIVERELOAD_TEST_PORT
         files: [
-          "tests/test.js"
+          "app/tests/test.js"
         ]
     haxe:
       build:
@@ -56,7 +56,7 @@ module.exports = (grunt) ->
           "createjs"
           "jQueryExtern"
         ]
-        classpath: ["lib","src"]
+        classpath: ["app/lib","app/src"]
         misc: ["-debug"]
         output: "public/js/main.js"
       test:
@@ -65,8 +65,8 @@ module.exports = (grunt) ->
           "createjs"
           "jQueryExtern"
         ]
-        classpath: ["lib","src","tests"]
-        output: "tests/test.js"
+        classpath: ["app/lib","app/src","app/tests"]
+        output: "app/tests/test.js"
     stylus:
       build:
         files:

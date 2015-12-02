@@ -1,5 +1,8 @@
 package figure;
 
+import util.WorkerUtil;
+import cv.AspectPolicy;
+import cv.Images;
 import performance.ObjectPool;
 import geometry.Points;
 import performance.GeneralObjectPool;
@@ -317,5 +320,4 @@ class ShapeFigure extends Shape implements Figure {
         render();
         this.color = c;
     }
-
 }

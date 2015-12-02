@@ -217,6 +217,24 @@ body
       cursor url("data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="), pointer
       &[data-editing="true"]
         cursor pointer
+  #similarLinesView
+    position absolute
+    top 0
+    left 0
+    width 100%
+    height 100px
+    #similarLinesList
+      height 100%
+      width 100%
+      list-style none
+      display table
+      overflow-x scroll
+      div.similarLinesListItem
+        display table-cell
+        vertical-align middle
+        padding-right 15px
+        img
+          max-height 100%
   #layerView
     position fixed
     left 0

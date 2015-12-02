@@ -36,6 +36,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     private var jBrushButton: JQuery;
     private var jEditButton: JQuery;
     private var jLayerButton: JQuery;
+    private var jGhostButton: JQuery;
     private var jImageButton: JQuery;
     private var jDebugButton: JQuery;
     public var jq: JQuery;
@@ -168,6 +169,11 @@ class App extends BackboneEvents implements BrushEditorListener {
             jLayerButton = new JQuery("#layerButton").on(click, function(e: MouseEvent) {
                 layerView.jq.toggle();
                 jLayerButton.toggleClass("editing");
+            });
+            var similarLinesView = new JQuery("#similarLinesView");
+            jGhostButton = new JQuery("#ghostButton").on(click, function(e: MouseEvent) {
+                similarLinesView.toggle();
+                jGhostButton.toggleClass("editing");
             });
             listenTo(model, "change:undoStackSize", function (m,val:Int) {
                 if (val == 0) {

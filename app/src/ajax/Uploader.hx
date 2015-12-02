@@ -1,4 +1,5 @@
 package ajax;
+import js.RegExp;
 import js.html.XMLHttpRequest;
 import js.Error;
 import js.html.FormData;

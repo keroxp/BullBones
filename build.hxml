@@ -1,7 +1,7 @@
 -lib createjs
 -lib jQueryExtern
--cp src
--cp lib
+-cp app/src
+-cp app/lib
 -main Main
 -debug
 -js public/js/main.js
