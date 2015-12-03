@@ -11,13 +11,13 @@ describe "POST /suggest", ->
     route (_app) ->
        app = _app
        done()
-  it "should be return 500 if dataURL was not gived", (done) ->
+  it "should be return 400 if dataURL was not gived", (done) ->
     request(app)
     .post("/suggest")
     .type("form")
     .send(hoge: "hoge")
     .expect(400,done)
-  it "should be return 500 if dataURL was invalid", (done) ->
+  it "should be return 400 if dataURL was invalid", (done) ->
     request(app)
     .post("/suggest")
     .type("form")
@@ -33,9 +33,9 @@ describe "POST /suggest", ->
       ctx.drawImage(testimg,0,0)
       url = canvas.toDataURL()
       request(app)
-      .post("/suggest")
-      .type("form")
+      .post("/suggest")      
       .send(dataURL: url)
       .expect(200)
+      .expect("Content-Type","image/png")
       .end(done)
     testimg.src = "tmp/test.png"
