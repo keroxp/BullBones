@@ -86,27 +86,33 @@ module.exports = (connection) ->
             debug err if err
             done err, results
         (results, done) ->
+          return done() if results.length == 0
           imgs = _.chain(results)
             .map (r) -> r.Images
-            .uniq (r) ->  r.idea
+            .uniq (r) ->  r.id
             .value()
           bounds = new Rect(0,0,img.width,img.height)
-          async.reduce imgs, {}, (memo, img, done2) ->
+          memo = {}
+          async.each imgs, (img, done2) ->
             loader.promiseImage(img.category,img.name)
             .then (loaded) ->
-              done2 null, memo["#{img.category}/#{img.name}"] = loaded
+              memo["#{img.category}/#{img.name}"] = loaded
+              done2 null, memo
             .catch done2
-          , (err, loadedImages) ->
+          , (err) ->
+            if err
+              debug err
+              return done(err)
             data = _.chain(results)
-            .uniq (r) -> r.CoherentLines.id
-            .each (v,i) ->
-              scx = v.CoherentLines.width / img.width
-              scy = v.CoherentLines.height / img.height
+            .each (v) ->
+              scx = img.width / v.CoherentLines.width
+              scy = img.height / v.CoherentLines.height
+              sc = Math.min(scx,scy)
               dx = v.CoherentLines.sx - v.BaseCohrentLine.sx
               dy = v.CoherentLines.sy - v.BaseCohrentLine.sy
               w = v.CoherentLines.width
               h = v.CoherentLines.height
-              bounds.extend(dx,dy,w*scx,h*scy)
+              bounds.extend(dx*sc,dy*sc,w*sc,h*sc)
             .value()
             canvas.width = bounds.width
             canvas.height = bounds.height
@@ -114,21 +120,32 @@ module.exports = (connection) ->
             for v in data
               cl = v.CoherentLines
               bl = v.BaseCohrentLine
+              scx = img.width / cl.width
+              scy = img.height / cl.height
+              sc = Math.min(scx,scy)
               dx = cl.sx - bl.sx
               dy = cl.sy - bl.sy
-              x = bounds.x - dx
-              y = bounds.y - dy
-              scx = cl.width / img.width
-              scy = cl.height/ img.height
-              srcimg = loadedImages["#{d.Images.category}/#{d.Images.name}"]
-              cohimg = loader.sliceImage(srcimg,cl.sx,cl.sy,cl.width,cl.height,scx,scy)
-              ctx.drawImage cohimg, 0, 0, cohimg.width, cohimg.height, x, y, cohimg.width, cohimg.height
-            done err, canvas.toBuffer()
-      ] , (err,ghost) ->
+              x = dx * sc - bounds.x
+              y = dy * sc - bounds.y
+              srcimg = memo["#{v.Images.category}/#{v.Images.name}"]
+              cohimg = loader.sliceImage(srcimg,cl.tiled_sx,cl.tiled_sy,cl.width,cl.height,sc,sc)
+              ctx.drawImage cohimg, x, y
+            done err, {
+              bounds: bounds
+              pivX: -bounds.x
+              pivY: -bounds.y
+              dataURL: canvas.toDataURL()
+            }
+      ] , (err,result) ->
         if err
           res.status(500).send(err).end()
+        else if not result
+          res.status(200).json({
+            code: 0x00
+            error: "Ghost was not generated because no similar line was found."
+          }).end()
         else
-          res.status(200).set("Content-Type", "image/png").send(ghost).end()
+          res.status(200).json(result).end()
     img.onerror = (err) ->
       res.status(400).send(err).end()
     img.src = buf

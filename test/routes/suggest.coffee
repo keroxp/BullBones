@@ -33,9 +33,8 @@ describe "POST /suggest", ->
       ctx.drawImage(testimg,0,0)
       url = canvas.toDataURL()
       request(app)
-      .post("/suggest")      
+      .post("/suggest")
       .send(dataURL: url)
       .expect(200)
-      .expect("Content-Type","image/png")
       .end(done)
     testimg.src = "tmp/test.png"

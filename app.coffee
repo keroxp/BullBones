@@ -22,7 +22,7 @@ module.exports = (done) ->
         host: process.env.MySQL_HOST || "localhost"
         user: process.env.MySQL_USER || "root"
         password: process.env.MySQL_PASSWORD || "password"
-        database: process.env.MySQL_DB_NAME || "coherent_line_suggestion"
+        database: process.env.MySQL_DB_NAME || "bullghost"
       connection.connect (err) ->
         cb(err, connection: connection)
   , (err, res) ->

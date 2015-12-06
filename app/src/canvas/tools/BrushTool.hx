@@ -1,4 +1,7 @@
 package canvas.tools;
+import figure.ImageFigure;
+import js.html.Image;
+import cv.ImageWrap;
 import js.Error;
 import util.Log;
 import jQuery.JQuery;
@@ -101,25 +104,16 @@ class BrushTool implements CanvasTool {
                 drawingFigure.calcVertexes();
                 var fig = drawingFigure.render();
                 CoherentLineSuggestion.postSuggest(fig.getCacheDataURL()).done(function(res) {
-                    var jList: JQuery = new JQuery("#similarLinesList");
-                    jList.children().remove();
-                    for (r in res) {
-                        CoherentLineSuggestion.getCoherentLine(r)
-                        .done(function(iw) {
-                            var li = new JQuery("<div></div>");
-                            li.css({
-                                width: '${iw.width}px',
-                                hegiht: '${iw.height}px'
-                            });
-                            li.addClass("similarLinesListItem");
-                            li.append(iw.image);
-                            jList.append(li);
-                        }).fail(function(e: Error){
-                            trace(e.message);
-                        });
-                    }
+                    Log.d(res);
+                    ImageWrap.load(res.dataURL)
+                    .done(function(iw) {
+                        var fig = new ImageFigure(iw);
+                        mainCanvas.insertFigure(fig.render());
+                    }).fail(function(e) {
+                        Log.e(e);
+                    });
                 }).fail(function(e){
-
+                    Log.e(e);
                 });
                 mainCanvas.insertFigure(fig);
                 mainCanvas.extendDirtyRectWithDisplayObject(drawingFigure);

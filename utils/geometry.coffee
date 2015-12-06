@@ -1,17 +1,19 @@
 class Rect
   constructor: (@x,@y,@width = 0,@height = 0) ->
   clone: -> new Rect(@x,@y,@width,@height)
+  right: -> @x+@width
+  bottom: -> @y+@height
   extend: (x,y,w = 0, h = 0) ->
-    if @x < x
-      @x = x
+    if x < @x
       @width += @x-x
-    else if @x+@width < x+w
-      @width += x+w-(@x+width)
-    if @y < y
-      @y = y
+      @x = x
+    else if @right() < x+w
+      @width += x+w-@right()
+    if y < @y
       @height += @y-y
-    else if @y+@height < y+h
-      @height += y+h-(@y+@height)
+      @y = y
+    else if @bottom() < y+h
+      @height += y+h-@bottom()
     this
 class Point
   constructor: (@x,@y) ->
