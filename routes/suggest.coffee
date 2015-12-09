@@ -69,7 +69,7 @@ module.exports = (connection) ->
         cond += "('#{n}','#{sketchHash}') "
         cond += ", " if n != 9
       query = "
-        SELECT CoherentLines.id AS line_id, COUNT(MinHashes.line_id)/20 AS jaccard FROM CoherentLines
+        SELECT CoherentLines.id AS line_id, COUNT(MinHashes.line_id)/10 AS jaccard FROM CoherentLines
         INNER JOIN MinHashes ON MinHashes.line_id = CoherentLines.id
         INNER JOIN Images ON Images.id = CoherentLines.image_id
         WHERE
@@ -79,7 +79,7 @@ module.exports = (connection) ->
         GROUP BY
           line_id
         HAVING
-          jaccard >= 2/20
+          jaccard >= 0.2
         ORDER BY
           jaccard DESC
         LIMIT 10

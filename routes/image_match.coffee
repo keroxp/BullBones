@@ -47,7 +47,9 @@ module.exports = (connection) ->
               args.g = 0
               args.b = 0
             args
+          ctx.globalAlpha = 0.5
           ctx.drawImage thumb,0,0
+          ctx.globalAlpha = 1.0
           ctx.drawImage transLine,0,0,transLine.width,transLine.height,cohl.sx,cohl.sy,cohl.width,cohl.height
           res.status(200).set("Content-Type","image/png").send(canvas.toBuffer()).end()
         if images = cache.get(imgpath)
