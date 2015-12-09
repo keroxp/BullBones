@@ -56,14 +56,7 @@ module.exports = (connection) ->
           a = imgdata.data[i+3]
           if a > 0 and (r != 255 && g != 255 && b != 255)
             flags.push(y*iw+x)
-      query = "
-        SELECT CoherentLines.*, BaseCohrentLine.*, Images.* FROM CoherentLines
-        INNER JOIN NearLines ON NearLines.target_line_id = CoherentLines.id
-        INNER JOIN MinHashes ON MinHashes.line_id = NearLines.line_id
-        LEFT OUTER JOIN CoherentLines AS BaseCohrentLine ON MinHashes.line_id = BaseCohrentLine.id
-        INNER JOIN Images ON CoherentLines.image_id = Images.id
-        WHERE
-      "
+      cond = ""
       for n in [0..9]
         sketches = []
         for k in [0..2]
@@ -73,77 +66,39 @@ module.exports = (connection) ->
             min = m if m < min
           sketches.push(min)
         sketchHash = hashfunc(sketches.join(','))
-        query += "(MinHashes.hash_func_index = '#{n}' AND MinHashes.sketch_hash = '#{sketchHash}') "
-        query += "OR " if n != 9
-      query += ";"
+        cond += "('#{n}','#{sketchHash}') "
+        cond += ", " if n != 9
+      query = "
+        SELECT CoherentLines.id AS line_id, COUNT(MinHashes.line_id)/20 AS jaccard FROM CoherentLines
+        INNER JOIN MinHashes ON MinHashes.line_id = CoherentLines.id
+        INNER JOIN Images ON Images.id = CoherentLines.image_id
+        WHERE
+          (MinHashes.hash_func_index, MinHashes.sketch_hash)
+        IN
+          (#{cond})
+        GROUP BY
+          line_id
+        HAVING
+          jaccard >= 2/20
+        ORDER BY
+          jaccard DESC
+        LIMIT 10
+      "
       debug query
       opts =
         sql: query
-        nestTables: true
+        nestTables: false
       async.waterfall [
         (done) ->
           connection.query opts, (err,results,fields) ->
             debug err if err
+            debug "found #{results.length}"
             done err, results
         (results, done) ->
-          return done() if results.length == 0
-          imgs = _.chain(results)
-            .map (r) -> r.Images
-            .uniq (r) ->  r.id
-            .value()
-          bounds = new Rect(0,0,img.width,img.height)
-          memo = {}
-          async.each imgs, (img, done2) ->
-            loader.promiseImage(img.category,img.name)
-            .then (loaded) ->
-              memo["#{img.category}/#{img.name}"] = loaded
-              done2 null, memo
-            .catch done2
-          , (err) ->
-            if err
-              debug err
-              return done(err)
-            data = _.chain(results)
-            .each (v) ->
-              scx = img.width / v.CoherentLines.width
-              scy = img.height / v.CoherentLines.height
-              sc = Math.min(scx,scy)
-              dx = v.CoherentLines.sx - v.BaseCohrentLine.sx
-              dy = v.CoherentLines.sy - v.BaseCohrentLine.sy
-              w = v.CoherentLines.width
-              h = v.CoherentLines.height
-              bounds.extend(dx*sc,dy*sc,w*sc,h*sc)
-            .value()
-            canvas.width = bounds.width
-            canvas.height = bounds.height
-            ctx = canvas.getContext "2d"
-            for v in data
-              cl = v.CoherentLines
-              bl = v.BaseCohrentLine
-              scx = img.width / cl.width
-              scy = img.height / cl.height
-              sc = Math.min(scx,scy)
-              dx = cl.sx - bl.sx
-              dy = cl.sy - bl.sy
-              x = dx * sc - bounds.x
-              y = dy * sc - bounds.y
-              srcimg = memo["#{v.Images.category}/#{v.Images.name}"]
-              cohimg = loader.sliceImage(srcimg,cl.tiled_sx,cl.tiled_sy,cl.width,cl.height,sc,sc)
-              ctx.drawImage cohimg, x, y
-            done err, {
-              bounds: bounds
-              pivX: -bounds.x
-              pivY: -bounds.y
-              dataURL: canvas.toDataURL()
-            }
+          done null, results
       ] , (err,result) ->
         if err
           res.status(500).send(err).end()
-        else if not result
-          res.status(200).json({
-            code: 0x00
-            error: "Ghost was not generated because no similar line was found."
-          }).end()
         else
           res.status(200).json(result).end()
     img.onerror = (err) ->

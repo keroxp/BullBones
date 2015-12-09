@@ -9,6 +9,7 @@ import js.html.Document;
 import js.html.ImageData;
 import js.html.CanvasElement;
 class Images {
+    public static var WHITE_IMG = "data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
     private static var sCanvas: CanvasElement = cast Browser.document.createElement("canvas");
     private static function resizeInternal(image: Image, w: Int, h: Int, ?asp: AspectPolicy) {
         if (asp == null){

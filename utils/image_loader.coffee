@@ -24,17 +24,12 @@ sliceImage = (img,sx,sy,width,height,scaleX = 1.0, scaleY = 1.0) ->
     - load line imageg widht category and name
   @return Promise<Image,Error>
 ###
-promiseImage = (category, name) ->
+promiseImage = (url) ->
   return new Promise (done,fail) ->
-    if not category or not name
-      return fail new Error("category or name was not given")
-    name = path.parse(name).name
-    imgpath = "#{category}/#{name}"
-    imgurl = "#{process.env.CoherentLinesPath || './cohlines'}/#{imgpath}.jpg"
     img = new Image
     img.onload = -> done(img)
     img.onerror = fail
-    img.src = imgurl
+    img.src = url
 module.exports =
   promiseImage: promiseImage
   sliceImage: sliceImage

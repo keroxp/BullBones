@@ -214,7 +214,7 @@ implements SearchResultListener {
     function get_toolType():CanvasToolType {
         return get("toolType");
     }
-    function set_toolType(value:CanvasToolType) {
+     function set_toolType(value:CanvasToolType) {
         set("toolType", value);
         return value;
     }

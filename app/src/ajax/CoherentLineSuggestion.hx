@@ -1,31 +1,15 @@
 package ajax;
 import jQuery.JqXHR;
-import haxe.ds.Either;
-import js.Error;
-import cv.Images;
 import Reflect;
-import js.html.Image;
-import cv.ImageWrap;
 import deferred.Deferred;
 import deferred.Promise;
-import js.html.XMLHttpRequest;
 import jQuery.JQuery;
-
-typedef CoherentLinesSuggestionError = {
-    code: Int,
-    error: String
-}
-typedef CoherentLineSuggestionResult = {
-    pivX: Float,
-    pivY: Float,
-    dataURL: String
-}
 
 class CoherentLineSuggestion {
     public function new() {
     }
-    public static function postSuggest(dataurl: String): Promise<CoherentLineSuggestionResult,CoherentLinesSuggestionError,Float> {
-        var def = new Deferred<CoherentLineSuggestionResult,CoherentLinesSuggestionError,Float>();
+    public static function postSuggest(dataurl: String): Promise<Array<Dynamic>,JqXHR,Float> {
+        var def = new Deferred<Array<Dynamic>,JqXHR,Float>();
         JQuery._static.ajax({
             url: "/suggest",
             method: "POST",
@@ -33,19 +17,8 @@ class CoherentLineSuggestion {
             data: {
                 dataURL: dataurl
             }
-        }).done(function(res: Dynamic) {
-            var error = Reflect.field(res,"error");
-            if (error != null) {
-                def.reject(res);
-            } else {
-                def.resolve(res);
-            }
-        }).fail(function(e: JqXHR){
-            def.reject({
-                code: -1,
-                error: e.statusText
-            });
-        });
+        }).done(def.resolve)
+        .fail(def.reject);
         return def;
     }
 }

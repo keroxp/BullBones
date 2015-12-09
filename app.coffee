@@ -38,6 +38,7 @@ module.exports = (done) ->
     app.get '/proxy', require("./routes/proxy")()
     app.get '/search', require("./routes/search")(res.mongo.db)
     app.post '/suggest', require("./routes/suggest")(res.mysql.connection)
+    app.get '/image_match', require("./routes/image_match")(res.mysql.connection)
     app.get '/coherent_lines', require("./routes/coherent_lines")
     app.post '/export', require("./routes/export")(res.mongo.db)
     app.get '/export/signed_url', require("./routes/signed_url")()

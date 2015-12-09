@@ -31,6 +31,8 @@ module.exports = (req,res) ->
   if img = cache.get(imgpath)
     done img
   else
-    loader.promiseImage(category,name)
+    base = process.env.ResourcePath || "res"
+    url = "#{base}/#{category}/#{name}/lines.png"
+    loader.promiseImage(url)
       .then done
       .catch res.status(404).send("image #{imgpath} was not found or an error occured while loading").end()
