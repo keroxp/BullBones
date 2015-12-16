@@ -46,6 +46,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     public var brushEditorView(default,null): BrushEditorView;
     public var imageEditorView(default,null): ImageEditorView;
     public var floatingThumbnailView(default,null): FloatingThumbnailView;
+    public var stampsView(default,null): FloatingThumbnailView;
     public var zoomInputView(default,null): ZoomInputView;
     public var layerView(default,null): LayerView;
     var window = BrowserUtil.window;
@@ -105,6 +106,8 @@ class App extends BackboneEvents implements BrushEditorListener {
             imageEditorView = new ImageEditorView(new JQuery("#imageEditorView"));
             // ThumbView
             floatingThumbnailView = new FloatingThumbnailView(new JQuery("#floatingThumbnailView"));
+            // StampView
+            stampsView = new FloatingThumbnailView(new JQuery("#stampsView"));
             // Zoom
             zoomInputView = new ZoomInputView(new JQuery("#zoomInputGroup"));
             // Layer
@@ -158,8 +161,9 @@ class App extends BackboneEvents implements BrushEditorListener {
             var toolPallet = new RadioBox(new JQuery("#toolPallete"), function (i: Int) {
                   mainCanvas.toolType = switch (i) {
                       case 0: CanvasToolType.Brush;
-                      case 1: CanvasToolType.Smooth;
-                      case 2: CanvasToolType.Select;
+                      case 1: CanvasToolType.Stamp;
+                      case 2: CanvasToolType.Smooth;
+                      case 3: CanvasToolType.Select;
                       default: null;
                   }
             });

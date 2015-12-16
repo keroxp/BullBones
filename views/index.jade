@@ -59,61 +59,63 @@ html(lang='ja')
               #searchingIndicator.hidden
                 img(src='img/loading-dot.svg', width='50', height='50')
               #searchResults.clearfix.hidden
-          #buttonsview
-            ul
-              li
-                a#searchButton.btn-floating.wave-effect.bb-btn.btn-large.red(title='検索')
-                  i.large.material-icons search
-              li
-                a#brushButton.bb-btn.btn-floating.wave-effect.btn-large.blue(title='ブラシ')
-                  i.large.material-icons palette
-              li
-                a#imageEditorButton.bb-btn.btn-floating.wave-effect.btn-large.orange(style='display:none', title='画像を編集')
-                  i.large.material-icons image
-              li
-                a#exportButton.bb-btn.btn-floating.wave-effect.btn-large.amber(title="画像を書き出し")
-                  i.large.material-icons input
-              li
-              if app_env == "development"
-                a#debugButton.bb-btn.btn-floating.wave-effect.btn-large.white
-                  i.large.mdi-action-bug-report(style='color: black')
-            #brushWrapper.bb-panel.panel.z-depth-1(style='display:none;')
-              #brushView
-                canvas#brushPreviewCanvas(width='220', height='100', style="width:220px;height:100px")
-                #brushForm
-                  form(action='#')
-                    p
-                      input#supplementInput.filled-in(type='checkbox', checked='')
-                      label(for='supplementInput') 手ぶれ補正
-                    p.range-field
-                      label(for='brushWidthInput') 太さ
-                      input#brushWidthInput(type='range', min='1', max='100', value='3')
-                    p.range-field
-                      label(for='brushAlphaInput') 透明度
-                      input#brushAlphaInput(type='range', min='0', max='100', value='100')
-                    p.range-field
-                      label(for='brushThickInput') 濃度
-                      input#brushThickInput(type='range', min='0', max='255', value='255')
-          #imageEditorView.bb-panel.panel.z-depth-1(style='display:none')
-            #imageEditorPreview
-              canvas#imageEditorPreviewCanvas(width='220', height='100')
-            #imageEditorForm
-              form(action='#')
-                p
-                  input#grayInput.filled-in(type='checkbox')
-                  label(for='grayInput') モノクロ
-                p
-                  input#lineExtractInput.filled-in(type='checkbox')
-                  label(for='lineExtractInput') 線画の抽出
-                #lineExtractInputWrapper.switch(style='display:none;')
-                  label
-                    | くっきり Off
-                    input#lineExtractSwitchInput(type='checkbox')
-                    span.lever
-                    | On
-                p.range-field
-                  label(for='imageAlpha') 透明度
-                  input#imageAlpha(type='range', min='0', max='100', value='100')
+          #rightArea
+            #stampsView
+            #buttonsview
+              ul
+                li
+                  a#searchButton.btn-floating.wave-effect.bb-btn.btn-large.red(title='検索')
+                    i.large.material-icons search
+                li
+                  a#brushButton.bb-btn.btn-floating.wave-effect.btn-large.blue(title='ブラシ')
+                    i.large.material-icons palette
+                li
+                  a#imageEditorButton.bb-btn.btn-floating.wave-effect.btn-large.orange(style='display:none', title='画像を編集')
+                    i.large.material-icons image
+                li
+                  a#exportButton.bb-btn.btn-floating.wave-effect.btn-large.amber(title="画像を書き出し")
+                    i.large.material-icons input
+                li
+                if app_env == "development"
+                  a#debugButton.bb-btn.btn-floating.wave-effect.btn-large.white
+                    i.large.mdi-action-bug-report(style='color: black')
+              #brushWrapper.bb-panel.panel.z-depth-1(style='display:none;')
+                #brushView
+                  canvas#brushPreviewCanvas(width='220', height='100', style="width:220px;height:100px")
+                  #brushForm
+                    form(action='#')
+                      p
+                        input#supplementInput.filled-in(type='checkbox', checked='')
+                        label(for='supplementInput') 手ぶれ補正
+                      p.range-field
+                        label(for='brushWidthInput') 太さ
+                        input#brushWidthInput(type='range', min='1', max='100', value='3')
+                      p.range-field
+                        label(for='brushAlphaInput') 透明度
+                        input#brushAlphaInput(type='range', min='0', max='100', value='100')
+                      p.range-field
+                        label(for='brushThickInput') 濃度
+                        input#brushThickInput(type='range', min='0', max='255', value='255')
+            #imageEditorView.bb-panel.panel.z-depth-1(style='display:none')
+              #imageEditorPreview
+                canvas#imageEditorPreviewCanvas(width='220', height='100')
+              #imageEditorForm
+                form(action='#')
+                  p
+                    input#grayInput.filled-in(type='checkbox')
+                    label(for='grayInput') モノクロ
+                  p
+                    input#lineExtractInput.filled-in(type='checkbox')
+                    label(for='lineExtractInput') 線画の抽出
+                  #lineExtractInputWrapper.switch(style='display:none;')
+                    label
+                      | くっきり Off
+                      input#lineExtractSwitchInput(type='checkbox')
+                      span.lever
+                      | On
+                  p.range-field
+                    label(for='imageAlpha') 透明度
+                    input#imageAlpha(type='range', min='0', max='100', value='100')
           #belowbar
             .inputGroup
               .inner.z-depth-1
@@ -144,14 +146,16 @@ html(lang='ja')
                   i.small.material-icons strikethrough_s
                 a#lineSymmetryPivotButton.radioParts(title="ピボット", data-enabled="true", data-radio-index="2")
                   i.small.material-icons filter_center_focus
-            //- .inputGroup#toolPallete
-            //-   .inner.z-depth-1
-            //-     a#smoothBrushButton.radioParts(title="選択ツール", data-enabled="true", data-radio-index="2")
-            //-       i.small.material-icons select_all
-            //-     a#smoothBrushButton.radioParts(title="スムースブラシ", data-enabled="true", data-radio-index="1")
-            //-       i.small.material-icons gesture
-            //-     a#drawingBrushButton.radioParts(title="ペイントブラシ", data-enabled="true", data-radio-index="0")
-            //-       i.small.material-icons brush
+            .inputGroup#toolPallete
+              .inner.z-depth-1
+                //- a#smoothBrushButton.radioParts(title="選択ツール", data-enabled="true", data-radio-index="2")
+                //-   i.small.material-icons select_all
+                //- a#smoothBrushButton.radioParts(title="スムースブラシ", data-enabled="true", data-radio-index="1")
+                //-   i.small.material-icons gesture
+                a#drawingBrushButton.radioParts(title="ペイントブラシ", data-enabled="true", data-radio-index="0")
+                  i.small.material-icons brush
+                a#drawingBrushButton.radioParts(title="スタンプツール", data-enabled="true", data-radio-index="1")
+                  i.small.material-icons insert_emoticon
             .inputGroup
               .inner.z-depth-1
                 a#editModeButton(title="編集モードへ",data-enabled="true")

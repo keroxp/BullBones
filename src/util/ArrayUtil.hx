@@ -1,6 +1,12 @@
 package util;
 import protocol.Clonable;
 class ArrayUtil {
+    public static function contains<T>(arr:Array<T>, callback: T -> Bool): Bool {
+        for (v in arr) {
+            if (callback(v)) return true;
+        }
+        return false;
+    }
     public static function findFirst<T>(arr: Array<T>, callback: T -> Bool): T {
         for (i in 0...arr.length) {
             if (callback(arr[i])) {

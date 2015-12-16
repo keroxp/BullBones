@@ -1,4 +1,9 @@
 package canvas;
+import canvas.tools.StampTool;
+import ajax.Loader;
+import js.html.Image;
+import cv.Images;
+import model.StampModel;
 import canvas.tools.SelectTool;
 import canvas.CanvasToolType;
 import figure.Figure;
@@ -740,6 +745,10 @@ implements SearchResultListener {
                 requestDraw("simplify", draw);
             });
             ret.push(simplify);
+            var stampify = new PopupItem("スタンプ化", function(p) {
+                makeStamp(cast(fig,ShapeFigure));
+            });
+            ret.push(stampify);
         }
         var copy = new PopupItem("コピー", function (p) {
             copyFigure(fig);
@@ -750,6 +759,34 @@ implements SearchResultListener {
         });
         ret.push(delete);
         return ret;
+    }
+
+    var stamps: Array<StampModel> = [];
+    @:isVar public var activeStamp(get, set):StampModel;
+    function get_activeStamp():StampModel {
+        if (activeStamp == null && stamps.length > 0) {
+            return activeStamp = stamps.last();
+        }
+        return activeStamp;
+    }
+
+    function set_activeStamp(value:StampModel) {
+        return this.activeStamp = value;
+    }
+
+    function makeStamp(fig: ShapeFigure) {
+        var contains = stamps.contains(function(v: StampModel){
+            return v.figureId == fig.id;
+        });
+        if (contains) return;
+
+        var img = new ImageWrap(new Image());
+        img.image.src = fig.getCacheDataURL();
+        var stamp = new StampModel(fig.id,img);
+        stamps.push(stamp);
+        Main.App.stampsView.add(img,function(){
+            Log.d(stamp);
+        });
     }
 
     var mDisplayCommand: DisplayCommand;
@@ -772,6 +809,7 @@ implements SearchResultListener {
                     // using tools
                     mCanvasState = UsingTool(switch (toolType) {
                         case CanvasToolType.Brush: new BrushTool();
+                        case CanvasToolType.Stamp: new StampTool();
                         case CanvasToolType.Smooth: new SmoothTool();
                         case CanvasToolType.Select: new SelectTool();
                     });
