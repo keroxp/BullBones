@@ -745,11 +745,11 @@ implements SearchResultListener {
                 requestDraw("simplify", draw);
             });
             ret.push(simplify);
-            var stampify = new PopupItem("スタンプ化", function(p) {
-                makeStamp(cast(fig,ShapeFigure));
-            });
-            ret.push(stampify);
         }
+        var stampify = new PopupItem("スタンプ化", function(p) {
+            makeStamp(fig);
+        });
+        ret.push(stampify);
         var copy = new PopupItem("コピー", function (p) {
             copyFigure(fig);
         });
@@ -765,7 +765,7 @@ implements SearchResultListener {
     @:isVar public var activeStamp(get, set):StampModel;
     function get_activeStamp():StampModel {
         if (activeStamp == null && stamps.length > 0) {
-            return activeStamp = stamps.last();
+            return stamps.last();
         }
         return activeStamp;
     }
@@ -774,7 +774,7 @@ implements SearchResultListener {
         return this.activeStamp = value;
     }
 
-    function makeStamp(fig: ShapeFigure) {
+    function makeStamp(fig: DisplayObject) {
         var contains = stamps.contains(function(v: StampModel){
             return v.figureId == fig.id;
         });
@@ -783,9 +783,11 @@ implements SearchResultListener {
         var img = new ImageWrap(new Image());
         img.image.src = fig.getCacheDataURL();
         var stamp = new StampModel(fig.id,img);
+        stamp.scaleX = fig.scaleX;
+        stamp.scaleY = fig.scaleY;
         stamps.push(stamp);
         Main.App.stampsView.add(img,function(){
-            Log.d(stamp);
+            activeStamp = stamp;
         });
     }
 
