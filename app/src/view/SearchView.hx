@@ -101,7 +101,7 @@ class SearchView extends ViewModel {
             Loader.loadImage(result.Thumbnail.MediaUrl)
             .done(done).fail(function(e){
                 mLoadingOverlay.jq.hide();
-                var msg = "画像の読み込みに失敗しました";
+                var msg = "申し訳ありませんが、画像が読み込めませんでした。";
                 Browser.alert(msg);
             });
         }).always(function(){

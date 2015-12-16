@@ -27,7 +27,7 @@ class Loader {
         img.onerror = function (e) {
             def.reject(e);
         }
-        if (src.substr(0,4) == "http" && src.indexOf(BrowserUtil.window.location.href) == -1) {
+        if (src.substr(0,4) == "http" && src.indexOf(BrowserUtil.window.location.host) == -1) {
             // external resource
             var encoded: String = js.Lib.eval('encodeURIComponent("$src")');
             img.src = '/proxy?url=$encoded';

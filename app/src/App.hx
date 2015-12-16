@@ -1,5 +1,7 @@
 package ;
 
+import js.html.Image;
+import view.SimilarLineSuggestView;
 import canvas.CanvasToolType;
 import view.RadioBox;
 import js.Error;
@@ -44,6 +46,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     public var modalView(default,null): ModalView;
     public var mainCanvas(default,null): MainCanvas;
     public var searchView(default,null): SearchView;
+    public var similarLinesView(default,null): SimilarLineSuggestView;
     public var brushEditorView(default,null): BrushEditorView;
     public var imageEditorView(default,null): ImageEditorView;
     public var floatingThumbnailView(default,null): FloatingThumbnailView;
@@ -170,10 +173,14 @@ class App extends BackboneEvents implements BrushEditorListener {
                 layerView.jq.toggle();
                 jLayerButton.toggleClass("editing");
             });
-            var similarLinesView = new JQuery("#similarLinesView");
+            similarLinesView = new SimilarLineSuggestView(new JQuery("#similarLinesView"));
+            listenTo(similarLinesView, SimilarLineSuggestView.SUGGEST_SELECTED_EVENT, function(val: Image) {
+                mainCanvas.onSuggestionSelected(new ImageWrap(val));
+            });
             jGhostButton = new JQuery("#ghostButton").on(click, function(e: MouseEvent) {
-                similarLinesView.toggle();
-                jGhostButton.toggleClass("editing");
+                model.useSuggest = !model.useSuggest;
+                similarLinesView.jq.toggle(model.useSuggest);
+                jGhostButton.toggleClass("editing",model.useSuggest);
             });
             listenTo(model, "change:undoStackSize", function (m,val:Int) {
                 if (val == 0) {
@@ -256,6 +263,7 @@ class App extends BackboneEvents implements BrushEditorListener {
     }
 
     private function onDrop (e: DragEvent) {
+        Log.d(e);
         e.preventDefault();
         e.stopPropagation();
         var files = e.dataTransfer.files;

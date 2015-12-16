@@ -1,16 +1,10 @@
 package canvas.tools;
 import util.BrowserUtil;
 import cv.Images;
-import materialize.Materialize;
-import figure.ImageFigure;
-import js.html.Image;
-import cv.ImageWrap;
-import js.Error;
 import util.Log;
 import jQuery.JQuery;
 import js.Browser;
 import ajax.CoherentLineSuggestion;
-import ajax.Uploader;
 import geometry.Points;
 import createjs.easeljs.Point;
 import performance.GeneralObjectPool;
@@ -106,34 +100,18 @@ class BrushTool implements CanvasTool {
             } else {
                 drawingFigure.calcVertexes();
                 var fig = drawingFigure.render();
-                var s = Browser.window.performance.now();
-                CoherentLineSuggestion.postSuggest(fig.getCacheDataURL()).done(function(res) {
-                    var t = Browser.window.performance.now()-s;
-                    Log.i('POST /suggest +${t} ms');
-                    Log.d(res);
-                    var jq = new JQuery("#similarLinesList");
-                    var h = jq.outerHeight();
-                    var flag = BrowserUtil.document.createDocumentFragment();
-                    jq.children().remove();
-                    for (d in res) {
-                        var jqDiv = new JQuery(
-                            '<div class="similarLinesListItem"></div>');
-                        var jqImg = new JQuery('
-                            <img />');
-                        jqImg.attr({
-                            height: h,
-                            src: Images.WHITE_IMG
-                        });
-                        jqImg.attr({
-                            src: '/image_match?line_id=${d.line_id}'
-                        });
-                        jqDiv.append(jqImg);
-                        flag.appendChild(jqDiv.get()[0]);
-                    }
-                    jq.append(flag);
-                }).fail(function(e){
-                    Log.e(e);
-                });
+                if (Main.App.model.useSuggest) {
+                    var s = Browser.window.performance.now();
+                    CoherentLineSuggestion.postSuggest(fig.getCacheDataURL())
+                    .done(function(res) {
+                        var t = Browser.window.performance.now()-s;
+                        Log.i('POST /suggest +${t} ms');
+                        Log.d(res);
+                        Main.App.similarLinesView.render(res);
+                    }).fail(function(e){
+                        Log.e(e);
+                    });
+                }
                 mainCanvas.insertFigure(fig);
                 mainCanvas.extendDirtyRectWithDisplayObject(drawingFigure);
             }

@@ -22,10 +22,14 @@ parseDataURL = (dataURL) ->
 module.exports = (connection) ->
   ###
   Suggestion API
-  @param dataURL dataURL化されたJPEG画像
+  @param dataURL String dataURL化されたJPEG画像
+  @param @optional offset Number 検索のオフセット値 @default 0
+  @param @optional limit Number 検索数の上限 @default 10
   ###
   return (req,res) ->
     url = req.body.dataURL
+    offset = req.body.offset || 0
+    limit = req.body.limit || 10
     if not req.body.dataURL
       return res.status(400).send("dataURL was not given.")
     buf = parseDataURL url
@@ -69,7 +73,7 @@ module.exports = (connection) ->
         cond += "('#{n}','#{sketchHash}') "
         cond += ", " if n != 9
       query = "
-        SELECT CoherentLines.id AS line_id, COUNT(MinHashes.line_id)/10 AS jaccard FROM CoherentLines
+        SELECT CoherentLines.id AS line_id, Images.category, COUNT(MinHashes.line_id)/10 AS jaccard FROM CoherentLines
         INNER JOIN MinHashes ON MinHashes.line_id = CoherentLines.id
         INNER JOIN Images ON Images.id = CoherentLines.image_id
         WHERE
@@ -79,10 +83,11 @@ module.exports = (connection) ->
         GROUP BY
           line_id
         HAVING
-          jaccard >= 0.2
+          jaccard >= 0.1
         ORDER BY
           jaccard DESC
-        LIMIT 10
+        LIMIT #{limit}
+        OFFSET #{offset}
       "
       debug query
       opts =

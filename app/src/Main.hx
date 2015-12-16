@@ -12,7 +12,8 @@ class Main {
             isDebug: false,
             isEditing: false,
             zoom: new ZoomEditor(),
-            env: env
+            env: env,
+            useSuggest: false
         });
         App.start();
     }

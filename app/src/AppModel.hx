@@ -70,6 +70,17 @@ class AppModel extends BaseModel {
         return value;
     }
 
+    public var useSuggest(get, set): Bool;
+
+    function set_useSuggest(value:Bool) {
+        set("useSuggest", value);
+        return value;
+    }
+
+    function get_useSuggest():Bool {
+        return get("useSuggest");
+    }
+
 
     public function new(attr: Dynamic) {
         super(attr);

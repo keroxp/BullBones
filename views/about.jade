@@ -53,6 +53,20 @@ html(lang='ja')
                 b 開発記録
               a(href="http://keroxp.me") http://keroxp.me
               p リリースノートや技術情報などはこちらで発信しています。
+            .divider
+            .section
+              h5 データセットについて
+              p 本ソフトウェアでは、研究目的として以下の画像検索システム及びコンピュータビジョンデータセットを使用しています。
+              p We use these search engine and image datasets for research.
+              b Bing Search API
+              p 
+                a(href="https://datamarket.azure.com/dataset/bing/search",target="_blank") 
+                  | https://datamarket.azure.com/dataset/bing/search
+              b Caltech 101
+              p
+                a(href="http://www.vision.caltech.edu/Image_Datasets/Caltech101/",target="_blank") 
+                  | http://www.vision.caltech.edu/Image_Datasets/Caltech101/              
+              
     include ./include/footer.jade
     if app_env == "development"
       script(src='http://localhost:35729/livereload.js')

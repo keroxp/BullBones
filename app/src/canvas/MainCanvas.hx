@@ -583,9 +583,12 @@ implements SearchResultListener {
         }
     }
 
-    function insertImageFiguew(iw: ImageWrap) {
+    function insertImageFigure(iw: ImageWrap) {
         var im = new ImageFigure(iw);
-        var p =  mMainContainer.globalToLocal(0,0);
+        var p =  mStage.getBounds().center();
+        p.x -= iw.width*.5;
+        p.y -= iw.height*.5;
+        p = mMainContainer.globalToLocal(p.x,p.y);
         im.x = p.x;
         im.y = p.y;
         insertFigure(im);
@@ -593,11 +596,15 @@ implements SearchResultListener {
     }
 
     public function onSearchResultLoad(img: ImageWrap, result: BingSearchResult):Void {
-        insertImageFiguew(img);
+        insertImageFigure(img);
+    }
+
+    public function onSuggestionSelected(img: ImageWrap) {
+        insertImageFigure(img);
     }
 
     public function onFileLoad (img: ImageWrap) {
-        insertImageFiguew(img);
+        insertImageFigure(img);
     }
 
     function resizeCanvas () {
