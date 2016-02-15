@@ -8,40 +8,40 @@ class Figures {
     public static function type(d: DisplayObject): FigureType {
         var s = d.toString();
         if (s.indexOf("ShapeFigureSet") > 0) {
-            return FigureType.ShapeSet;
+            return FigureType.TypeShapeSet;
         }else if (s.indexOf("ShapeFigure") > 0) {
-            return FigureType.Shape;
+            return FigureType.TypeShape;
         } else if (s.indexOf("ImageFigure") > 0) {
-            return FigureType.Image;
+            return FigureType.TypeImage;
         } else if (s.indexOf("InternalShape") > 0) {
-            return FigureType.Internal;
+            return FigureType.TypeInternal;
         } else if (s.indexOf("Layer") > 0) {
-            return FigureType.Layer;
+            return FigureType.TypeLayer;
         }
         throw new Error("Invalid DisplayObject => "+d);
     }
     public static function typeString(d: DisplayObject): String {
         var s = d.toString();
-        if (type(d) == FigureType.Shape) {
+        if (type(d) == FigureType.TypeShape) {
             return "図形";
-        } else if (type(d) == FigureType.Image) {
+        } else if (type(d) == FigureType.TypeImage) {
             return "画像";
-        } else if (type(d) == FigureType.ShapeSet) {
+        } else if (type(d) == FigureType.TypeShapeSet) {
             return "図形セット";
-        } else if (type(d) == FigureType.Layer) {
+        } else if (type(d) == FigureType.TypeLayer) {
             return "レイヤー";
-        } else if (type(d) == FigureType.Internal) {
+        } else if (type(d) == FigureType.TypeInternal) {
             return "その他";
         }
         throw new Error("Invalid DisplayObject => "+d);
     }
     public static function asShapeFigure(d: DisplayObject, callback: ShapeFigure -> Void): Void {
-        if (type(d) == FigureType.Shape) {
+        if (type(d) == FigureType.TypeShape) {
             callback(cast d);
         }
     }
     public static function asImageFigure(d: DisplayObject, callback: ImageFigure -> Void): Void {
-        if (type(d) == FigureType.Image) {
+        if (type(d) == FigureType.TypeImage) {
             callback(cast d);
         }
     }

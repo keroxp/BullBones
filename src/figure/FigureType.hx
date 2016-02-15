@@ -1,8 +1,8 @@
 package figure;
 enum FigureType {
-    Internal;
-    Shape;
-    ShapeSet;
-    Image;
-    Layer;
+    TypeInternal;
+    TypeShape;
+    TypeShapeSet;
+    TypeImage;
+    TypeLayer;
 }

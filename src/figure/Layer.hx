@@ -46,8 +46,6 @@ class Layer extends Container implements Figure {
         ret.layerScaleY = layerScaleY;
         var _clone = Reflect.field(this, "_cloneProps");
         ret = Reflect.callMethod(this, _clone,[ret]);
-        // do depp copy _bounds because easeljs.DisplayObject#clone does not :(
-        Reflect.setField(ret, "_bounds", getBounds().clone());
         ret.uncache();
         ret.cache(0,0,ret.getTransformedBounds().width,ret.getTransformedBounds().height);
         return cast ret.render();

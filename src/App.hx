@@ -89,7 +89,7 @@ class App extends BaseModel implements BrushEditorListener {
                 jEditButton.toggleClass("editing", value);
             });
             listenTo(mainCanvas, "change:activeLayer", function (c: MainCanvas, value: DisplayObject) {
-                if (value != null && value.type() == FigureType.Image) {
+                if (value != null && value.type() == FigureType.TypeImage) {
                     jImageButton.show();
                 } else {
                     jImageButton.hide();

@@ -47,7 +47,7 @@ class ImageEditorView extends ViewModel {
     private var mImage: ImageFigure;
     public function onChangeActiveLayer (canvas: MainCanvas, value: DisplayObject) {
         if (value == mImage) return;
-        if (value != null && value.type() == FigureType.Image) {
+        if (value != null && value.type() == FigureType.TypeImage) {
             mImage = cast value;
             listenTo(mImage.editor, "change", reRenderThumb);
         } else if (mImage != null){

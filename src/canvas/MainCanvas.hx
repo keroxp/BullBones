@@ -1,4 +1,5 @@
 package canvas;
+import figure.FigureType;
 import canvas.tools.ScaleTool;
 import canvas.tools.GrabTool;
 import canvas.tools.DragTool;
@@ -712,11 +713,14 @@ implements SearchResultListener {
                 }
             } else {
                 // during editing
-                hitted = cast mLayerContainer.children.findLast(function(d: DisplayObject) {
+                hitted = mLayerContainer.children.findLast(function(d: DisplayObject) {
                     return d.visible && d.getTransformedBounds().containsPoint(p_main_local.x,p_main_local.y);
                 });
                 if (hitted != null) {
-                   mActiveTool = new DragTool(hitted);
+                    mActiveTool = new DragTool(hitted);
+                    if (isEditing && hitted.type() == FigureType.TypeLayer) {
+                        activeLayer = cast hitted;
+                    }
                 } else {
                    mActiveTool = new GrabTool();
                 }
@@ -726,7 +730,6 @@ implements SearchResultListener {
                         mActiveTool = new ScaleTool(corner);
                     }
                 }
-                trace(mActiveTool);
             }
             if (mActiveTool != null) {
                 mActiveTool.onMouseDown(this,e);

@@ -43,7 +43,7 @@ class MultipleFigures extends DisplayObject {
     }
 
     public function type():FigureType {
-        return FigureType.Internal;
+        return FigureType.TypeInternal;
     }
 
     public function setActive(bool:Bool):Void {
