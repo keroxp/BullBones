@@ -1,8 +1,7 @@
 package command;
 import canvas.MainCanvas;
 import createjs.easeljs.DisplayObject;
-import command.Undoable.ExecType;
-class MirroringPivotMoveCommand extends DisplayCommand {
+class MirroringPivotMoveCommand extends AffineCommand<DisplayObject> {
     private var mBeforePivotX: Float;
     private var mBeforePivotY: Float;
     private var mAfterPivotX: Float;
@@ -12,23 +11,26 @@ class MirroringPivotMoveCommand extends DisplayCommand {
         mBeforePivotX = mcanvas.mirroringInfo.pivotX;
         mBeforePivotY = mcanvas.mirroringInfo.pivotY;
     }
-    override public function exec(args:ExecType<Dynamic,Void>):DisplayCommand {
+    override public function exec<ET>(args: Dynamic -> ET): Undoable {
         super.exec(args);
-        mAfterPivotX = this.canvas.mirroringInfo.pivotX;
-        mAfterPivotY = this.canvas.mirroringInfo.pivotY;
+        mAfterPivotX = mainCanvas.mirroringInfo.pivotX;
+        mAfterPivotY = mainCanvas.mirroringInfo.pivotY;
         return this;
     }
 
-    override public function undo():DisplayCommand {
+    override public function undo():Void {
         super.undo();
-        this.canvas.mirroringInfo.pivotX = mBeforePivotX;
-        this.canvas.mirroringInfo.pivotY = mBeforePivotY;
-        return this;
+        mainCanvas.mirroringInfo.pivotX = mBeforePivotX;
+        mainCanvas.mirroringInfo.pivotY = mBeforePivotY;
     }
-    override public function redo():DisplayCommand {
+    override public function redo():Void {
         super.redo();
-        this.canvas.mirroringInfo.pivotX = mAfterPivotX;
-        this.canvas.mirroringInfo.pivotY = mAfterPivotY;
-        return this;
+        mainCanvas.mirroringInfo.pivotX = mAfterPivotX;
+        mainCanvas.mirroringInfo.pivotY = mAfterPivotY;
     }
+
+    override public function toString():String {
+        return "[MirroringPivotMvoeCommand]";
+    }
+
 }

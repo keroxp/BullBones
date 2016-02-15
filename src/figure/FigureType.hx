@@ -4,4 +4,5 @@ enum FigureType {
     Shape;
     ShapeSet;
     Image;
+    Layer;
 }

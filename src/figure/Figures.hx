@@ -15,6 +15,8 @@ class Figures {
             return FigureType.Image;
         } else if (s.indexOf("InternalShape") > 0) {
             return FigureType.Internal;
+        } else if (s.indexOf("Layer") > 0) {
+            return FigureType.Layer;
         }
         throw new Error("Invalid DisplayObject => "+d);
     }
@@ -26,6 +28,8 @@ class Figures {
             return "画像";
         } else if (type(d) == FigureType.ShapeSet) {
             return "図形セット";
+        } else if (type(d) == FigureType.Layer) {
+            return "レイヤー";
         } else if (type(d) == FigureType.Internal) {
             return "その他";
         }

@@ -1,8 +1,9 @@
 package view;
-import figure.FigureType;
+import canvas.events.DeleteLayerEvent;
+import canvas.events.InsertLayerEvent;
+import canvas.events.CopyLayerEvent;
+import figure.Layer;
 import canvas.MainCanvas;
-import createjs.easeljs.DisplayObject;
-import util.Log;
 import util.BrowserUtil;
 import js.html.DragEvent;
 import jQuery.JQuery;
@@ -26,7 +27,7 @@ class LayerView extends ViewModel {
     }
 
     override public function init() {
-        listenTo(Main.App.mainCanvas, "change:activeFigure", onChangeActiveFigure);
+        listenTo(Main.App.mainCanvas, "change:activeLayer", onChangeActiveLayer);
         listenTo(Main.App.mainCanvas, MainCanvas.ON_INSERT_EVENT, add);
         listenTo(Main.App.mainCanvas, MainCanvas.ON_DELETE_EVENT, remove);
         listenTo(Main.App.mainCanvas, MainCanvas.ON_COPY_EVENT, copy);
@@ -37,27 +38,28 @@ class LayerView extends ViewModel {
         jq.find(".layerItem.selected").removeClass("selected");
     }
 
-    function onChangeActiveFigure(canvas: MainCanvas, fig: DisplayObject, opts: Dynamic) {
+    function onChangeActiveLayer(canvas: MainCanvas, layer: Layer, opts: Dynamic) {
+        trace("onChangeActiveLayer");
         if (opts.changer == this) return;
-        if (fig != null) {
+        if (layer != null) {
             var ls: LayerItemView = layerItems.findFirst(function(li: LayerItemView) {
-                return li.display.id == fig.id;
+                return li.layer.id == layer.id;
             });
             ls.select();
         } else {
             deselectAll();
         }
     }
-    function add(e: InsertEvent) {
+    function add(e: InsertLayerEvent) {
         var li = new LayerItemView(e.target,this);
         var regex = new EReg('^${e.target.typeString()}([0-9]*)$', "i");
         li.title = e.target.typeString() + calcNextTitlePostfix(li,regex);
         _add(li, e.at);
     }
-    function copy(e: CopyEvent) {
+    function copy(e: CopyLayerEvent) {
         var li = new LayerItemView(e.target,this);
         var src: LayerItemView = layerItems.findFirst(function(li: LayerItemView) {
-            return e.src.id == li.display.id;
+            return e.src.id == li.layer.id;
         });
         var baseRegex = new EReg('^(.*)のコピー[0-9]*$', "i");
         var base = src.title;
@@ -71,7 +73,7 @@ class LayerView extends ViewModel {
     // レイヤータイトルのpostfixの数字を動的に計算する
     function calcNextTitlePostfix(item: LayerItemView, regex: EReg): Int {
         var indexes = layerItems.filter(function(li: LayerItemView) {
-            return li.display.type() == item.display.type() && regex.match(li.title);
+            return li.layer.type() == item.layer.type() && regex.match(li.title);
         }).map(function(li: LayerItemView) {
             regex.match(li.title);
             return Std.parseInt(regex.matched(1));
@@ -102,15 +104,15 @@ class LayerView extends ViewModel {
         layerItems.push(li);
     }
 
-    function remove (e: DeleteEvent) {
+    function remove (e: DeleteLayerEvent) {
         var rm: LayerItemView = layerItems.removeFirst(function(li: LayerItemView) {
-           return li.display.id == e.target.id;
+           return li.layer.id == e.target.id;
         });
         rm.jq.remove();
     }
-    public function invalidate(display: DisplayObject) {
+    public function invalidate(display: Layer) {
         layerItems.findFirst(function(li: LayerItemView) {
-            return li.display == display;
+            return li.layer == display;
         }).render();
     }
 }
@@ -121,8 +123,8 @@ private class LayerItemView extends ViewModel {
     var jTitle: JQuery;
     var mLayerView: LayerView;
     public var title: String;
-    public var display(default, null): DisplayObject;
-    public function new (fig: DisplayObject, layerView: LayerView) {
+    public var layer(default, null): Layer;
+    public function new (layer: Layer, layerView: LayerView) {
         super(new JQuery('
         <li class="layerItem" draggable="true">
             <div class="layerItemVisibility" title="非表示にする">
@@ -136,15 +138,15 @@ private class LayerItemView extends ViewModel {
             </div>
         </li>
         '));
-        this.display = fig;
+        this.layer = layer;
         mLayerView = layerView;
         jVisibility = jq.find(".layerItemVisibility i");
         jq.find(".layerItemVisibility").on("click", function (e) {
-            var v = !display.isVisible();
+            var v = !layer.isVisible();
             jVisibility.toggleClass("invisible");
             jVisibility.html(v ? "visibility" : "visibility_off");
-            display.visible = v;
-            Main.App.mainCanvas.extendDirtyRectWithDisplayObject(display);
+            layer.visible = v;
+            Main.App.mainCanvas.extendDirtyRectWithDisplayObject(layer);
             Main.App.mainCanvas.draw(false);
         });
         jThumbnail = jq.find("img");
@@ -169,14 +171,14 @@ private class LayerItemView extends ViewModel {
             var tgtId = Std.parseInt(tgt.attr("data-layer-id"));
             var from = mLayerView.layerItems.indexOf(self);
             var to = mLayerView.layerItems.firstIndexOf(function(li: LayerItemView) {
-                return li.display.id == tgtId;
+                return li.layer.id == tgtId;
             });
             if (to < from) {
                 to += 1;
             }
             mLayerView.layerItems.remove(self);
             mLayerView.layerItems.insert(to,self);
-            Main.App.mainCanvas.moveLayer(display,to);
+            Main.App.mainCanvas.moveLayer(layer,to);
         });
         jq.on("dragover", function (e) {
             jq.addClass("dragover");
@@ -192,13 +194,13 @@ private class LayerItemView extends ViewModel {
         if (!Main.App.mainCanvas.isEditing) {
             Main.App.mainCanvas.isEditing = true;
         }
-        Main.App.mainCanvas.activeFigure = display;
+        Main.App.mainCanvas.activeLayer = layer;
     }
     public function render(): LayerItemView {
-        jq.attr("id", 'layer-item-${display.id}');
-        jq.attr("data-layer-id", display.id);
-        jVisibility.html(display.isVisible() ? "visibility" : "visibility off");
-        jThumbnail.attr("src", display.getCacheDataURL());
+        jq.attr("id", 'layer-item-${layer.id}');
+        jq.attr("data-layer-id", layer.id);
+        jVisibility.html(layer.isVisible() ? "visibility" : "visibility off");
+        jThumbnail.attr("src", layer.getCacheDataURL());
         jTitle.html(title);
         return this;
     }

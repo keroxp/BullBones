@@ -1,30 +1,26 @@
 package canvas;
-import canvas.tools.SelectTool;
+import canvas.tools.ScaleTool;
+import canvas.tools.GrabTool;
+import canvas.tools.DragTool;
+import command.Undoable;
+import figure.Layer;
 import canvas.CanvasToolType;
-import figure.Figure;
-import command.MirroringPivotMoveCommand;
-import canvas.tools.SmoothTool;
 import canvas.tools.BrushTool;
-import canvas.CanvasState;
 import js.html.UIEvent;
 import view.PopupMenu;
 import util.CursorUtil;
 import geometry.Scalar;
 import figure.PivotShape;
-import figure.FigureType;
-import figure.ShapeFigureSet;
 import model.MirroringInfo;
 import js.html.Window;
 import rollbar.Rollbar;
 import ajax.Uploader;
 import jQuery.JQuery;
 import js.Error;
-import command.CopyCommand;
-import command.DeleteCommand;
-import command.InsertCommand;
+import command.CopyLayerCommand;
+import command.DeleteLayerCommand;
+import command.InsertLayerCommand;
 import cv.ImageWrap;
-import command.FigureCommand;
-import command.DisplayCommand;
 import createjs.easeljs.DisplayObject;
 import model.ZoomEditor;
 import createjs.easeljs.Point;
@@ -32,7 +28,6 @@ import js.html.WheelEvent;
 import view.PopupMenu.PopupItem;
 import util.Log;
 import createjs.easeljs.Rectangle;
-import js.html.ImageElement;
 import util.BrowserUtil;
 import js.Browser;
 import figure.ImageFigure;
@@ -50,20 +45,8 @@ import createjs.easeljs.Stage;
 import createjs.easeljs.Shape;
 using util.RectangleUtil;
 using util.ArrayUtil;
+using util.UndoableUtil;
 using figure.Figures;
-
-typedef InsertEvent = {
-    public var target: DisplayObject;
-    public var at: Int;
-}
-typedef DeleteEvent = {
-    public var target: DisplayObject;
-}
-typedef CopyEvent = {
-    public var src: DisplayObject;
-    public var target: DisplayObject;
-    public var at: Int;
-}
 
 /*
 Layer Structure
@@ -73,7 +56,10 @@ Layer Structure
     BrushCircleShape
     BoudingBox
   [Main Container]
-    [Figure Container]
+    [Layer Container]
+        - Layer 1
+        - Layer 2
+        - ...
   [Background Container]
     GridShape
     BackgroundShape
@@ -85,15 +71,15 @@ implements SearchResultListener {
     var mFgContainer: Container = new Container();
     var mBgContainer: Container = new Container();
     var mMainContainer: Container = new Container();
-    var mFigureContainer: Container = new Container();
+    var mLayerContainer: Container = new Container();
     var mBoundingBox: BoundingBox = new BoundingBox();
     var mFuzzySketchGraph: Shape = new Shape();
     var mBackground: Shape = new Shape();
     var mGrid: Shape = new Shape();
     var mBrushCircle: Shape = new Shape();
     var mMirrorPivotShape: PivotShape = new PivotShape();
-    var mUndoStack: Array<FigureCommand> = new Array<FigureCommand>();
-    var mRedoStack: Array<FigureCommand> = new Array<FigureCommand>();
+    var mUndoStack: Array<Undoable> = new Array<Undoable>();
+    var mRedoStack: Array<Undoable> = new Array<Undoable>();
     var mCanvas: CanvasElement;
     var vGridUnit = 10;
     var vGridDivision = 10;
@@ -105,8 +91,7 @@ implements SearchResultListener {
     var mCapture: CanvasMouseEvent;
     var window = BrowserUtil.window;
     var mPopupMenu: PopupMenu;
-    var mCanvasState: CanvasState = Idle;
-    var mTool: CanvasTool;
+    var mActiveTool: CanvasTool;
     public static var ON_CANVAS_MOUSEDOWN_EVENT(default, null) = "ON_CANVAS_MOUSEDOWN_EVENT";
     public static var ON_CANVAS_MOUSEMOVE_EVENT(default, null) = "ON_CANVAS_MOUSEMOVE_EVENT";
     public static var ON_CANVAS_MOUSEUP_EVENT(default, null) = "ON_CANVAS_MOUSEUP_EVENT";
@@ -118,7 +103,7 @@ implements SearchResultListener {
 
     public function new(jq: JQuery) {
         super(jq, {
-            activeFigure: null,
+            activeLayer: null,
             toolType: Brush,
             isEditing: false,
             isExporting: false
@@ -152,7 +137,7 @@ implements SearchResultListener {
         mMirrorPivotShape.visible = false;
         mFgContainer.addChild(mMirrorPivotShape);
 
-        mMainContainer.addChild(mFigureContainer);
+        mMainContainer.addChild(mLayerContainer);
 
         mStage.addChild(mBgContainer);
         mStage.addChild(mMainContainer);
@@ -162,6 +147,7 @@ implements SearchResultListener {
         // reset drawing
         resizeCanvas();
         invalidate();
+
     }
 
     override public function init() {
@@ -170,8 +156,8 @@ implements SearchResultListener {
         listenTo(Main.App, App.APP_WINDOW_RESIZE_EVENT, resizeCanvas);
         listenTo(Main.App.model, "change:zoom", onChageZoomEditor);
         listenTo(Main.App.model, "change:isDebug", function () {
-            for (f in mFigureContainer.children) {
-                cast(f, Figure).render();
+            for (f in mLayerContainer.children) {
+                cast(f, Layer).render();
             }
             invalidate();
         });
@@ -188,15 +174,21 @@ implements SearchResultListener {
         );
         mirroringInfo.pivotX = piv.x;
         mirroringInfo.pivotY = piv.y;
+
     }
 
-    @:isVar public var activeFigure(get,set):DisplayObject;
-    function get_activeFigure(): DisplayObject {
-        return get("activeFigure");
+    public function onStart() {
+        var layer = new Layer();
+        insertLayer(layer,true);
     }
-    function set_activeFigure(value:DisplayObject) {
-        trace("set_activeFigure", value);
-        if (activeFigure == value) return value;
+
+    @:isVar public var activeLayer(get,set):Layer;
+    function get_activeLayer(): Layer {
+        return get("activeLayer");
+    }
+    function set_activeLayer(value:Layer) {
+        trace("set_activeLayer", value);
+        if (activeLayer == value) return value;
         if (value == null && mPopupMenu.isShown) {
             mPopupMenu.dismiss(200);
         }
@@ -204,9 +196,9 @@ implements SearchResultListener {
         if (isEditing) {
             showPopupMenu(value);
         }
-        extendDirtyRectWithDisplayObject(value != null ? value : activeFigure);
-        requestDraw("setActiveFigure", draw);
-        set("activeFigure", value);
+        extendDirtyRectWithDisplayObject(value != null ? value : activeLayer);
+        requestDraw("setActiveLayer", draw);
+        set("activeLayer", value);
         return value;
     }
 
@@ -232,13 +224,6 @@ implements SearchResultListener {
         mBrushCircle.visible = !value;
         jq.css("cursor","");
         set("isEditing", value);
-        if (value) {
-            activeFigure = mFigureContainer.children.findLast(function(e: DisplayObject) {
-                return e.visible;
-            });
-        } else {
-            activeFigure = null;
-        }
         invalidate();
         return value;
     }
@@ -265,11 +250,17 @@ implements SearchResultListener {
     inline function get_scale():Float return Main.App.model.zoom.scale;
     
     function invalidate () {
+        mBoundingBox.clear();
+        mPopupMenu.dismiss();
+        mGrid.graphics.clear();
         drawBackground();
-        drawGrid();
-        drawBrushCircle();
-        drawBoundingBox(activeFigure);
-        showPopupMenu(activeFigure);
+        if (!isEditing) {
+            drawBrushCircle();
+        } else {
+            drawGrid();
+            drawBoundingBox(activeLayer);
+            showPopupMenu(activeLayer);
+        }
         requestDraw("invalidate", draw, [true]);
     }
     private function requestDraw(tag: String, func: Dynamic, ?args: Array<Dynamic>) {
@@ -345,9 +336,10 @@ implements SearchResultListener {
         mGrid.updateCache();
         extendDirtyRect(0,0,mCanvas.width,mCanvas.height);
     }
-    function drawBoundingBox (target: DisplayObject) {
+    function drawBoundingBox (target: Layer) {
         mBoundingBox.clear();
-        if (target != null) {
+        if (target != null && target.hasContent())
+        {
             var p = mMainContainer.localToLocal(
                 target.x,
                 target.y,
@@ -421,79 +413,76 @@ implements SearchResultListener {
         container.setChildIndex(ret,container.children.length);
         return cast ret;
     }
-    public function insertFigure (f: DisplayObject, silent: Bool = false, ?index: Int) {
-        if (f == null) {
+    public function insertLayer (layer: Layer, silent: Bool = false, ?index: Int) {
+        if (layer == null) {
             throw new Error("attempt to insert null figure");
         }
         var fun = function(arg) {
-            var i = index == null ? mFigureContainer.children.length : index;
-            mFigureContainer.addChildAt(f,i);
-            f.asImageFigure(function (imf: ImageFigure) {
-                listenTo(imf.editor, "change", onImageEditorChange);
-            });
+            var i = index == null ? mLayerContainer.children.length : index;
+            mLayerContainer.addChildAt(layer,i);
+            listenTo(layer.editor, "change", onImageEditorChange);
             trigger(ON_INSERT_EVENT, {
-                target: f,
+                target: layer,
                 at: i
             });
         };
-        silent ? fun(null) : pushCommand(new InsertCommand(f,this).exec(fun));
-        extendDirtyRectWithDisplayObject(f);
+        silent ? fun(null) : pushCommand(new InsertLayerCommand(layer,this).exec(fun));
+        activeLayer = layer;
+        extendDirtyRectWithDisplayObject(layer);
         requestDraw("insertFigure", draw);
+        Log.d(layer);
     }
-    public function deleteFigure(f: DisplayObject, silent: Bool = false) {
-        if (f == null) return;
+    public function deleteLayer(layer: Layer, silent: Bool = false) {
+        if (layer == null) return;
         // 削除後だとparentの情報が消えるので先にDRを更新しておく
-        extendDirtyRectWithDisplayObject(f);
+        extendDirtyRectWithDisplayObject(layer);
         var fun = function(a) {
-            mFigureContainer.removeChild(f);
-            f.asImageFigure(function(imf: ImageFigure) {
-                stopListening(imf.editor, "change", onImageEditorChange);
-                Main.App.floatingThumbnailView.remove(imf.imageWrap.id);
-            });
+            mLayerContainer.removeChild(layer);
+            stopListening(layer.editor, "change", onImageEditorChange);
+//            Main.App.floatingThumbnailView.remove(layer.imageWrap.id);
             trigger(ON_DELETE_EVENT,{
-                target: f
+                target: layer
             });
         };
-        silent ? fun(null) : pushCommand(new DeleteCommand(f,this).exec(fun));
+        silent ? fun(null) : pushCommand(new DeleteLayerCommand(layer,this).exec(fun));
         mBoundingBox.clear();
         if (isEditing) {
-            activeFigure = mFigureContainer.children.last();
+            activeLayer = cast mLayerContainer.children.last();
         }
         requestDraw("deleteFigure",draw);
     }
 
-    public function copyFigure(f: DisplayObject, silent: Bool = false) {
-        var i = mFigureContainer.getChildIndex(f)+1;
+    public function copyLayer(layer: Layer, silent: Bool = false) {
+        var i = mLayerContainer.getChildIndex(layer)+1;
         var fun = function(a){
-            var cop = f.clone();
-            cop.x = f.x+20;
-            cop.y = f.y+20;
-            mFigureContainer.addChildAt(cop, i);
-            cop.asImageFigure(function (imf: ImageFigure) {
-                listenTo(imf.editor, "change", onImageEditorChange);
-            });
+            var cop = layer.clone();
+            cop.x = layer.x+20;
+            cop.y = layer.y+20;
+            mLayerContainer.addChildAt(cop, i);
+            listenTo(cop.editor, "change", onImageEditorChange);
             return cop;
         };
-        var copied: DisplayObject;
+        var copied: Layer;
         if (silent) {
             copied = fun(null);
         } else {
-            var cmd = new CopyCommand(f,this);
-            copied = cmd.exec(fun).copiedObject;
+            var cmd = new CopyLayerCommand(layer,this);
+            cmd.exec(fun);
+            copied = cmd.copiedObject;
             pushCommand(cmd);
         }
         trigger(ON_COPY_EVENT,{
-            src: f,
+            src: layer,
             target: copied,
             at: i
         });
         if (isEditing) {
-            activeFigure = copied;
+            activeLayer = copied;
         }
     }
 
     public function moveLayer(fig: DisplayObject, at: Int) {
-        mFigureContainer.setChildIndex(fig, at);
+        mLayerContainer.setChildIndex(fig, at);
         extendDirtyRectWithDisplayObject(fig);
         requestDraw("moveLayer", draw);
     }
@@ -511,7 +500,7 @@ implements SearchResultListener {
         requestDraw("thumbnalzieImage", draw);
     }
 
-    public function pushCommand(cmd: FigureCommand) {
+    public function pushCommand(cmd: Undoable) {
         mUndoStack.push(cmd);
         mRedoStack.splice(0,mRedoStack.length);
         Main.App.model.undoStackSize += 1;
@@ -522,20 +511,7 @@ implements SearchResultListener {
         var cmd = mUndoStack.pop();
         if (cmd != null) {
             mRedoStack.push(cmd);
-            var af = null;
-            if (cmd.isInsertCommand() || cmd.isCopyCommand()) {
-                var i = mFigureContainer.getChildIndex(cmd.target);
-                if (cmd.isInsertCommand()) {
-                    i -= 1;
-                }
-                af = i < mFigureContainer.children.length ? mFigureContainer.getChildAt(i) : null;
-            } else {
-                af = cmd.target;
-            }
-            Reflect.callMethod(cmd, Reflect.field(cmd,"undo"),[]);
-            if (isEditing) {
-                activeFigure = af;
-            }
+            cmd.undo();
             invalidate();
             Main.App.model.undoStackSize -= 1;
             Main.App.model.redoStackSize += 1;
@@ -545,22 +521,8 @@ implements SearchResultListener {
     public function redo() {
         var cmd = mRedoStack.pop();
         if (cmd != null) {
-            Reflect.callMethod(cmd, Reflect.field(cmd, "redo"),[]);
+            cmd.redo();
             mUndoStack.push(cmd);
-            var af = null;
-            if (cmd.isDeleteCommand()) {
-                var i = mFigureContainer.getChildIndex(cmd.target) - 1;
-                af = i < mFigureContainer.children.length ? mFigureContainer.getChildAt(i) : null;
-            } else {
-                af = cmd.target;
-                if (cmd.isCopyCommand()) {
-                    var i = cmd.target.parent.getChildIndex(cmd.target);
-                    af = cmd.target.parent.getChildAt(i+1);
-                }
-            }
-            if (isEditing) {
-                activeFigure = af;
-            }
             invalidate();
             Main.App.model.undoStackSize += 1;
             Main.App.model.redoStackSize -= 1;
@@ -568,36 +530,24 @@ implements SearchResultListener {
     }
 
     public function onImageEditorChange(editor: ImageEditor):Void {
-        if (activeFigure.type() == FigureType.Image) {
-            var image: ImageFigure = cast activeFigure;
-            image.setFilterAsync(editor.createFilter())
-            .done(function(img: ImageElement) {
-                image.alpha = editor.alpha;
-                Main.App.layerView.invalidate(image);
-                extendDirtyRectWithDisplayObject(image);
-                requestDraw("onImageEditorChange", draw);
-            }).fail(function(e) {
-                Log.e(e);
-                Rollbar.error(e);
-            });
-        }
-    }
-
-    function insertImageFiguew(iw: ImageWrap) {
-        var im = new ImageFigure(iw);
-        var p =  mMainContainer.globalToLocal(0,0);
-        im.x = p.x;
-        im.y = p.y;
-        insertFigure(im);
-        isEditing = true;
+        activeLayer.setFilterAsync(editor.createFilter())
+        .done(function(im) {
+            activeLayer.alpha = editor.alpha;
+            Main.App.layerView.invalidate(activeLayer);
+            extendDirtyRectWithDisplayObject(activeLayer);
+            requestDraw("onImageEditorChange", draw);
+        }).fail(function(e) {
+            Log.e(e);
+            Rollbar.error(e);
+        });
     }
 
     public function onSearchResultLoad(img: ImageWrap, result: BingSearchResult):Void {
-        insertImageFiguew(img);
+        insertLayer(Layer.fromImage(img));
     }
 
     public function onFileLoad (img: ImageWrap) {
-        insertImageFiguew(img);
+        insertLayer(Layer.fromImage(img));
     }
 
     function resizeCanvas () {
@@ -660,8 +610,8 @@ implements SearchResultListener {
         } else {
             var pivX = mCanvas.width/2;
             var pivY = mCanvas.height/2;
-            if (activeFigure != null) {
-                var c = activeFigure.getTransformedBounds().center();
+            if (activeLayer != null) {
+                var c = activeLayer.getTransformedBounds().center();
                 var p = mMainContainer.localToGlobal(c.x,c.y);
                 pivX = p.x;
                 pivY = p.y;
@@ -669,7 +619,7 @@ implements SearchResultListener {
             applyScaleToLayer(mMainContainer, val.scale, pivX, pivY);
         }
         if (mirroringInfo.pivotEnabled) {
-            var piv = mFigureContainer.localToLocal(
+            var piv = mLayerContainer.localToLocal(
                 mirroringInfo.pivotX,
                 mirroringInfo.pivotY,
                 mFgContainer
@@ -690,8 +640,8 @@ implements SearchResultListener {
         container.y = g_pivY;
     }
 
-    function showPopupMenu (target: DisplayObject) {
-        if (!isExporting && target != null) {
+    function showPopupMenu (target: Layer) {
+        if (!isExporting && target != null && target.hasContent()) {
             mPopupMenu.render(getPopupItmes(target));
             var d = BrowserUtil.window.devicePixelRatio;
             var p = mMainContainer.localToGlobal(
@@ -723,36 +673,20 @@ implements SearchResultListener {
         }
     }
 
-    function getPopupItmes (fig: DisplayObject): Array<PopupItem> {
+    function getPopupItmes (layer: Layer): Array<PopupItem> {
         var ret: Array<PopupItem> = [];
-        if (fig.type() == FigureType.Image) {
-            var hide = new PopupItem("隠す",function(p) {
-                thumbnalzieImage(cast fig);
-                var i = mFigureContainer.getChildIndex(fig)-1;
-                activeFigure = null;
-            });
-            ret.push(hide);
-        }
-        if (fig.type() == FigureType.Shape && !cast(fig, ShapeFigure).isSimplified) {
-            var simplify = new PopupItem("頂点を検出", function(p){
-                cast(fig, ShapeFigure).simplify().render();
-                extendDirtyRectWithDisplayObject(fig);
-                requestDraw("simplify", draw);
-            });
-            ret.push(simplify);
-        }
         var copy = new PopupItem("コピー", function (p) {
-            copyFigure(fig);
+            copyLayer(layer);
         });
         ret.push(copy);
         var delete = new PopupItem("削除", function (p) {
-            deleteFigure(fig);
+            deleteLayer(layer);
         });
         ret.push(delete);
         return ret;
     }
 
-    var mDisplayCommand: DisplayCommand;
+    var mUndoCommand: Undoable;
     function onMouseDown (e: CanvasMouseEvent) {
         mPressed = true;
         var p_main_local = e.getLocal(mMainContainer);
@@ -767,58 +701,38 @@ implements SearchResultListener {
                 }
                 if (mirroringInfo.pivotEnabled && mMirrorPivotShape.hitTest(p_fg_local.x,p_fg_local.y)) {
                     hitted = mMirrorPivotShape;
-                    mCanvasState = Dragging(hitted);
+                    mActiveTool = new DragTool(hitted);
                 } else {
                     // using tools
-                    mCanvasState = UsingTool(switch (toolType) {
+                    mActiveTool = switch (toolType) {
                         case CanvasToolType.Brush: new BrushTool();
-                        case CanvasToolType.Smooth: new SmoothTool();
-                        case CanvasToolType.Select: new SelectTool();
-                    });
+                        case CanvasToolType.Eraser: new BrushTool(true);
+                    };
                     drawBrushCircle();
                 }
             } else {
                 // during editing
-                hitted = mFigureContainer.children.findLast(function(d: DisplayObject) {
+                hitted = cast mLayerContainer.children.findLast(function(d: DisplayObject) {
                     return d.visible && d.getTransformedBounds().containsPoint(p_main_local.x,p_main_local.y);
                 });
                 if (hitted != null) {
-                    mCanvasState = Dragging(hitted);
+                   mActiveTool = new DragTool(hitted);
                 } else {
-                    mCanvasState = Grabbing;
+                   mActiveTool = new GrabTool();
                 }
-            }
-            if (activeFigure != null) {
-                var corner = mBoundingBox.hitsCorner(p_fg_local.x,p_fg_local.y);
-                if (corner != null) {
-                    mCanvasState = Scaling(corner);
-                }
-            }
-            switch (mCanvasState) {
-                case UsingTool(tool): {
-                    tool.onMouseDown(this,e);
-                }
-                case Dragging(dragging): {
-                    if (dragging == mMirrorPivotShape) {
-                        mDisplayCommand = new MirroringPivotMoveCommand(dragging, this);
-                    } else {
-                        mDisplayCommand = new DisplayCommand(dragging, this);
+                if (activeLayer != null) {
+                    var corner = mBoundingBox.hitsCorner(p_fg_local.x,p_fg_local.y);
+                    if (corner != null) {
+                        mActiveTool = new ScaleTool(corner);
                     }
-                    if (isEditing) {
-                        activeFigure = hitted;
-                    }
-                    jq.css("cursor", mCurrentPointerCSS = "move");
                 }
-                case Grabbing: {
-                    jq.css("cursor",mCurrentPointerCSS = CursorUtil.grabbingCursor());
-                }
-                case Scaling(corner): {
-                    mDisplayCommand = new DisplayCommand(activeFigure, this);
-                }
-                default: {}
+                trace(mActiveTool);
+            }
+            if (mActiveTool != null) {
+                mActiveTool.onMouseDown(this,e);
             }
             if (isEditing) {
-                drawBoundingBox(activeFigure);
+                drawBoundingBox(activeLayer);
             }
             mBrushCircle.visible = !isEditing;
         } else {
@@ -827,7 +741,7 @@ implements SearchResultListener {
         trigger(ON_CANVAS_MOUSEDOWN_EVENT);
         requestDraw("onMouseDown", draw);
     }
-    private var mCurrentPointerCSS: String;
+
     private static var MOVED_THRESH = 2*2;
 
     function updateBrushCircle(e: CanvasMouseEvent) {
@@ -838,6 +752,11 @@ implements SearchResultListener {
         mBrushCircle.x = fp.x-bw;
         mBrushCircle.y = fp.y-bw;
         extendDirtyRectWithDisplayObject(mBrushCircle);
+    }
+
+    private var mCurrentPointerCSS: String;
+    function setCursor(cursor: String) {
+        jq.css("cursor", mCurrentPointerCSS = cursor);
     }
 
     function handleFreeCursorMove(e: CanvasMouseEvent) {
@@ -854,13 +773,13 @@ implements SearchResultListener {
             }
             updateBrushCircle(e);
         } else {
-            if (activeFigure != null) {
+            if (activeLayer != null) {
                 var lpfg = e.getLocal(mFgContainer);
                 var c = mBoundingBox.hitsCorner(lpfg.x,lpfg.y);
                 if (c != null) {
                     nextCursor = BoundingBox.getPointerCSS(c);
                 } else {
-                    if (activeFigure.getTransformedBounds().containsPoint(lpfg.x,lpfg.y)){
+                    if (activeLayer.getTransformedBounds().containsPoint(lpfg.x,lpfg.y)){
                         nextCursor = CursorUtil.MOVE;
                     } else {
                         nextCursor = CursorUtil.grabCursor();
@@ -869,104 +788,10 @@ implements SearchResultListener {
             }
         }
         if (mCurrentPointerCSS != nextCursor) {
-            jq.css("cursor", mCurrentPointerCSS = nextCursor);
+            setCursor(nextCursor);
         }
     }
 
-    function handleSmooth(e: CanvasMouseEvent, tool: SmoothTool) {
-
-    }
-    function handleDragging(e: CanvasMouseEvent, dragging: DisplayObject) {
-        if (!isEditing) {
-            dragging.x += e.deltaX;
-            dragging.y += e.deltaY;
-            if (dragging == mMirrorPivotShape) {
-                var w = mMirrorPivotShape.totalRadius.toFloat();
-                var piv = mFgContainer.localToLocal(
-                    mMirrorPivotShape.x+w,
-                    mMirrorPivotShape.y+w,
-                    mFigureContainer
-                );
-                mirroringInfo.pivotX = piv.x;
-                mirroringInfo.pivotY = piv.y;
-                extendDirtyRectWithDisplayObject(mMirrorPivotShape);
-            }
-        } else {
-            extendDirtyRectWithDisplayObject(activeFigure);
-            dragging.x += e.deltaX/scale;
-            dragging.y += e.deltaY/scale;
-            mBoundingBox.x += e.deltaX;
-            mBoundingBox.y += e.deltaY;
-            extendDirtyRectWithDisplayObject(dragging);
-            mDirtyRect.padAll(mBoundingBox.cornerRadius.toFloat()*2);
-            mPopupMenu.dismiss(200);
-        }
-    }
-    function handleGrabbing(e: CanvasMouseEvent) {
-        mMainContainer.x += e.deltaX;
-        mMainContainer.y += e.deltaY;
-        mFgContainer.x += e.deltaX;
-        mFgContainer.y += e.deltaY;
-        extendDirtyRect(0,0,mCanvas.width,mCanvas.height);
-        drawGrid(e.deltaX,e.deltaY);
-        mPopupMenu.dismiss(200);
-    }
-    function handleScaling(e: CanvasMouseEvent, corner: Corner) {
-        var tb = activeFigure.getTransformedBounds().clone();
-        var lpmn = e.getLocal(mMainContainer);
-        var lpmnprev = e.getLocalPrev(mMainContainer);
-        inline function doScaleX (width: Float) {
-            var sx = width/tb.width;
-            if (0 < sx) {
-                activeFigure.scaleX *= sx;
-            }
-        }
-        inline function doScaleY (height: Float) {
-            var sy = height/tb.height;
-            if (0 < sy) {
-                activeFigure.scaleY *= sy;
-            }
-        }
-        inline function constrainScaleX () {
-            if (lpmn.x < tb.right()) {
-                if (tb.right() < lpmnprev.x) {
-                    doScaleX(tb.right()-e.x);
-                } else {
-                    doScaleX(tb.width-e.deltaX/scale);
-                }
-                activeFigure.x = lpmn.x;
-            }
-        }
-        inline function constrainScaleY () {
-            if (lpmn.y < tb.bottom()) {
-                if (tb.bottom() < lpmnprev.y) {
-                    doScaleY(tb.bottom()-lpmn.y);
-                } else {
-                    doScaleY(tb.height-e.deltaY/scale);
-                }
-                activeFigure.y = lpmn.y;
-            }
-        }
-        extendDirtyRectWithDisplayObject(activeFigure);
-        corner.isLeft? constrainScaleX() : doScaleX(tb.width+e.deltaX/scale);
-        corner.isTop? constrainScaleY() : doScaleY(tb.height+e.deltaY/scale);
-        if (modifiedByShift()) {
-            var d = activeFigure;
-            var s = (d.scaleX+d.scaleY)*0.5;
-            var oBounds = d.getBounds();
-            d.scaleX = d.scaleY = s;
-            var w = oBounds.width*s;
-            var h = oBounds.height*s;
-            if (corner.isLeft) {
-                d.x = tb.right()-w;
-            }
-            if (corner.isTop) {
-                d.y = tb.bottom()-h;
-            }
-        }
-        extendDirtyRectWithDisplayObject(activeFigure);
-        drawBoundingBox(activeFigure);
-    }
     function onMouseMove (e: CanvasMouseEvent) {
         if (!BrowserUtil.isBrowser) {
             e.srcEvent.preventDefault();
@@ -976,24 +801,10 @@ implements SearchResultListener {
                 handleFreeCursorMove(e);
             } else {
                 if (!isEditing) {
-                    switch(mCanvasState) {
-                    case UsingTool(tool):
-                        tool.onMouseMove(this, e);
-                    case Dragging(dragging):
-                        handleDragging(e,dragging);
-                    default: {}
-                    }
                     updateBrushCircle(e);
-                } else {
-                    switch (mCanvasState) {
-                        case Dragging(dragging):
-                            handleDragging(e,dragging);
-                        case Grabbing:
-                            handleGrabbing(e);
-                        case Scaling(corner):
-                            handleScaling(e, corner);
-                        default: {}
-                    }
+                }
+                if (mActiveTool != null) {
+                    mActiveTool.onMouseMove(this,e);
                 }
             }
         } else {
@@ -1021,38 +832,18 @@ implements SearchResultListener {
     function onMouseUp (e: CanvasMouseEvent) {
         if (!isExporting) {
             if (!isEditing) {
-                switch (mCanvasState) {
-                case UsingTool(tool):
-                    tool.onMouseUp(this, e);
-                default: {}
+                if (mActiveTool != null) {
+                    mActiveTool.onMouseUp(this,e);
                 }
                 drawBrushCircle();
             } else {
-                switch (mCanvasState) {
-                case Dragging(dragging): {
-                    drawBoundingBox(dragging);
+                if (mActiveTool != null) {
+                    mActiveTool.onMouseUp(this,e);
                 }
-                case Grabbing: {
-                    if (activeFigure != null) {
-                        activeFigure = null;
-                    }
-                    jq.css("cursor", CursorUtil.grabCursor());
-                }
-                case Scaling(corner): {
-                    activeFigure.asShapeFigure(function(shape: ShapeFigure) {
-                        var sx = shape.shapeScaleX*shape.scaleX;
-                        var sy = shape.shapeScaleY*shape.scaleY;
-                        shape.applyScale(sx,sy).render();
-                    });
-                    drawBoundingBox(activeFigure);
-                    Main.App.layerView.invalidate(activeFigure);
-                }
-                default: {}
-                }
-                showPopupMenu(activeFigure);
+                showPopupMenu(activeLayer);
             }
-            if (mDisplayCommand != null) {
-                pushCommand(mDisplayCommand.exec(null));
+            if (mUndoCommand != null) {
+                pushCommand(mUndoCommand.exec(null));
             }
         } else {
             // during exporting
@@ -1066,9 +857,9 @@ implements SearchResultListener {
             exportImage(lp.x,lp.y,w,h);
             isExporting = false;
         }
-        mDisplayCommand = null;
+        mUndoCommand = null;
         mPressed = false;
-        mCanvasState = Idle;
+        mActiveTool = null;
         mBrushCircle.visible = BrowserUtil.isBrowser && !isEditing;
         trigger(ON_CANVAS_MOUSEUP_EVENT);
         requestDraw("onMouseUp", draw);
@@ -1117,7 +908,7 @@ implements SearchResultListener {
         var el: Element = cast e.target;
         if (el.id == "searchInput") return true;
         switch e.keyCode {
-            case 8: deleteFigure(activeFigure);
+            case 8: deleteLayer(activeLayer);
             case 69: { // E
                 if (isEditing) {
                     isEditing = false;

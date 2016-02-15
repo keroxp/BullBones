@@ -40,12 +40,12 @@ class ImageEditorView extends ViewModel {
     }
 
     override public function init() {
-        listenTo(Main.App.mainCanvas, "change:activeFigure", onactiveFigureChange);
+        listenTo(Main.App.mainCanvas, "change:activeLayer", onChangeActiveLayer);
     }
 
     private var mThumbData: ImageData;
     private var mImage: ImageFigure;
-    public function onactiveFigureChange (canvas: MainCanvas, value: DisplayObject) {
+    public function onChangeActiveLayer (canvas: MainCanvas, value: DisplayObject) {
         if (value == mImage) return;
         if (value != null && value.type() == FigureType.Image) {
             mImage = cast value;

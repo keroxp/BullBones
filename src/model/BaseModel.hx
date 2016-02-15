@@ -6,7 +6,7 @@ class BaseModel extends Model {
     public function new (?attr: Dynamic, ?options: Dynamic) {
         super(attr, options);
     }
-    public function listenToOnChangeAttribute<T>(obj: BaseModel, key: String, callback: OnChangeAttributeCallback<T>) {
+    public function listenToChangeAttribute<T>(obj: BaseModel, key: String, callback: OnChangeAttributeCallback<T>) {
         this.listenTo(obj,'change:$key',callback);
     }
 }

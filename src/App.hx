@@ -29,7 +29,7 @@ import view.SearchView;
 import js.Browser;
 using figure.Figures;
 
-class App extends BackboneEvents implements BrushEditorListener {
+class App extends BaseModel implements BrushEditorListener {
     public var model(default, null): AppModel;
     private var jModalLoading: JQuery;
     private var jSearchButton: JQuery;
@@ -88,7 +88,7 @@ class App extends BackboneEvents implements BrushEditorListener {
                 hidePanels();
                 jEditButton.toggleClass("editing", value);
             });
-            listenTo(mainCanvas, "change:activeFigure", function (c: MainCanvas, value: DisplayObject) {
+            listenTo(mainCanvas, "change:activeLayer", function (c: MainCanvas, value: DisplayObject) {
                 if (value != null && value.type() == FigureType.Image) {
                     jImageButton.show();
                 } else {
@@ -158,8 +158,7 @@ class App extends BackboneEvents implements BrushEditorListener {
             var toolPallet = new RadioBox(new JQuery("#toolPallete"), function (i: Int) {
                   mainCanvas.toolType = switch (i) {
                       case 0: CanvasToolType.Brush;
-                      case 1: CanvasToolType.Smooth;
-                      case 2: CanvasToolType.Select;
+                      case 1: CanvasToolType.Eraser;
                       default: null;
                   }
             });
@@ -195,6 +194,8 @@ class App extends BackboneEvents implements BrushEditorListener {
             floatingThumbnailView.init();
             zoomInputView.init();
             layerView.init();
+
+            mainCanvas.onStart();
 
             // hide loading
             haxe.Timer.delay(function() {

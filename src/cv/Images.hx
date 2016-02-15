@@ -73,7 +73,7 @@ class Images {
 
     }
 
-    public static function getImageData (image: ImageElement): ImageData {
+    public static function getImageData (image: Dynamic): ImageData {
         sCanvas.width = image.width;
         sCanvas.height = image.height;
         var ctx = sCanvas.getContext2d();

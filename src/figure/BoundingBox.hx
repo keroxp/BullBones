@@ -49,6 +49,7 @@ class BoundingBox extends Shape {
     public function hitsCorner(x: Float, y: Float): Corner {
         var hw = cornerRadius.toFloat()*2;
         var bounds = getTransformedBounds();
+        if (bounds == null) return null;
         inline function isLeft (_x: Float): Bool {
             return bounds.x-hw <= _x && _x <= bounds.x+hw;
         }

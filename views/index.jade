@@ -144,14 +144,12 @@ html(lang='ja')
                   i.small.material-icons strikethrough_s
                 a#lineSymmetryPivotButton.radioParts(title="ピボット", data-enabled="true", data-radio-index="2")
                   i.small.material-icons filter_center_focus
-            //- .inputGroup#toolPallete
-            //-   .inner.z-depth-1
-            //-     a#smoothBrushButton.radioParts(title="選択ツール", data-enabled="true", data-radio-index="2")
-            //-       i.small.material-icons select_all
-            //-     a#smoothBrushButton.radioParts(title="スムースブラシ", data-enabled="true", data-radio-index="1")
-            //-       i.small.material-icons gesture
-            //-     a#drawingBrushButton.radioParts(title="ペイントブラシ", data-enabled="true", data-radio-index="0")
-            //-       i.small.material-icons brush
+            .inputGroup#toolPallete
+              .inner.z-depth-1
+                a#eraserButton.radioParts(title="消しゴム", data-enabled="true", data-radio-index="1")
+                  i.small.material-icons smartphone
+                a#drawingBrushButton.radioParts(title="ペイントブラシ", data-enabled="true", data-radio-index="0")
+                  i.small.material-icons brush
             .inputGroup
               .inner.z-depth-1
                 a#editModeButton(title="編集モードへ",data-enabled="true")

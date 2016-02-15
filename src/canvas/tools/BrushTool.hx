@@ -1,33 +1,33 @@
 package canvas.tools;
+import createjs.easeljs.Shape;
 import geometry.Points;
 import createjs.easeljs.Point;
 import performance.GeneralObjectPool;
-import figure.ShapeFigureSet;
 import figure.ShapeFigure;
 class BrushTool implements CanvasTool {
-    private var drawingFigure: ShapeFigure;
-    private var mirroringFigure: ShapeFigure;
     private static var sPointPool = Points.createPool(5);
-    public function new() {
+    private var drawingFigure: ShapeFigure;
+    private var mirrorFigure: ShapeFigure;
+    private var isEraser = false;
+
+    public function new(isEraser: Bool = false) {
+        this.isEraser = isEraser;
     }
 
     public function onMouseDown(mainCanvas:MainCanvas, e:CanvasMouseEvent):Void {
-        var f =  new ShapeFigure();
         var p = e.getLocal(mainCanvas.mMainContainer);
-        f.addPoint(p.x,p.y);
-        f.width = Main.App.model.brush.width;
-        f.color = Main.App.model.brush.color;
-        if (mainCanvas.mirroringInfo.enabled) {
-            var m = new ShapeFigure();
-            m.addPoint(
-                mainCanvas.mirroringInfo.getMirrorX(p.x),
-                mainCanvas.mirroringInfo.getMirrorY(p.y)
-            );
-            m.width = Main.App.model.brush.width;
-            m.color = Main.App.model.brush.color;
-            this.mirroringFigure = m;
+        drawingFigure = new ShapeFigure();
+        drawingFigure.width = Main.App.model.brush.width;
+        drawingFigure.color = Main.App.model.brush.color;
+        drawingFigure.compositeOperation = isEraser ? "destination-out" : "source-over";
+        drawingFigure.addPoint(p.x,p.y);
+        if (Main.App.mainCanvas.mirroringInfo.enabled) {
+            mirrorFigure = new ShapeFigure();
+            mirrorFigure.width = Main.App.model.brush.width;
+            mirrorFigure.color = Main.App.model.brush.color;
+            mirrorFigure.compositeOperation = isEraser ? "destination-out" : "source-over";
+            mirrorFigure.addPoint(p.x,p.y);
         }
-        this.drawingFigure = f;
     }
 
     public function onMouseMove(mainCanvas:MainCanvas, e:CanvasMouseEvent):Void {
@@ -48,8 +48,8 @@ class BrushTool implements CanvasTool {
             if (!drawingFigure.isLine) {
                 drawingFigure.isLine = true;
                 if (mainCanvas.mirroringInfo.enabled) {
-                    mirroringFigure.isLine = true;
-                    mainCanvas.extendDirtyRectWithRect(mirroringFigure.getTransformedBounds());
+                    mirrorFigure.isLine = true;
+                    mainCanvas.extendDirtyRectWithRect(mirrorFigure.getTransformedBounds());
                 }
                 mainCanvas.extendDirtyRectWithRect(drawingFigure.getTransformedBounds());
             }
@@ -59,10 +59,11 @@ class BrushTool implements CanvasTool {
             drawingFigure.isLine = false;
         }
         buf.graphics.setStrokeStyle(b.width,"round", "round");
+        buf.compositeOperation = isEraser ? "destination-out" : "source-over";
         if (mainCanvas.mirroringInfo.enabled) {
             var mx = mainCanvas.mirroringInfo.getMirrorX(drawPoint.x);
             var my = mainCanvas.mirroringInfo.getMirrorY(drawPoint.y);
-            mirroringFigure.addPoint(mx,my);
+            mirrorFigure.addPoint(mx,my);
             var mpx = mainCanvas.mirroringInfo.getMirrorX(drawPointPrev.x);
             var mpy = mainCanvas.mirroringInfo.getMirrorY(drawPointPrev.y);
             buf.graphics
@@ -85,20 +86,26 @@ class BrushTool implements CanvasTool {
     public function onMouseUp(mainCanvas:MainCanvas, e:CanvasMouseEvent):Void {
         var buf = mainCanvas.getBufferShape(mainCanvas.mMainContainer);
         if (drawingFigure.points.length > 1) {
+            var layer = mainCanvas.activeLayer;
             if (mainCanvas.mirroringInfo.enabled) {
-                var first = drawingFigure.render();
-                var second = mirroringFigure.render();
-                var set = ShapeFigureSet.createWithShapes([first,second]);
-                mainCanvas.insertFigure(set.render());
-                mainCanvas.extendDirtyRectWithDisplayObject(set);
+                layer.addChild(drawingFigure.render());
+                layer.addChild(mirrorFigure.render());
+                mainCanvas.extendDirtyRectWithDisplayObject(drawingFigure);
+                mainCanvas.extendDirtyRectWithDisplayObject(mirrorFigure);
             } else {
-                drawingFigure.calcVertexes();
-                mainCanvas.insertFigure(drawingFigure.render());
+                layer.addChild(drawingFigure.render());
                 mainCanvas.extendDirtyRectWithDisplayObject(drawingFigure);
             }
+            layer.cache(0,0,layer.getTransformedBounds().width,layer.getTransformedBounds().height);
+            Main.App.layerView.invalidate(layer);
         }
         this.drawingFigure = null;
-        this.mirroringFigure = null;
+        this.mirrorFigure = null;
         buf.graphics.clear();
     }
+
+    public function toString():String {
+        return "[BrushTool]";
+    }
+
 }
