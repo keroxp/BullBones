@@ -1,4 +1,6 @@
 package figure;
+import js.Error;
+import ajax.Loader;
 import js.html.CanvasRenderingContext2D;
 import js.html.CanvasElement;
 import createjs.easeljs.Container;
@@ -15,15 +17,10 @@ import createjs.easeljs.Rectangle;
 import createjs.easeljs.DisplayObject;
 using util.RectangleUtil;
 using util.ArrayUtil;
+using util.CreateJSExt;
 class Layer extends Container implements Figure {
     public var editor(default,null): ImageEditor = new ImageEditor();
-    public var layerScaleX(default,null): Float = 1.0;
-    public var layerScaleY(default,null): Float = 1.0;
     private static var sTempRect = new Rectangle();
-    public var leftObject(default,null): DisplayObject;
-    public var topObject(default,null): DisplayObject;
-    public var rightObject(default,null): DisplayObject;
-    public var bottomObject(default,null): DisplayObject;
 
     public static function fromImage(image: ImageWrap): Layer {
         var ret = new Layer();
@@ -42,23 +39,11 @@ class Layer extends Container implements Figure {
             ret.addChild(child.clone());
         }
         ret.editor = editor.clone();
-        ret.layerScaleX = layerScaleX;
-        ret.layerScaleY = layerScaleY;
         var _clone = Reflect.field(this, "_cloneProps");
         ret = Reflect.callMethod(this, _clone,[ret]);
         ret.uncache();
         ret.cache(0,0,ret.getTransformedBounds().width,ret.getTransformedBounds().height);
         return cast ret.render();
-    }
-
-    private function updateBounds(x: Float, y: Float, w: Float = 0, h: Float = 0) {
-        if (getBounds() == null) {
-            setBounds(x,y,w,h);
-        } else {
-            var bounds = getBounds().clone();
-            bounds.extend(x,y,w,h);
-            setBounds(bounds.x,bounds.y,bounds.width,bounds.height);
-        }
     }
 
     public override function addChild(child:DisplayObject):DisplayObject {
@@ -67,53 +52,46 @@ class Layer extends Container implements Figure {
 
     public override function addChildAt(child:DisplayObject, index:Float):DisplayObject {
         var hasNoChild = getNumChildren() == 0;
-        var ex: Float = 0;
-        var ey: Float = 0;
         if (hasNoChild) {
-            leftObject = rightObject = topObject = bottomObject = child;
-        } else {
-            if (child.x < x) { leftObject = child; }
-            if (getTransformedBounds().right() < child.x) { rightObject = child; }
-            if (child.y < y) { topObject = child; }
-            if (getTransformedBounds().bottom() < child.y) { bottomObject = child; }
-        }
-        if (child.x < x || hasNoChild) {
-            var diff = x - child.x;
             x = child.x;
-            child.x = 0;
-            for (child in children) {
-                child.x += diff;
-                if (ex < child.x) {
-                    ex = child.x;
-                }
-            }
-        } else {
-            child.x -= x;
-            ex = child.x;
-        }
-        if (child.y < y || hasNoChild) {
-            var diff = y - child.y;
             y = child.y;
+            child.x = 0;
             child.y = 0;
-            for (child in children) {
-                child.y += diff;
-                if (ey < child.y) {
-                    ey = child.y;
-                }
-            }
+            this.setSize(child.getWidth(),child.getHeight());
         } else {
-            child.y -= y;
-            ey = child.y;
+            if (child.x < x) {
+                var diff = x - child.x;
+                x = child.x;
+                child.x = 0;
+                for (c in children) {
+                    c.x += diff;
+                }
+                this.setWidth(this.getWidth()+diff);
+            } else {
+                var diff = child.getRight() - this.getRight();
+                if (diff > 0) {
+                    this.setWidth(this.getWidth()+diff);
+                }
+                child.x -= x;
+            }
+            if (child.y < y) {
+                var diff = y - child.y;
+                y = child.y;
+                child.y = 0;
+                for (c in children) {
+                    c.y += diff;
+                }
+                this.setHeight(this.getHeight()+diff);
+            } else {
+                var diff = child.getBottom() - this.getBottom();
+                if (diff > 0) {
+                    this.setHeight(this.getHeight()+diff);
+                }
+                child.y -= y;
+            }
         }
         super.addChild(child);
-        var b = getBounds();
-        var cb = child.getBounds();
-        if (hasNoChild) {
-            b = cb.clone();
-        } else {
-            b.extend(ex,ey,cb.width,cb.height);
-        }
-        setBounds(0,0,~~b.width,~~b.height);
+        cache(child.x,child.y,child.getWidth(),child.getHeight());
         return child;
     }
 
@@ -147,8 +125,24 @@ class Layer extends Container implements Figure {
         return pr;
     }
 
-    public function applyScale(sx: Float, sy: Float): Layer {
-        return this;
+    public function applyScale(): Promise<Layer,Error,Void> {
+        // レイヤー全体を拡縮して1枚のビットマップにする
+        var tb = getTransformedBounds();
+        cache(0,0,tb.width,tb.height);
+        var ret = new Deferred<Layer,Error,Void>();
+        var url = getCacheDataURL();
+        Loader.loadImage(url).done(function(iw: ImageWrap) {
+            var imf = new ImageFigure(iw);
+            imf.x = x;
+            imf.y = y;
+            removeAllChildren();
+            addChild(imf);
+            scaleX = 1.0;
+            scaleY = 1.0;
+            cache(0,0,imf.imageWrap.width,imf.imageWrap.height);
+            ret.resolve(this);
+        }).fail(ret.reject);
+        return ret;
     }
 
     public function render(): DisplayObject {

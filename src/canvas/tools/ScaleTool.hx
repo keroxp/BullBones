@@ -1,5 +1,8 @@
 package canvas.tools;
-import command.LayerAffineCommand;
+import util.Log;
+import js.Error;
+import figure.Layer;
+import command.AffineCommand;
 import figure.BoundingBox.Corner;
 using util.RectangleUtil;
 class ScaleTool implements CanvasTool {
@@ -10,7 +13,7 @@ class ScaleTool implements CanvasTool {
     }
 
     public function onMouseDown(mcanvas:MainCanvas, e:CanvasMouseEvent):Void {
-        mcanvas.mUndoCommand = new LayerAffineCommand(mcanvas.activeLayer, mcanvas);
+        mcanvas.mUndoCommand = new AffineCommand<Layer>(mcanvas.activeLayer, mcanvas);
     }
 
     public function onMouseMove(mc:MainCanvas, e:CanvasMouseEvent):Void {
@@ -71,9 +74,13 @@ class ScaleTool implements CanvasTool {
     }
 
     public function onMouseUp(mc:MainCanvas, e:CanvasMouseEvent):Void {
-        mc.activeLayer.applyScale(1.0,1.0);
-        mc.drawBoundingBox(mc.activeLayer);
-        Main.App.layerView.invalidate(mc.activeLayer);
+        mc.activeLayer.applyScale().done(function(l: Layer) {
+            mc.drawBoundingBox(mc.activeLayer);
+            mc.extendDirtyRectWithDisplayObject(mc.activeLayer);
+            Main.App.layerView.invalidate(mc.activeLayer);
+        }).fail(function(e: Error) {
+            Log.e(e);
+        });
     }
 
     public function toString():String {

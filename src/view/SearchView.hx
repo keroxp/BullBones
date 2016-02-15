@@ -1,4 +1,5 @@
 package view;
+import cv.Images;
 import cv.ImageWrap;
 import util.Log;
 import js.Browser;
@@ -124,7 +125,6 @@ class SearchView extends ViewModel {
         mLoadingOverlay.jq.hide();
         jInput.focus();
     }
-    private static var WHITE_IMG = "data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
 
     public function render(urls:Array<String>) {
         var document:Document = js.Browser.document;
@@ -146,13 +146,13 @@ class SearchView extends ViewModel {
         });
         for (j in 0...imgs.length) {
             var img:Image = cast imgs[j];
-            img.src = j < urls.length ? urls[j] : WHITE_IMG;
+            img.src = j < urls.length ? urls[j] : Images.WHITE_IMG;
             i++;
         }
         while (i < urls.length) {
             var row = new JQuery("<div class='searchResultsRow'></div>");
             for (j in 0...3) {
-                var url = i < urls.length ? urls[i] : WHITE_IMG;
+                var url = i < urls.length ? urls[i] : Images.WHITE_IMG;
                 var cell = new JQuery('<div class="searchResultsCell"><img src=\"$url\"></div>');
                 cell.attr('data-index', i);
                 cell.on("click", onCellClicked);

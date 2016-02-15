@@ -1,4 +1,5 @@
 package figure;
+import createjs.easeljs.Rectangle;
 import js.Error;
 import figure.FigureType;
 import figure.ImageFigure;
