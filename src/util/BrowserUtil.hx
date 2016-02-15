@@ -1,4 +1,5 @@
 package util;
+import js.html.CanvasElement;
 import js.html.Window;
 import js.html.Document;
 import js.Browser;
@@ -42,7 +43,9 @@ class BrowserUtil {
     private static function _isWebKit() {
         return ua().indexOf("webkit") > -1;
     }
-
+    public static function createCanvas(): CanvasElement {
+        return cast document.createElement("canvas");
+    }
     public static var isMobilePhone: Bool = _isMobilePhone();
     public static var isMobile: Bool = _isMobile();
     public static var isBrowser: Bool = _isBrowser();

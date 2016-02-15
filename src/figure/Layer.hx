@@ -1,4 +1,5 @@
 package figure;
+import util.BrowserUtil;
 import js.Error;
 import ajax.Loader;
 import js.html.CanvasRenderingContext2D;
@@ -124,22 +125,28 @@ class Layer extends Container implements Figure {
         });
         return pr;
     }
-
     public function applyScale(): Promise<Layer,Error,Void> {
-        // レイヤー全体を拡縮して1枚のビットマップにする
-        var tb = getTransformedBounds();
-        cache(0,0,tb.width,tb.height);
+        var _x = x;
+        var _y = y;
+        x = 0;
+        y = 0;
+        var cvs = BrowserUtil.createCanvas();
+        cvs.width = Std.int(this.getWidth());
+        cvs.height = Std.int(this.getHeight());
+        var ctx = cvs.getContext2d();
+        updateContext(ctx);
+        draw(ctx,true);
+        var url = cvs.toDataURL();
         var ret = new Deferred<Layer,Error,Void>();
-        var url = getCacheDataURL();
         Loader.loadImage(url).done(function(iw: ImageWrap) {
             var imf = new ImageFigure(iw);
-            imf.x = x;
-            imf.y = y;
+            uncache();
             removeAllChildren();
             addChild(imf);
+            x = ~~_x;
+            y = ~~_y;
             scaleX = 1.0;
             scaleY = 1.0;
-            cache(0,0,imf.imageWrap.width,imf.imageWrap.height);
             ret.resolve(this);
         }).fail(ret.reject);
         return ret;
@@ -158,7 +165,12 @@ class Layer extends Container implements Figure {
     }
 
     override public function toString():String {
-        return '[Layer id="$id" bounds="${getTransformedBounds().toString()}"]';
+        var ret = '<Layer id="$id" bounds="${getTransformedBounds().toString()}>\n';
+        for (child in children) {
+            ret += '\t${child.toString()}';
+        }
+        ret += "</Layer>";
+        return ret;
     }
 
 
